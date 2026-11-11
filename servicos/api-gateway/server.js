@@ -1,128 +1,255 @@
 /*
- * S.G.J.A — API Gateway (microsserviço)
- *  GET  /health                          → status do serviço
- *  GET  /api/v1/entidades/:entidade      → lista registros (proxy Base44, chave fica no servidor)
- *  POST /api/v1/entidades/:entidade      → cria registro
- *  PUT  /api/v1/entidades/:entidade/:id  → atualiza registro
- *  POST /api/v1/certificados/enviar      → envia o PDF do certificado por e-mail (Nodemailer)
- *  GET  /api/v1/lembretes/agenda         → quando sai cada lembrete de WhatsApp e quantos já foram
- * Também roda o agendador de lembretes por WhatsApp (30 min antes de cada atividade).
+ * S.G.J.A — servidor (API) com login por perfil.
+ *
+ * Público (sem login, com limite de tentativas)
+ *   GET  /api/v1/publico/resumo                  total de inscritos
+ *   POST /api/v1/publico/inscricoes              nova inscrição
+ *   POST /api/v1/publico/cpf-inscrito            { cpf } -> { inscrito }
+ *   POST /api/v1/publico/participante            { cpf, email } -> dados do próprio participante
+ *   POST /api/v1/publico/certificado             { cpf, email } -> emite o certificado (se apto)
+ *   POST /api/v1/publico/certificado/email       { cpf, email, pdfBase64 } -> envia ao e-mail da inscrição
+ *   GET  /api/v1/publico/certificados/:codigo    validação pública
+ * Comissão organizadora (login individual)
+ *   POST /api/v1/comissao/cadastro | /login
+ *   GET  /api/v1/comissao/chamada?eventoId=
+ *   POST /api/v1/comissao/checkin                { eventoId, alunoId | cpf | qr }
+ *   POST /api/v1/comissao/checkin/remover        { eventoId, alunoId }
+ * Professor
+ *   POST /api/v1/professor/login                 { senha }
+ *   GET  /api/v1/professor/dados
+ *   PUT  /api/v1/professor/membros/:id           { status }
+ *   POST /api/v1/professor/certificados/:alunoId
+ *   POST /api/v1/professor/certificados/:alunoId/email  { pdfBase64 }
+ *   GET  /api/v1/professor/lembretes/agenda
+ *   POST /api/v1/professor/demo | /limpar        (só com ALLOW_DEMO / ALLOW_RESET = true)
  */
+require("./env");
+const fs = require("fs");
+const path = require("path");
+const vm = require("vm");
 const express = require("express");
 const nodemailer = require("nodemailer");
-
-require("./env");
+const C = require("../../js/core.js");
+const { criarServico, ErroNegocio } = require("../../js/servico.js");
+const { criarStore } = require("./store");
+const auth = require("./auth");
 const lembretes = require("./lembretes");
 
-const ENTIDADES = new Set(["Aluno", "Frequencia", "Certificado", "EmailEnviado"]);
+/* ---------- Configuração ---------- */
+function carregarConfig() {
+  const ctx = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "..", "js", "config.js"), "utf8"), ctx);
+  return ctx.window.SGJA_CONFIG;
+}
+const CFG = carregarConfig();
+const SEGREDO = process.env.ASSINATURA_SEGREDO || "";
+if (SEGREDO.length < 32) throw new Error("Defina ASSINATURA_SEGREDO no .env com pelo menos 32 caracteres aleatórios.");
+auth.assinarToken({ teste: 1 }, 1); // falha cedo se TOKEN_SEGREDO estiver ausente
+if (!process.env.PROFESSOR_SENHA_HASH) console.warn("Aviso: PROFESSOR_SENHA_HASH não definido. O login do professor fica desativado.");
+
+const store = criarStore();
+const servico = criarServico({ store, config: CFG, core: C, segredo: SEGREDO });
 const ORIGENS = (process.env.ORIGENS_PERMITIDAS || "").split(",").map((s) => s.trim()).filter(Boolean);
+const SESSAO_PROF_MIN = Number(process.env.SESSAO_PROFESSOR_MIN || 120);
+const SESSAO_COM_MIN = Number(process.env.SESSAO_COMISSAO_MIN || 240);
+
 const app = express();
 app.disable("x-powered-by");
-app.use(express.json({ limit: "3mb" })); // PDF em base64 cabe com folga
+if (process.env.TRUST_PROXY) app.set("trust proxy", 1); // atrás de Render/Railway/Nginx, para o IP real
 
-// CORS só para os domínios do site.
+/* ---------- Cabeçalhos de segurança e CORS ---------- */
 app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+  res.setHeader("Cache-Control", "no-store");
+  if (req.secure) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   const origem = req.headers.origin;
   if (origem && ORIGENS.includes(origem)) {
     res.setHeader("Access-Control-Allow-Origin", origem);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Max-Age", "600");
   }
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
+  if (req.method === "OPTIONS") return res.sendStatus(origem && ORIGENS.includes(origem) ? 204 : 403);
   next();
 });
 
-// Limite simples de requisições por IP (60 por minuto).
-const acessos = new Map();
-app.use((req, res, next) => {
-  const ip = req.ip, agora = Date.now();
-  const reg = acessos.get(ip) || { n: 0, inicio: agora };
-  if (agora - reg.inicio > 60000) { reg.n = 0; reg.inicio = agora; }
-  reg.n += 1; acessos.set(ip, reg);
-  if (reg.n > 60) return res.status(429).json({ erro: "Muitas requisições. Tente em 1 minuto." });
-  next();
-});
+const jsonPequeno = express.json({ limit: "20kb" });
+const jsonPdf = express.json({ limit: "3mb" });
+const geral = auth.limitador(240, 60000, "geral");
+app.use("/api", geral);
 
-app.get("/health", (_req, res) => res.json({ status: "ok", servico: "sgja-api-gateway", hora: new Date().toISOString() }));
+const rota = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+const campo = (v, max = 200) => String(v == null ? "" : v).slice(0, max);
 
-async function base44(metodo, caminho, corpo) {
-  const { BASE44_APP_ID, BASE44_API_KEY } = process.env;
-  if (!BASE44_APP_ID || !BASE44_API_KEY) throw Object.assign(new Error("Base44 não configurado"), { status: 503 });
-  const r = await fetch(`https://app.base44.com/api/apps/${BASE44_APP_ID}/entities/${caminho}`, {
-    method: metodo, headers: { api_key: BASE44_API_KEY, "Content-Type": "application/json" },
-    body: corpo ? JSON.stringify(corpo) : undefined
-  });
-  const dados = await r.json().catch(() => null);
-  if (!r.ok) throw Object.assign(new Error("Erro no Base44"), { status: r.status, dados });
-  return dados;
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+/* ---------- Público ---------- */
+app.get("/api/v1/publico/resumo", rota(async (_req, res) => res.json({ inscritos: await servico.contarInscritos() })));
+
+app.post("/api/v1/publico/inscricoes", auth.limitador(10, 60000, "inscricao"), jsonPequeno, rota(async (req, res) => {
+  res.status(201).json({ aluno: await servico.criarAluno(req.body) });
+}));
+
+app.post("/api/v1/publico/cpf-inscrito", auth.limitador(20, 60000, "cpf"), jsonPequeno, rota(async (req, res) => {
+  res.json({ inscrito: await servico.cpfJaInscrito(campo(req.body && req.body.cpf, 20)) });
+}));
+
+// Consulta do próprio participante: CPF + e-mail, com bloqueio após 5 erros para o mesmo CPF.
+async function comCredenciais(req, fn) {
+  const cpf = C.soDigitos(campo(req.body && req.body.cpf, 20));
+  const email = campo(req.body && req.body.email, 120);
+  const chave = `participante:${cpf}`;
+  if (auth.contaBloqueada(chave)) throw new ErroNegocio("Muitas tentativas para este CPF. Tente de novo em 15 minutos.", null, 429);
+  try { const r = await fn(cpf, email); auth.limparFalhas(chave); return r; }
+  catch (e) { if (e.status === 404) auth.registrarFalha(chave); throw e; }
 }
+const limiteConsulta = auth.limitador(10, 60000, "consulta");
 
-function entidadeValida(req, res, next) {
-  if (!ENTIDADES.has(req.params.entidade)) return res.status(404).json({ erro: "Entidade inexistente" });
-  next();
-}
+app.post("/api/v1/publico/participante", limiteConsulta, jsonPequeno, rota(async (req, res) => {
+  res.json(await comCredenciais(req, (cpf, email) => servico.consultarParticipante(cpf, email)));
+}));
 
-app.get("/api/v1/entidades/:entidade", entidadeValida, async (req, res, next) => {
-  try { res.json(await base44("GET", req.params.entidade)); } catch (e) { next(e); }
-});
+app.post("/api/v1/publico/certificado", limiteConsulta, jsonPequeno, rota(async (req, res) => {
+  const cert = await comCredenciais(req, (cpf, email) => servico.emitirCertificadoParticipante(cpf, email));
+  res.json({ certificado: publicoCert(cert) });
+}));
 
-app.post("/api/v1/entidades/:entidade", entidadeValida, async (req, res, next) => {
+app.post("/api/v1/publico/certificado/email", auth.limitador(3, 60000, "email-participante"), jsonPdf, rota(async (req, res) => {
+  const aluno = await comCredenciais(req, (cpf, email) => servico.identificarParticipante(cpf, email));
+  res.json(await enviarCertificado(aluno, req.body && req.body.pdfBase64));
+}));
+
+app.get("/api/v1/publico/certificados/:codigo", auth.limitador(30, 60000, "validar"), rota(async (req, res) => {
+  const cert = await servico.buscarCertificadoPorCodigo(campo(req.params.codigo, 20));
+  if (!cert) return res.status(404).json({ erro: "Certificado não encontrado." });
+  res.json({ certificado: cert });
+}));
+
+/* ---------- Comissão organizadora ---------- */
+app.post("/api/v1/comissao/cadastro", auth.limitador(5, 60000, "cadastro"), jsonPequeno, rota(async (req, res) => {
+  res.status(201).json({ membro: publicoMembro(await servico.cadastrarMembro(req.body)) });
+}));
+
+app.post("/api/v1/comissao/login", auth.limitador(10, 60000, "login-comissao"), jsonPequeno, rota(async (req, res) => {
+  const email = C.normalizarEmail(campo(req.body && req.body.email, 120));
+  const chave = `comissao:${email}`;
+  if (auth.contaBloqueada(chave)) throw new ErroNegocio("Muitas tentativas. Acesso bloqueado por 15 minutos.", null, 429);
   try {
-    // Regra de proteção também no servidor: CPF/e-mail únicos.
-    if (req.params.entidade === "Aluno") {
-      const cpf = String(req.body.cpf || "").replace(/\D/g, "");
-      const email = String(req.body.email || "").trim().toLowerCase();
-      const todos = await base44("GET", "Aluno");
-      if (todos.some((a) => a.cpf === cpf)) return res.status(409).json({ erro: "CPF já inscrito", campo: "cpf" });
-      if (todos.some((a) => a.email === email)) return res.status(409).json({ erro: "E-mail já inscrito", campo: "email" });
-    }
-    res.status(201).json(await base44("POST", req.params.entidade, req.body));
-  } catch (e) { next(e); }
-});
+    const m = await servico.autenticarMembro(email, campo(req.body && req.body.senha, 200));
+    auth.limparFalhas(chave);
+    res.json({ token: auth.assinarToken({ perfil: "comissao", sub: m.id, nome: m.nome }, SESSAO_COM_MIN), membro: publicoMembro(m) });
+  } catch (e) { if (e.status === 401) auth.registrarFalha(chave); throw e; }
+}));
 
-app.put("/api/v1/entidades/:entidade/:id", entidadeValida, async (req, res, next) => {
-  try { res.json(await base44("PUT", `${req.params.entidade}/${encodeURIComponent(req.params.id)}`, req.body)); } catch (e) { next(e); }
-});
+const comissao = auth.exigir("comissao");
+app.get("/api/v1/comissao/chamada", comissao, rota(async (req, res) => {
+  res.json(await servico.chamada(req.sessao.sub, campo(req.query.eventoId, 10)));
+}));
 
+app.post("/api/v1/comissao/checkin", comissao, jsonPequeno, rota(async (req, res) => {
+  const b = req.body || {}, ev = campo(b.eventoId, 10), id = req.sessao.sub;
+  let r;
+  if (b.qr) r = await servico.checkinPorQR(id, campo(b.qr, 200), ev);
+  else if (b.cpf) r = await servico.checkinPorCPF(id, campo(b.cpf, 20), ev);
+  else r = await servico.registrarCheckin(id, campo(b.alunoId, 40), ev, campo(b.origem, 10));
+  res.json(r);
+}));
+
+app.post("/api/v1/comissao/checkin/remover", comissao, jsonPequeno, rota(async (req, res) => {
+  await servico.removerCheckin(req.sessao.sub, campo(req.body && req.body.alunoId, 40), campo(req.body && req.body.eventoId, 10));
+  res.json({ ok: true });
+}));
+
+/* ---------- Professor ---------- */
+app.post("/api/v1/professor/login", auth.limitador(10, 60000, "login-professor"), jsonPequeno, rota(async (req, res) => {
+  if (auth.contaBloqueada("professor")) throw new ErroNegocio("Muitas tentativas. Acesso bloqueado por 15 minutos.", null, 429);
+  const hash = process.env.PROFESSOR_SENHA_HASH;
+  if (!hash || !auth.conferirHash(campo(req.body && req.body.senha, 200), hash)) {
+    auth.registrarFalha("professor");
+    throw new ErroNegocio("Senha incorreta.", null, 401);
+  }
+  auth.limparFalhas("professor");
+  res.json({ token: auth.assinarToken({ perfil: "professor", sub: "professor" }, SESSAO_PROF_MIN) });
+}));
+
+const professor = auth.exigir("professor");
+app.get("/api/v1/professor/dados", professor, rota(async (_req, res) => res.json(await servico.dadosPainel())));
+
+app.put("/api/v1/professor/membros/:id", professor, jsonPequeno, rota(async (req, res) => {
+  res.json({ membro: await servico.definirStatusMembro(campo(req.params.id, 40), campo(req.body && req.body.status, 20)) });
+}));
+
+app.post("/api/v1/professor/certificados/:alunoId", professor, rota(async (req, res) => {
+  res.json({ certificado: await servico.emitirCertificado(campo(req.params.alunoId, 40)) });
+}));
+
+app.post("/api/v1/professor/certificados/:alunoId/email", professor, jsonPdf, rota(async (req, res) => {
+  res.json(await enviarCertificado(await servico.alunoParaEmail(campo(req.params.alunoId, 40)), req.body && req.body.pdfBase64));
+}));
+
+app.get("/api/v1/professor/lembretes/agenda", professor, rota(async (_req, res) => res.json(await lembretes.agenda())));
+
+app.post("/api/v1/professor/demo", professor, rota(async (_req, res) => {
+  if (process.env.ALLOW_DEMO !== "true") throw new ErroNegocio("Dados de demonstração desativados neste servidor.", null, 403);
+  await servico.popularDemo(); res.json({ ok: true });
+}));
+
+app.post("/api/v1/professor/limpar", professor, rota(async (_req, res) => {
+  if (process.env.ALLOW_RESET !== "true") throw new ErroNegocio("Apagar dados está desativado neste servidor.", null, 403);
+  await servico.limparTudo(); res.json({ ok: true });
+}));
+
+/* ---------- Envio de certificado por e-mail ---------- */
 const transporte = process.env.SMTP_USER ? nodemailer.createTransport({
   host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 465), secure: Number(process.env.SMTP_PORT || 465) === 465,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
 }) : null;
 
-app.post("/api/v1/certificados/enviar", async (req, res, next) => {
-  try {
-    const { para, nome, assunto, mensagem, arquivo, pdfBase64 } = req.body || {};
-    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(para || "")) return res.status(400).json({ erro: "E-mail inválido" });
-    if (!pdfBase64 || !/^[A-Za-z0-9+/=]+$/.test(pdfBase64)) return res.status(400).json({ erro: "PDF ausente ou inválido" });
-    const pdf = Buffer.from(pdfBase64, "base64");
-    if (pdf.subarray(0, 4).toString() !== "%PDF") return res.status(400).json({ erro: "Anexo não é um PDF" });
-    if (!transporte) return res.status(503).json({ erro: "SMTP não configurado" });
-    const info = await transporte.sendMail({
-      from: process.env.EMAIL_REMETENTE || process.env.SMTP_USER, to: para,
-      subject: String(assunto || "Seu certificado").slice(0, 150), text: String(mensagem || `Olá, ${nome}! Segue seu certificado.`),
-      attachments: [{ filename: String(arquivo || "certificado.pdf").replace(/[^\w.-]/g, "_"), content: pdf, contentType: "application/pdf" }]
-    });
-    res.json({ ok: true, id: info.messageId });
-  } catch (e) { next(e); }
-});
+// Destino é sempre o e-mail da inscrição, e o texto é montado aqui (o servidor não envia conteúdo de terceiros).
+async function enviarCertificado(aluno, pdfBase64) {
+  const cert = await servico.emitirCertificado(aluno.id); // confere que está apto
+  const b64 = String(pdfBase64 || "");
+  if (!b64 || b64.length > 2.8e6 || !/^[A-Za-z0-9+/=]+$/.test(b64)) throw new ErroNegocio("PDF ausente ou inválido.");
+  const pdf = Buffer.from(b64, "base64");
+  if (pdf.subarray(0, 5).toString() !== "%PDF-") throw new ErroNegocio("O anexo não é um PDF.");
+  const nomeArq = `certificado-jornada-${aluno.nome.normalize("NFD").replace(/[^A-Za-z0-9]+/g, "-").toLowerCase()}.pdf`;
+  const assunto = CFG.email.assunto;
+  const mensagem = `Olá, ${aluno.nome.split(" ")[0]}!\n\nObrigado por participar da ${CFG.evento.nome} da ${CFG.evento.sigla} Teresina.\n` +
+    `Segue em anexo o seu certificado de ${cert.horas} horas.\n\nCódigo de autenticidade: ${cert.codigo}\n\nComissão Organizadora — ${CFG.evento.instituicao}`;
+  let status = "simulado";
+  if (transporte) {
+    try {
+      await transporte.sendMail({ from: process.env.EMAIL_REMETENTE || process.env.SMTP_USER, to: aluno.email, subject: assunto, text: mensagem,
+        attachments: [{ filename: nomeArq, content: pdf, contentType: "application/pdf" }] });
+      status = "enviado";
+    } catch (e) { console.error("SMTP:", e.message); status = "falhou"; }
+  }
+  await servico.registrarEnvio(aluno, cert, assunto, mensagem, nomeArq, status, transporte ? "smtp" : "simulado");
+  if (status === "falhou") throw new ErroNegocio("Não foi possível enviar o e-mail agora.", null, 502);
+  const [u, d] = aluno.email.split("@");
+  return { status, para: `${u.slice(0, 2)}***@${d}` };
+}
 
-app.get("/api/v1/lembretes/agenda", async (_req, res, next) => {
-  try { res.json(await lembretes.agenda()); } catch (e) { next(e); }
-});
+const publicoCert = (c) => ({ codigo: c.codigo, nome: c.nome, curso: c.curso, horas: c.horas, atividades: c.atividades, emitidoEm: c.emitidoEm, enviadoPorEmail: !!c.enviadoPorEmail });
+const publicoMembro = (m) => ({ id: m.id, nome: m.nome, status: m.status });
 
+/* ---------- Erros ---------- */
+app.use((_req, res) => res.status(404).json({ erro: "Rota não encontrada." }));
 app.use((err, _req, res, _next) => {
-  console.error(err.message);
-  res.status(err.status || 500).json({ erro: err.status ? err.message : "Erro interno" });
+  if (err.type === "entity.parse.failed") return res.status(400).json({ erro: "Dados enviados em formato inválido." });
+  if (err.type === "entity.too.large") return res.status(413).json({ erro: "Dados enviados grandes demais." });
+  if (err instanceof ErroNegocio || err.name === "ErroNegocio") return res.status(err.status || 400).json({ erro: err.message, campo: err.campo || undefined });
+  console.error(err);
+  res.status(err.status && err.status < 500 ? err.status : 500).json({ erro: "Erro interno." });
 });
 
 const PORT = Number(process.env.PORT || 3000);
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`S.G.J.A API Gateway em http://localhost:${PORT}`));
-  if (process.env.LEMBRETES_ATIVO !== "false") {
-    lembretes.iniciar();
-    console.log("Agendador de lembretes WhatsApp ativo (verifica a cada minuto).");
-  }
+  app.listen(PORT, () => console.log(`S.G.J.A API em http://localhost:${PORT}`));
+  if (process.env.LEMBRETES_ATIVO !== "false") { lembretes.iniciar(); console.log("Agendador de lembretes WhatsApp ativo."); }
 }
 module.exports = app;

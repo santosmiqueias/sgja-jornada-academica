@@ -1,9 +1,18 @@
 {
   "name": "sgja-api-gateway",
   "version": "1.0.0",
-  "description": "Microsserviço do S.G.J.A: proxy seguro para o Base44 e envio de certificados por e-mail",
+  "description": "Servidor do S.G.J.A: API com login por perfil, dados protegidos, e-mail de certificados e lembretes por WhatsApp",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=18" },
-  "dependencies": { "express": "4.21.2", "nodemailer": "6.9.16" }
+  "scripts": {
+    "start": "node server.js",
+    "hash": "node gerar-hash.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "4.22.3",
+    "nodemailer": "10.2.1"
+  }
 }

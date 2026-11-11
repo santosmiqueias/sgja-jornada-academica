@@ -51,12 +51,21 @@ A câmera do leitor de QR Code só abre em **HTTPS** ou `localhost`. As três op
 
 Tudo fica em `js/config.js`:
 
+- `backend`: `"local"` (**demonstração**: dados no navegador, PIN 2026) ou `"servidor"` (**evento real**: login por perfil e dados protegidos no servidor). Veja [`docs/seguranca.md`](docs/seguranca.md).
+- `servidor.url`: endereço HTTPS do servidor (`servicos/api-gateway`).
 - `evento.percentualMinimoAtividades`: 50 = certificado para quem fez check-in em pelo menos metade das atividades (3 de 6).
 - `eventos`: atividades, datas e carga horária.
-- `backend`: `"local"` (salva no navegador, ideal para demonstração) ou `"base44"`.
-- `email.modo`: `"simulado"`, `"microsservico"` (Node + SMTP) ou `"emailjs"`.
-- `painel.pinHash`: hash SHA-256 do PIN (veja `docs/arquitetura.md`, seção Segurança).
 - `evento.assinaturas`: nomes do reitor e do coordenador no certificado.
+
+Senhas, segredos e a chave do Base44 **nunca** ficam no site: no modo servidor, eles ficam no `.env` do servidor.
+
+## Segurança
+
+Auditoria completa, com ataques reais e correções, em [`docs/seguranca.md`](docs/seguranca.md). Para repetir os testes de ataque:
+
+```bash
+npm run test:servidor
+```
 
 ## Estrutura
 
@@ -65,16 +74,16 @@ index.html, inscricao.html, painel.html, certificado.html, validar.html
 css/style.css              identidade visual (azul #0b2a6f + amarelo #f5c400)
 js/config.js               configuração central
 js/core.js                 regras puras: CPF, máscaras, horas, aprovação, assinaturas
-js/api.js                  camada de dados (driver local ou Base44) + regras de proteção
+js/servico.js              regras de negócio (as mesmas no navegador e no servidor)
+js/api.js                  camada de dados: modo local (demonstração) ou servidor (com login)
 js/inscricao.js            tela de inscrição
 js/checkin.js              check-in da comissão organizadora (cadastro, login, chamada, QR Code)
 js/painel.js               painel do professor (inscritos, certificados, lembretes, comissão, dados)
 js/certificado-pdf.js      gerador do PDF (jsPDF)
-js/email.js                envio do certificado por e-mail
 js/certificado-base64.js   fundo do certificado embutido
 assets/img/                logo, modelo original e fundo limpo do certificado
 base44/                    esquemas das tabelas para criar no Base44
-servicos/api-gateway/      microsserviço Node (proxy Base44, e-mail com SMTP, lembretes WhatsApp)
+servicos/api-gateway/      servidor Node: API com login por perfil, dados (arquivos ou Base44), e-mail e lembretes WhatsApp
 tests/                     testes unitários (node --test)
 docs/                      arquitetura, Kanban, plano de testes, roteiro do pitch
 ```

@@ -30,12 +30,13 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 | 15 | Critério do certificado: check-in em 50% das atividades (3 de 6) | 4 | aluno com 2 check-ins não recebe; com 3 recebe | js/core.js |
 | 16 | Gerar PDF no modelo oficial | 4 | nome, horas, curso e código nas posições certas | js/certificado-pdf.js |
 | 17 | Código de autenticidade + página de validação | 4 | código falso é recusado | validar.html |
-| 18 | Envio do certificado por e-mail (individual e lote) | 4 | aparece na caixa de saída; SMTP real via microsserviço | js/email.js |
+| 18 | Envio do certificado por e-mail (individual e lote) | 4 | aparece na caixa de saída; SMTP real pelo servidor, só para o e-mail da inscrição | js/api.js, servicos/api-gateway |
 | 18b | Lembrete WhatsApp 30 min antes de cada atividade | 4 | só para quem autorizou, sem repetir | servicos/api-gateway/lembretes.js |
 | 19 | Exportar inscritos em CSV | 3 | abre no Excel com acentos | js/painel.js |
 | 20 | Testes unitários das regras | 5 | `npm test` passando | tests/ |
 | 21 | Roteiro de testes de estresse (QA) | 5 | todos os casos de `testes-qa.md` executados | docs/testes-qa.md |
 | 22 | Deploy (Netlify/Vercel) | 5 | link HTTPS público funcionando | netlify.toml, vercel.json |
+| 22b | Auditoria de segurança: ataques reais, correções e testes automáticos | 5 | 17 ataques barrados, npm audit sem falhas | docs/seguranca.md |
 | 23 | Pitch de 5 minutos ensaiado 2 vezes | 5 | cronometrado abaixo de 5:00 | docs/pitch.md |
 
 ## Cronograma

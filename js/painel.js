@@ -7,49 +7,53 @@
   const esc = C.escaparHTML;
 
   /* ---------------- Autenticação ---------------- */
-  const CHAVE_SESSAO = "sgja_sessao_painel";
   const CHAVE_TENTATIVAS = "sgja_tentativas";
-
-  function lerSessao() {
-    try { return JSON.parse(sessionStorage.getItem(CHAVE_SESSAO) || "null"); } catch (_) { return null; }
-  }
-  function sessaoValida() { const s = lerSessao(); return s && s.expira > Date.now(); }
   function lerTentativas() {
     try { return JSON.parse(sessionStorage.getItem(CHAVE_TENTATIVAS) || '{"n":0,"ate":0}'); } catch (_) { return { n: 0, ate: 0 }; }
+  }
+
+  if (API.backend === "servidor") {
+    document.querySelector('label[for="pin"]').textContent = "Senha do professor";
+    $("pin").removeAttribute("inputmode"); $("pin").removeAttribute("maxlength");
+    const dica = $("pin").parentElement.querySelector(".form-text"); if (dica) dica.remove();
   }
 
   $("form-login").addEventListener("submit", async (e) => {
     e.preventDefault();
     const t = lerTentativas();
     if (t.ate > Date.now()) { $("erro-login").textContent = `Muitas tentativas. Aguarde ${Math.ceil((t.ate - Date.now()) / 1000)}s.`; return; }
-    const hash = await C.sha256Hex($("pin").value);
-    if (hash === CFG.painel.pinHash) {
-      try {
-        sessionStorage.setItem(CHAVE_SESSAO, JSON.stringify({ expira: Date.now() + CFG.painel.sessaoMinutos * 60000 }));
-        sessionStorage.removeItem(CHAVE_TENTATIVAS);
-      } catch (_) { /* sem storage: sessão vale só nesta aba aberta */ }
+    UI.carregando($("btn-entrar"), true, "Entrando...");
+    try {
+      await API.entrarProfessor($("pin").value);
+      try { sessionStorage.removeItem(CHAVE_TENTATIVAS); } catch (_) {}
       $("pin").value = ""; $("erro-login").textContent = "";
       abrirPainel();
-    } else {
-      t.n += 1;
-      if (t.n >= 5) { t.ate = Date.now() + 60000; t.n = 0; }
-      try { sessionStorage.setItem(CHAVE_TENTATIVAS, JSON.stringify(t)); } catch (_) {}
-      $("erro-login").textContent = t.ate > Date.now() ? "PIN incorreto. Acesso bloqueado por 60 segundos." : "PIN incorreto.";
+    } catch (err) {
+      if (err.status === 401) {
+        t.n += 1;
+        if (t.n >= 5) { t.ate = Date.now() + 60000; t.n = 0; }
+        try { sessionStorage.setItem(CHAVE_TENTATIVAS, JSON.stringify(t)); } catch (_) {}
+      }
+      $("erro-login").textContent = t.ate > Date.now() ? "Acesso bloqueado por 60 segundos." : (err.message || "Não foi possível entrar.");
       $("pin").select();
-    }
+    } finally { UI.carregando($("btn-entrar"), false); }
   });
 
-  $("btn-sair").addEventListener("click", () => {
-    try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (_) {}
-    location.reload();
-  });
+  $("btn-sair").addEventListener("click", () => { API.sairProfessor(); location.reload(); });
 
   /* ---------------- Estado ---------------- */
   let alunos = [], frequencias = [], certificados = [], membros = [];
 
+  let emails = [];
   async function recarregar() {
-    [alunos, frequencias, certificados, membros] = await Promise.all([API.listarAlunos(), API.listarFrequencias(), API.listarCertificados(), API.listarMembros()]);
-    desenharInscritos(); desenharLembretes(); desenharComissao(); await desenharCertificados();
+    try {
+      const d = await API.dadosPainel();
+      ({ alunos, frequencias, certificados, membros, emails } = d);
+      desenharInscritos(); desenharLembretes(); desenharComissao(); desenharCertificados();
+    } catch (err) {
+      if (err.status === 401) { API.sairProfessor(); location.reload(); return; }
+      UI.aviso(err.message || "Não foi possível carregar os dados.", "erro");
+    }
   }
 
   function abrirPainel() {
@@ -62,7 +66,7 @@
     setInterval(consultarServidor, 60000);
     // Tempo real: outra aba (ex.: inscrição) alterou os dados → atualiza.
     window.addEventListener("storage", (e) => { if (e.key && e.key.startsWith("sgja_v1_")) recarregar(); });
-    if (CFG.backend === "base44") setInterval(recarregar, 10000);
+    if (API.backend === "servidor") setInterval(recarregar, 20000);
   }
 
   function filtrarAlunos(texto) {
@@ -73,7 +77,6 @@
   }
 
   /* ---------------- Inscritos ---------------- */
-  const atividadesDe = (aluno) => C.calcularHoras(frequencias, CFG.eventos, aluno.id).atividades;
 
   function situacaoDe(aluno) {
     const { horas, atividades } = C.calcularHoras(frequencias, CFG.eventos, aluno.id);
@@ -111,14 +114,14 @@
   });
 
   /* ---------------- Certificados ---------------- */
-  async function desenharCertificados() {
+  function desenharCertificados() {
     const aptos = alunos.filter((a) => situacaoDe(a).aprovado);
     const enviados = new Set(certificados.filter((c) => c.enviadoPorEmail).map((c) => c.alunoId));
     $("st-aprovados").textContent = aptos.length;
     $("st-pendentes").textContent = alunos.length - aptos.length;
     $("st-enviados").textContent = enviados.size;
     $("st-minimo").textContent = `${API.atividadesMinimas()} de ${CFG.eventos.length}`;
-    $("modo-email").textContent = { simulado: "simulado (demonstração)", microsservico: "microsserviço Node", emailjs: "EmailJS" }[CFG.email.modo];
+    $("modo-email").textContent = API.backend === "servidor" ? "servidor (SMTP)" : ({ simulado: "simulado (demonstração)", emailjs: "EmailJS" }[CFG.email.modo] || CFG.email.modo);
 
     $("tb-aptos").innerHTML = aptos.length ? aptos.map((a) => `<tr>
         <td class="fw-semibold small">${esc(a.nome)}</td><td class="small">${situacaoDe(a).feitas} de ${CFG.eventos.length} · ${situacaoDe(a).horas}h</td>
@@ -126,7 +129,6 @@
         <td class="text-end"><button class="btn btn-sm btn-outline-primary btn-pdf" data-id="${esc(a.id)}" aria-label="Baixar certificado de ${esc(a.nome)}"><i class="bi bi-file-earmark-pdf"></i></button></td></tr>`).join("")
       : `<tr><td colspan="4" class="text-center text-muted py-4">Ninguém atingiu a carga mínima ainda.</td></tr>`;
 
-    const emails = await API.listarEmails();
     $("caixa-saida").innerHTML = emails.length ? emails.slice(0, 30).map((m) => `<li class="list-group-item px-0">
         <div class="d-flex justify-content-between"><strong>${esc(m.nome)}</strong><span class="text-muted">${UI.formatarDataHora(m.created_date)}</span></div>
         <div class="text-muted">${esc(m.para)} · <i class="bi bi-paperclip"></i>${esc(m.anexo)}</div>
@@ -138,9 +140,10 @@
     const b = e.target.closest(".btn-pdf");
     if (!b) return;
     const aluno = alunos.find((a) => a.id === b.dataset.id);
-    const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas, atividadesDe(aluno));
-    SGJA_PDF.gerar(aluno, cert).save(SGJA_PDF.nomeArquivo(aluno));
-    certificados = await API.listarCertificados();
+    try {
+      const cert = await API.emitirCertificadoProfessor(aluno.id);
+      SGJA_PDF.gerar(aluno, cert).save(SGJA_PDF.nomeArquivo(aluno));
+    } catch (err) { UI.aviso(err.message, "erro"); }
   });
 
   $("btn-lote").addEventListener("click", async (e) => {
@@ -156,8 +159,8 @@
       const aluno = fila[i];
       $("status-lote").textContent = `Processando ${i + 1} de ${fila.length}: ${aluno.nome}`;
       try {
-        const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas, atividadesDe(aluno));
-        await SGJA_EMAIL.enviar(aluno, cert, SGJA_PDF.gerar(aluno, cert));
+        const cert = await API.emitirCertificadoProfessor(aluno.id);
+        await API.enviarCertificadoProfessor(aluno, cert, SGJA_PDF.gerar(aluno, cert));
         ok++;
       } catch (err) { console.error(err); falhas++; }
       barra.firstElementChild.style.width = `${Math.round(((i + 1) / fila.length) * 100)}%`;
@@ -175,11 +178,7 @@
   let agendaServidor = null;
 
   async function consultarServidor() {
-    if (!WA.servidorUrl) return;
-    try {
-      const r = await fetch(`${WA.servidorUrl.replace(/\/$/, "")}/api/v1/lembretes/agenda`, { signal: AbortSignal.timeout(3000) });
-      agendaServidor = r.ok ? await r.json() : null;
-    } catch (_) { agendaServidor = null; }
+    agendaServidor = await API.agendaLembretes();
     desenharLembretes();
   }
 
@@ -208,14 +207,6 @@
     $("previa-whats").textContent = C.mensagemLembrete(exemplo, API.eventos()[0], CFG.evento.nome, WA.antecedenciaMinutos);
   }
 
-  $("btn-exportar-whats").addEventListener("click", () => {
-    const lista = alunos.filter((a) => a.aceitaWhatsApp).map((a) => ({ id: a.id, nome: a.nome, telefone: a.telefone, aceitaWhatsApp: true, atividades: a.atividades || [] }));
-    if (!lista.length) { UI.aviso("Nenhum inscrito autorizou WhatsApp ainda.", "info"); return; }
-    const blob = new Blob([JSON.stringify(lista, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = "inscritos.json"; a.click(); URL.revokeObjectURL(a.href);
-    UI.aviso(`${lista.length} inscrito(s) exportados.`, "sucesso");
-  });
 
   /* ---------------- Comissão organizadora ---------------- */
   const ROTULO_STATUS = { pendente: ["Aguardando liberação", "badge-pend"], ativo: ["Com acesso", "badge-ok"], bloqueado: ["Bloqueado", "text-bg-danger"] };
@@ -249,8 +240,7 @@
     if (status === "bloqueado" && !(await UI.confirmar(`${m.nome} não poderá mais registrar check-in até ser reativado.`, { titulo: "Bloquear acesso", botao: "Bloquear", perigo: true }))) return;
     try {
       await API.definirStatusMembro(m.id, status);
-      membros = await API.listarMembros();
-      desenharComissao();
+      await recarregar();
       UI.aviso(status === "ativo" ? `Acesso liberado para ${m.nome}.` : `Acesso de ${m.nome} bloqueado.`, "sucesso");
     } catch (err) { UI.aviso(err.message, "erro"); }
   });
@@ -259,7 +249,7 @@
   function desenharConfig() {
     const total = API.cargaTotal();
     const itens = [
-      ["Banco de dados", CFG.backend === "base44" ? "Base44 (nuvem)" : "Navegador (demonstração)"],
+      ["Banco de dados", API.backend === "servidor" ? "Servidor (com login)" : "Navegador (demonstração)"],
       ["Atividades", `${CFG.eventos.length} atividades · ${total}h`],
       ["Regra do certificado", `check-in em ${CFG.evento.percentualMinimoAtividades}% das atividades = ${API.atividadesMinimas()} de ${CFG.eventos.length}`],
       ["E-mail", CFG.email.modo],
@@ -282,5 +272,5 @@
     catch (err) { UI.aviso(err.message, "erro"); }
   });
 
-  if (sessaoValida()) abrirPainel();
+  if (API.sessaoProfessor()) abrirPainel();
 })();

@@ -3,28 +3,29 @@
 ## 1. Visão geral
 
 ```
- Navegador (aluno / professor)
+ Navegador (aluno / comissão / professor)
  ┌──────────────────────────────────────────────────────────┐
- │  Páginas HTML5 + Bootstrap 5                              │
- │  inscricao.js · painel.js · certificado-pdf.js · email.js │
+ │  Páginas HTML5 + Bootstrap 5 (CSP: só scripts do site)    │
+ │  inscricao.js · checkin.js · painel.js · certificado-pdf  │
  │                │                                          │
- │           js/api.js  (API única usada pelas telas)        │
- │      ┌─────────┴──────────┐                               │
- │  LocalStore           Base44Store                         │
- │  (localStorage)       (REST)                              │
- └──────────────────────────┬───────────────────────────────┘
-                            │ HTTPS
-         ┌──────────────────┴───────────────────┐
-         │ servicos/api-gateway (Node/Express)   │──► SMTP (envio do PDF)
-         │ guarda a chave do Base44 no servidor  │
-         └──────────────────┬───────────────────┘
-                            ▼
-                     Base44 (banco na nuvem)
+ │           js/api.js                                       │
+ │      ┌─────────┴────────────────────┐                     │
+ │  modo "local" (demonstração)   modo "servidor"            │
+ │  js/servico.js + localStorage  só chamadas HTTPS à API    │
+ └────────────────────────────────┬─────────────────────────┘
+                                  │ HTTPS + token por perfil
+         ┌────────────────────────┴───────────────┐
+         │ servicos/api-gateway (Node/Express)     │──► SMTP (certificado)
+         │ js/servico.js = regras e permissões     │──► WhatsApp (lembretes)
+         │ segredos e senhas só no .env            │
+         └────────────────────────┬───────────────┘
+                                  ▼
+                 arquivos em dados/  ou  Base44
 ```
 
 - **Front-end:** HTML5, CSS3, JavaScript puro, Bootstrap 5, Bootstrap Icons, fonte Montserrat.
 - **Bibliotecas:** jsPDF (PDF), qrcodejs (gerar QR), html5-qrcode (ler QR pela câmera), EmailJS (opcional).
-- **Back-end:** Base44 (tabelas) + microsserviço Node.js/Express (proxy e e-mail com Nodemailer).
+- **Back-end:** servidor Node.js/Express com login por perfil; dados em arquivos ou no Base44; e-mail com Nodemailer.
 - **Padrão de projeto:** *Adapter*. As telas falam só com `SGJA_API`. Trocar o banco (local ↔ Base44) é uma linha em `config.js`.
 
 ## 2. Modelo de dados (Squad 3)
@@ -46,34 +47,19 @@ O catálogo de eventos também está em `js/config.js` (fonte usada pelo site).
 
 ## 3. API (Squad 3)
 
-### 3.1 API interna (`js/api.js`)
+As regras de negócio ficam em `js/servico.js` e são as mesmas nos dois modos:
 
-| Operação | Equivalente REST | Regra |
+- **Modo `local`** (demonstração): rodam no navegador, sobre o `localStorage`.
+- **Modo `servidor`** (evento real): rodam no servidor (`servicos/api-gateway`), que é a barreira de segurança. O site só chama a API.
+
+| Perfil | Rotas (prefixo `/api/v1`) | O que devolve |
 |---|---|---|
-| `criarAluno(dados)` | `POST /alunos` | valida tudo de novo, bloqueia CPF/e-mail/matrícula duplicados, trava contra clique duplo |
-| `listarAlunos()` | `GET /alunos` | ordenado por nome |
-| `buscarAlunoPorCPF(cpf)` | `GET /alunos?cpf=` | |
-| `registrarCheckin(alunoId, eventoId, origem)` | `POST /frequencias` | idempotente: não duplica presença |
-| `removerCheckin(alunoId, eventoId)` | `DELETE /frequencias/:id` | |
-| `validarIngresso(qr)` | `POST /ingressos/validar` | confere a assinatura do QR |
-| `situacao(alunoId)` | `GET /alunos/:id/situacao` | horas, mínimo, aprovado |
-| `salvarCertificado(aluno, horas)` | `POST /certificados` | gera código de autenticidade |
-| `buscarCertificadoPorCodigo(c)` | `GET /certificados/:codigo` | validação pública |
+| Público | `GET /publico/resumo`, `POST /publico/inscricoes`, `POST /publico/cpf-inscrito`, `GET /publico/certificados/:codigo` | total de inscritos, ingresso do novo inscrito, "sim/não", dados públicos do certificado |
+| Participante (CPF + e-mail) | `POST /publico/participante`, `POST /publico/certificado`, `POST /publico/certificado/email` | só os próprios dados e certificado |
+| Comissão (login) | `POST /comissao/cadastro`, `POST /comissao/login`, `GET /comissao/chamada`, `POST /comissao/checkin`, `POST /comissao/checkin/remover` | lista da chamada com CPF mascarado |
+| Professor (login) | `POST /professor/login`, `GET /professor/dados`, `PUT /professor/membros/:id`, `POST /professor/certificados/:alunoId[/email]`, `GET /professor/lembretes/agenda` | tudo |
 
-### 3.2 Microsserviço (`servicos/api-gateway`)
-
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/health` | status do serviço |
-| GET | `/api/v1/entidades/:entidade` | lista registros do Base44 |
-| POST | `/api/v1/entidades/:entidade` | cria registro (com bloqueio de CPF/e-mail duplicado → **409**) |
-| PUT | `/api/v1/entidades/:entidade/:id` | atualiza registro |
-| POST | `/api/v1/certificados/enviar` | `{ para, nome, assunto, mensagem, arquivo, pdfBase64 }` → envia por SMTP |
-| GET | `/api/v1/lembretes/agenda` | horário de envio de cada lembrete WhatsApp e quantos já saíram |
-
-O servidor também roda o **agendador de lembretes por WhatsApp** (detalhes em `docs/whatsapp.md`).
-
-Para rodar: `cd servicos/api-gateway && npm install && cp .env.example .env` (preencha) `&& npm start`.
+Detalhes de autenticação, limites e cabeçalhos em [`seguranca.md`](seguranca.md).
 
 ## 4. Algoritmos
 
@@ -107,7 +93,7 @@ Para rodar: `cd servicos/api-gateway && npm install && cp .env.example .env` (pr
 | Ameaça | Proteção |
 |---|---|
 | Dados inválidos | máscaras + validação no front **e** de novo na camada de API |
-| Inscrição duplicada | CPF, e-mail e matrícula únicos (API local e microsserviço com 409) |
+| Inscrição duplicada | CPF, e-mail e matrícula únicos (validado no servidor, resposta 409) |
 | Clique duplo / envio repetido | botão desativado + trava por operação em `api.js` |
 | Robôs | campo-armadilha invisível no formulário |
 | XSS | todo dado do usuário passa por `escaparHTML` ou `textContent` antes de ir para a tela |
@@ -116,7 +102,7 @@ Para rodar: `cd servicos/api-gateway && npm install && cp .env.example .env` (pr
 | Acesso ao check-in | conta individual por membro da comissão; senha guardada só como PBKDF2-SHA256 (100 mil repetições, salt aleatório); conta nasce pendente e só funciona depois de liberada por um professor; bloqueio vale na hora (conferido a cada registro); 5 erros de senha bloqueiam por 60s; mensagem de erro igual para e-mail inexistente e senha errada; cada presença guarda quem a registrou |
 | QR Code falsificado | assinatura SHA-256 com segredo |
 | Certificado falso | código único validável publicamente |
-| Chave do Base44 exposta | em produção o front chama o microsserviço; a chave fica no `.env` do servidor |
+| Chave do Base44 exposta | o site nunca fala com o Base44; a chave fica só no `.env` do servidor |
 | Abuso da API | limite de 60 requisições/minuto por IP, CORS restrito, payload máximo de 3 MB, anexo precisa começar com `%PDF` |
 | Cabeçalhos HTTP | `vercel.json`/`netlify.toml` com `nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` |
 | LGPD | consentimento obrigatório, CPF mascarado nas telas e no PDF, finalidade explicada no formulário |
@@ -129,7 +115,7 @@ node -e "crypto.subtle.digest('SHA-256', new TextEncoder().encode('NOVO_PIN')).t
 
 Cole o resultado em `painel.pinHash` no `js/config.js`.
 
-**Limite conhecido:** no modo `local`, os dados ficam no navegador de quem usa, e o PIN é conferido no próprio navegador. Isso serve para demonstração. Em produção, use `backend: "base44"` com o microsserviço e a autenticação de usuários do próprio Base44.
+**Limite conhecido:** no modo `local`, os dados ficam no navegador de quem usa, e o PIN é conferido no próprio navegador. Isso serve só para demonstração. No evento, use `backend: "servidor"` (passo a passo em [`seguranca.md`](seguranca.md)).
 
 ## 7. Usabilidade e acessibilidade
 

@@ -50,10 +50,10 @@ test("Mensagem tem nome, atividade, hora e sala", () => {
 
 test("Agendador: envia uma vez, respeita autorização e ignora telefone inválido", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-"));
-  process.env.LEMBRETES_DADOS = dir;
+  process.env.DADOS_DIR = dir;
   process.env.WHATSAPP_PROVEDOR = "simulado";
   delete process.env.BASE44_APP_ID;
-  fs.writeFileSync(path.join(dir, "inscritos.json"), JSON.stringify([
+  fs.writeFileSync(path.join(dir, "Aluno.json"), JSON.stringify([
     { id: "A1", nome: "Ana Sousa", telefone: "86999990001", aceitaWhatsApp: true, atividades: ["EV01", "EV02"] },
     { id: "A2", nome: "Bruno Lima", telefone: "86999990002", aceitaWhatsApp: false, atividades: ["EV01"] },
     { id: "A3", nome: "Carla Reis", telefone: "123", aceitaWhatsApp: true, atividades: ["EV01"] },
@@ -99,8 +99,8 @@ test("Agendador: envia uma vez, respeita autorização e ignora telefone inváli
 
 test("Agendador: falha do provedor é tentada de novo no minuto seguinte", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-"));
-  fs.writeFileSync(path.join(dir, "inscritos.json"), JSON.stringify([{ id: "A9", nome: "Davi Melo", telefone: "86999990009", aceitaWhatsApp: true, atividades: ["EV01"] }]));
-  process.env.LEMBRETES_DADOS = dir;
+  fs.writeFileSync(path.join(dir, "Aluno.json"), JSON.stringify([{ id: "A9", nome: "Davi Melo", telefone: "86999990009", aceitaWhatsApp: true, atividades: ["EV01"] }]));
+  process.env.DADOS_DIR = dir;
   for (const k of Object.keys(require.cache)) if (k.includes("api-gateway")) delete require.cache[k];
   const wa = require("../servicos/api-gateway/whatsapp.js");
   const original = wa.enviar;

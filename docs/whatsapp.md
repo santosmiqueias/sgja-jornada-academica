@@ -4,7 +4,7 @@
 
 1. Na inscrição, o aluno escolhe **em quais atividades vai se inscrever** (campo `atividades`) e marca
    **"Quero receber no WhatsApp um lembrete..."** (campo `aceitaWhatsApp`).
-2. O microsserviço `servicos/api-gateway` verifica **a cada minuto** quais atividades começam nos próximos 30 minutos.
+2. O servidor `servicos/api-gateway` verifica **a cada minuto** quais atividades começam nos próximos 30 minutos.
 3. O lembrete de cada atividade vai **só para quem se inscreveu nela** e autorizou WhatsApp. Envia a mensagem uma única vez por atividade e grava em `dados/lembretes-enviados.json`
    (ou na tabela `LembreteWhatsApp` no Base44). Reiniciar o servidor não causa mensagem repetida.
 4. Se o servidor ficar fora do ar no minuto exato, ele ainda envia ao voltar, desde que a atividade não tenha começado.
@@ -44,8 +44,8 @@ node lembretes.js --agenda
 
 ## De onde vêm os inscritos
 
-- **Com Base44** (`BASE44_APP_ID` e `BASE44_API_KEY` no `.env`): o servidor lê a tabela `Aluno` direto.
-- **Modo demonstração:** painel → aba **Lembretes** → **Exportar inscritos.json** e salve em `servicos/api-gateway/dados/inscritos.json`.
+O servidor usa o próprio armazenamento: a tabela `Aluno` do Base44 (se configurado) ou o arquivo `dados/Aluno.json`.
+Nenhuma lista com telefones é exportada do site.
 
 ## Escolher o provedor (`WHATSAPP_PROVEDOR` no `.env`)
 

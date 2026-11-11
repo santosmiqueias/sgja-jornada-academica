@@ -42,20 +42,20 @@ window.SGJA_CONFIG = {
     "Publicidade e Propaganda", "Outro"
   ],
 
-  // Banco de dados: "local" (demonstração, salva no navegador) ou "base44".
+  // Onde ficam os dados:
+  //   "local"    -> DEMONSTRAÇÃO. Dados no navegador deste aparelho, PIN e segredo abaixo ficam visíveis.
+  //                Não use com dados reais de alunos.
+  //   "servidor" -> EVENTO REAL. Tudo passa pelo servidor (servicos/api-gateway) com login por perfil;
+  //                senhas, segredos e a chave do Base44 ficam só no servidor (arquivo .env).
   backend: "local",
-  base44: {
-    // Painel do Base44 → app → Settings → API. Em produção, não exponha a chave
-    // no front-end: use o microsserviço (servicos/api-gateway) como proxy.
-    appId: "",
-    apiKey: "",
-    baseUrl: "https://app.base44.com/api/apps"
+  servidor: {
+    url: "https://SEU-SERVIDOR.onrender.com" // HTTPS obrigatório (localhost só em testes)
   },
 
-  // Envio de e-mail: "simulado" (registra na caixa de saída), "microsservico" ou "emailjs".
+  // E-mail no modo "local": "simulado" (só registra) ou "emailjs".
+  // No modo "servidor" o envio é feito pelo servidor (SMTP do .env), sempre para o e-mail da inscrição.
   email: {
     modo: "simulado",
-    microsservicoUrl: "http://localhost:3000/api/v1/certificados/enviar",
     emailjs: { publicKey: "", serviceId: "", templateId: "" },
     assunto: "Seu certificado — VI Jornada Acadêmica UNINASSAU"
   },
@@ -63,12 +63,11 @@ window.SGJA_CONFIG = {
   // Lembrete por WhatsApp antes de cada atividade (enviado pelo servidor: servicos/api-gateway).
   whatsapp: {
     ativo: true,
-    antecedenciaMinutos: 30,
-    servidorUrl: "http://localhost:3000" // microsserviço que agenda e envia
+    antecedenciaMinutos: 30
   },
 
-  // Acesso do professor ao painel. Guarda só o hash SHA-256 do PIN, nunca o PIN.
-  // PIN padrão de demonstração: 2026  (troque gerando um novo hash, veja docs/seguranca.md)
+  // Acesso do professor no modo "local" (DEMONSTRAÇÃO): PIN 2026.
+  // No modo "servidor" a senha do professor fica só no servidor (PROFESSOR_SENHA_HASH no .env).
   painel: {
     pinHash: "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
     sessaoMinutos: 120
@@ -80,6 +79,7 @@ window.SGJA_CONFIG = {
     sessaoMinutos: 240
   },
 
-  // Segredo usado para assinar QR Codes e códigos de certificado.
+  // Segredo de assinatura de QR Codes e certificados SÓ do modo "local" (demonstração).
+  // No modo "servidor" o segredo fica no .env (ASSINATURA_SEGREDO) e este valor não é usado.
   segredoAssinatura: "SGJA-6JA-UNINASSAU-2026"
 };

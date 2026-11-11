@@ -6,33 +6,29 @@
   const esc = C.escaparHTML;
 
   /* ---------------- Sessão individual ---------------- */
-  const CHAVE_SESSAO = "sgja_sessao_comissao";
   const CHAVE_TENTATIVAS = "sgja_tentativas_comissao";
-  const SESSAO_MIN = (CFG.comissao && CFG.comissao.sessaoMinutos) || 240;
-  let membro = null; // { id, nome, ... } de quem está usando
+  let membro = null; // { id, nome } de quem está usando
 
   const ler = (k, padrao) => { try { return JSON.parse(sessionStorage.getItem(k) || "null") || padrao; } catch (_) { return padrao; } };
   const gravar = (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
   const apagar = (k) => { try { sessionStorage.removeItem(k); } catch (_) {} };
 
   function sair(mensagem) {
-    apagar(CHAVE_SESSAO);
+    API.sairComissao();
     pararCamera();
     membro = null;
     $("tela-checkin").classList.add("d-none");
     $("tela-acesso").classList.remove("d-none");
     $("btn-sair").classList.add("d-none");
     $("subtitulo").textContent = "Área da comissão organizadora";
+    $("tb-chamada").innerHTML = "";
     if (mensagem) $("erro-entrar").textContent = mensagem;
   }
 
-  // Confere de novo no banco: se um professor bloqueou, o acesso cai na hora.
-  async function garantirAcesso() {
-    const atual = membro && (await API.buscarMembro(membro.id));
-    if (!atual || atual.status !== "ativo") {
-      sair("Seu acesso ao check-in foi bloqueado ou removido. Fale com a coordenação.");
-      throw new API.ErroNegocio("Acesso encerrado.");
-    }
+  // Sessão expirada ou acesso bloqueado pelo professor: o servidor recusa (401/403) e a página desconecta.
+  function tratarErro(err) {
+    if (err && (err.status === 401 || err.status === 403)) { sair(err.message); return; }
+    if (membro) UI.aviso((err && err.message) || "Erro ao registrar presença.", "erro");
   }
 
   $("form-entrar").addEventListener("submit", async (e) => {
@@ -41,14 +37,13 @@
     if (t.ate > Date.now()) { $("erro-entrar").textContent = `Muitas tentativas. Aguarde ${Math.ceil((t.ate - Date.now()) / 1000)}s.`; return; }
     UI.carregando($("btn-entrar"), true, "Entrando...");
     try {
-      const m = await API.autenticarMembro($("e-email").value, $("e-senha").value);
+      const m = await API.entrarComissao($("e-email").value, $("e-senha").value);
       apagar(CHAVE_TENTATIVAS);
-      gravar(CHAVE_SESSAO, { id: m.id, expira: Date.now() + SESSAO_MIN * 60000 });
       $("e-senha").value = ""; $("erro-entrar").textContent = "";
-      abrir(m);
+      abrir({ id: m.id, nome: m.nome });
     } catch (err) {
       if (!(err instanceof API.ErroNegocio)) { console.error(err); $("erro-entrar").textContent = "Não foi possível entrar agora."; return; }
-      if (err.message.startsWith("E-mail ou senha")) {
+      if (err.status === 401) {
         t.n += 1;
         if (t.n >= 5) { t.ate = Date.now() + 60000; t.n = 0; }
         gravar(CHAVE_TENTATIVAS, t);
@@ -94,8 +89,12 @@
   const ultimos = [];
 
   async function recarregar() {
-    [alunos, frequencias] = await Promise.all([API.listarAlunos(), API.listarFrequencias()]);
-    desenharChamada();
+    if (!membro) return;
+    try {
+      const r = await API.chamada(atividade);
+      alunos = r.alunos; frequencias = r.frequencias;
+      desenharChamada();
+    } catch (err) { tratarErro(err); }
   }
 
   function abrir(m) {
@@ -109,7 +108,7 @@
   }
 
   window.addEventListener("storage", (e) => { if (membro && e.key && e.key.startsWith("sgja_v1_")) recarregar(); });
-  if (CFG.backend === "base44") setInterval(() => { if (membro) recarregar(); }, 10000);
+  if (API.backend === "servidor") setInterval(() => { if (membro) recarregar(); }, 15000);
 
   function montarSeletor() {
     const sel = $("sel-atividade");
@@ -121,7 +120,7 @@
     });
     sel.value = sugerida;
     atividade = sugerida;
-    sel.addEventListener("change", () => { atividade = sel.value; desenharChamada(); });
+    sel.addEventListener("change", () => { atividade = sel.value; recarregar(); });
   }
 
   const freqDaAtividade = () => new Map(frequencias.filter((f) => f.eventoId === atividade).map((f) => [f.alunoId, f]));
@@ -131,7 +130,7 @@
     const t = texto.trim().toLowerCase();
     const d = C.soDigitos(t);
     if (!t) return alunos;
-    return alunos.filter((a) => a.nome.toLowerCase().includes(t) || (d && (a.cpf.includes(d) || a.matricula.includes(d))));
+    return alunos.filter((a) => a.nome.toLowerCase().includes(t) || (d && a.matricula.includes(d)));
   }
 
   function desenharChamada() {
@@ -151,10 +150,10 @@
     $("tb-chamada").innerHTML = lista.length ? lista.map((a) => {
       const f = presentes.get(a.id);
       const extra = inscritoEm(a, atividade) ? "" : ' <span class="badge text-bg-light" title="Não se inscreveu nesta atividade">não inscrito</span>';
-      const por = f ? esc(f.registradoPorNome || (f.origem === "demo" ? "exemplo" : "—")) : "";
+      const por = f ? esc(f.registradoPorNome || "—") : "";
       return `<tr class="${f ? "presente" : ""}">
         <td><input class="form-check-input chk-presenca" type="checkbox" data-id="${esc(a.id)}" ${f ? "checked" : ""} aria-label="Presença de ${esc(a.nome)}"></td>
-        <td><div class="fw-semibold">${esc(a.nome)}${extra}</div><div class="small text-muted">CPF ${C.mascararCPFParaExibicao(a.cpf)}</div></td>
+        <td><div class="fw-semibold">${esc(a.nome)}${extra}</div><div class="small text-muted">CPF ${esc(a.cpfMascarado)}</div></td>
         <td class="d-none d-md-table-cell small">${esc(a.curso)}</td>
         <td class="d-none d-sm-table-cell small">${esc(a.matricula)}</td>
         <td class="d-none d-lg-table-cell small text-muted">${por}</td></tr>`;
@@ -165,21 +164,17 @@
   $("busca-chamada").addEventListener("input", desenharChamada);
   $("filtro-chamada").addEventListener("change", desenharChamada);
 
-  const quem = () => ({ id: membro.id, nome: membro.nome });
-
   $("tb-chamada").addEventListener("change", async (e) => {
     if (!e.target.classList.contains("chk-presenca")) return;
     const caixa = e.target, id = caixa.dataset.id;
     caixa.disabled = true;
     try {
-      await garantirAcesso();
-      if (caixa.checked) { const r = await API.registrarCheckin(id, atividade, "lista", quem()); registrarUltimo(r.aluno, r.novo); }
+      if (caixa.checked) { const r = await API.checkin({ alunoId: id, eventoId: atividade, origem: "lista" }); registrarUltimo(r.aluno, r.novo); }
       else await API.removerCheckin(id, atividade);
-      frequencias = await API.listarFrequencias();
-      desenharChamada();
+      await recarregar();
     } catch (err) {
       caixa.checked = !caixa.checked;
-      if (membro) UI.aviso(err.message || "Erro ao registrar presença.", "erro");
+      tratarErro(err);
     } finally { caixa.disabled = false; }
   });
 
@@ -191,11 +186,10 @@
     if (!(await UI.confirmar(`Registrar presença de ${ids.length} aluno(s) nesta atividade?`, { titulo: "Confirmar presenças", botao: "Registrar presenças" }))) return;
     UI.carregando(botao, true, "Registrando...");
     try {
-      await garantirAcesso();
-      for (const id of ids) await API.registrarCheckin(id, atividade, "lote", quem());
+      for (const id of ids) await API.checkin({ alunoId: id, eventoId: atividade, origem: "lote" });
       await recarregar();
       UI.aviso(`${ids.length} presença(s) registradas.`, "sucesso");
-    } catch (err) { if (membro) UI.aviso(err.message, "erro"); }
+    } catch (err) { tratarErro(err); }
     finally { UI.carregando(botao, false); }
   });
 
@@ -206,15 +200,13 @@
       `<li class="mb-1"><i class="bi ${u.novo ? "bi-check-circle-fill text-success" : "bi-info-circle text-primary"} me-1"></i><strong>${esc(u.nome)}</strong> <span class="text-muted">· ${u.hora}${u.novo ? "" : " · já estava presente"}</span></li>`).join("");
   }
 
-  async function checkinAluno(aluno, origem) {
-    await garantirAcesso();
-    const r = await API.registrarCheckin(aluno.id, atividade, origem, quem());
+  async function confirmar(dados) {
+    const r = await API.checkin({ ...dados, eventoId: atividade });
     registrarUltimo(r.aluno, r.novo);
     if (r.novo && !inscritoEm(r.aluno, atividade)) UI.aviso(`${r.aluno.nome} não se inscreveu nesta atividade. Presença registrada mesmo assim.`, "alerta");
     else UI.aviso(r.novo ? `Presença confirmada: ${r.aluno.nome}` : `${r.aluno.nome} já estava presente.`, r.novo ? "sucesso" : "info");
     bipe(r.novo);
-    frequencias = await API.listarFrequencias();
-    desenharChamada();
+    await recarregar();
   }
 
   $("cpf-rapido").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
@@ -222,9 +214,7 @@
     e.preventDefault();
     const cpf = $("cpf-rapido").value;
     if (!C.validarCPF(cpf)) { UI.aviso("CPF inválido.", "erro"); bipe(false); return; }
-    const aluno = await API.buscarAlunoPorCPF(cpf);
-    if (!aluno) { UI.aviso("CPF não inscrito na Jornada.", "erro"); bipe(false); return; }
-    try { await checkinAluno(aluno, "cpf"); $("cpf-rapido").value = ""; } catch (err) { if (membro) UI.aviso(err.message, "erro"); }
+    try { await confirmar({ cpf }); $("cpf-rapido").value = ""; } catch (err) { tratarErro(err); bipe(false); }
   });
 
   function bipe(ok) {
@@ -250,8 +240,8 @@
       await leitor.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 230, height: 230 } }, async (texto) => {
         if (texto === ultimaLeitura.texto && Date.now() - ultimaLeitura.em < 3000) return; // mesma leitura em sequência
         ultimaLeitura = { texto, em: Date.now() };
-        try { await checkinAluno(await API.validarIngresso(texto), "qrcode"); }
-        catch (err) { if (membro) { UI.aviso(err.message, "erro"); bipe(false); } }
+        try { await confirmar({ qr: texto }); }
+        catch (err) { tratarErro(err); bipe(false); }
       });
       $("btn-camera").innerHTML = '<i class="bi bi-stop-circle me-1"></i>Fechar câmera';
     } catch (err) {
@@ -261,10 +251,6 @@
   });
 
   /* ---------------- Retomar sessão aberta ---------------- */
-  (async () => {
-    const s = ler(CHAVE_SESSAO, null);
-    if (!s || s.expira <= Date.now()) return;
-    const m = await API.buscarMembro(s.id);
-    if (m && m.status === "ativo") abrir(m); else sair();
-  })();
+  const aberta = API.sessaoComissao();
+  if (aberta) abrir({ id: aberta.id, nome: aberta.nome });
 })();

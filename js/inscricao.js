@@ -86,7 +86,7 @@
   $("cpf").addEventListener("blur", async () => {
     if (!C.validarCPF($("cpf").value)) { $("erro-cpf").textContent = "CPF inválido. Confira os números."; return; }
     try {
-      if (await API.buscarAlunoPorCPF($("cpf").value)) {
+      if (await API.cpfJaInscrito($("cpf").value)) {
         $("erro-cpf").innerHTML = 'Este CPF já está inscrito. <a href="certificado.html">Recuperar meu ingresso</a>.';
         $("cpf").classList.add("is-invalid"); $("cpf").classList.remove("is-valid");
       }

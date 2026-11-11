@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Painel do professor · VI Jornada Acadêmica</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=202611112232">
+  <link rel="icon" href="assets/img/favicon.png?v=202611112301">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611112232">
+  <link rel="stylesheet" href="css/style.css?v=202611112301">
 </head>
 <body>
   <div id="menu"></div>
@@ -140,9 +142,8 @@
                 <div class="p-3 rounded small" style="background:#dcf8c6; white-space:pre-line" id="previa-whats"></div>
               </div>
               <div class="card p-3">
-                <h2 class="h6 fw-bold">Enviar lista ao servidor</h2>
-                <p class="small text-muted">No modo demonstração os inscritos ficam neste navegador. Exporte o arquivo e salve em <code>servicos/api-gateway/dados/inscritos.json</code>. Com Base44 configurado, o servidor lê direto do banco.</p>
-                <button class="btn btn-primary" id="btn-exportar-whats"><i class="bi bi-download me-1"></i>Exportar inscritos.json</button>
+                <h2 class="h6 fw-bold">Quem envia</h2>
+                <p class="small text-muted mb-0">No modo servidor, os lembretes saem do próprio servidor, que já tem a lista de inscritos. Nenhum arquivo com telefones precisa ser exportado.</p>
               </div>
             </div>
           </div>
@@ -200,13 +201,13 @@
   <script src="vendor/qrcode.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/emailjs.min.js"></script>
-  <script src="js/config.js?v=202611112232"></script>
-  <script src="js/core.js?v=202611112232"></script>
-  <script src="js/api.js?v=202611112232"></script>
-  <script src="js/ui.js?v=202611112232"></script>
-  <script src="js/certificado-base64.js?v=202611112232"></script>
-  <script src="js/certificado-pdf.js?v=202611112232"></script>
-  <script src="js/email.js?v=202611112232"></script>
-  <script src="js/painel.js?v=202611112232"></script>
+  <script src="js/config.js?v=202611112301"></script>
+  <script src="js/core.js?v=202611112301"></script>
+  <script src="js/servico.js?v=202611112301"></script>
+  <script src="js/api.js?v=202611112301"></script>
+  <script src="js/ui.js?v=202611112301"></script>
+  <script src="js/certificado-base64.js?v=202611112301"></script>
+  <script src="js/certificado-pdf.js?v=202611112301"></script>
+  <script src="js/painel.js?v=202611112301"></script>
 </body>
 </html>

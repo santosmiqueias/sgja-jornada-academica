@@ -37,7 +37,8 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 
 ## 4:00 – 4:40 · Engenharia por trás
 
-- HTML5, CSS3, JavaScript, Bootstrap; banco no **Base44**; microsserviço Node para e-mail e proxy seguro.
+- HTML5, CSS3, JavaScript, Bootstrap; servidor Node com login por perfil; banco no **Base44** (chave só no servidor).
+- Auditoria de segurança: atacamos o próprio sistema, corrigimos 9 falhas e 17 testes repetem os ataques a cada mudança.
 - Segurança: validação de CPF pelo algoritmo oficial, PIN com hash, QR assinado, LGPD com CPF mascarado.
 - Qualidade: testes automatizados e 24 casos de teste de estresse.
 - No ar em HTTPS: *(mostrar o link)*.
@@ -50,6 +51,7 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 ## Perguntas prováveis da banca
 
 - **"E se a internet cair?"** O site roda localmente; as bibliotecas estão embutidas. O check-in por CPF funciona como totem.
+- **"E se alguém tentar invadir?"** Senhas com hash, sessões assinadas, bloqueio após 5 erros, cada perfil só vê o necessário. Está tudo em `docs/seguranca.md`, com os testes de ataque.
 - **"Como impede fraude de presença?"** O QR é assinado com SHA-256 e só o professor autenticado registra presença.
 - **"E a LGPD?"** Consentimento obrigatório, CPF mascarado nas telas e no PDF, dados usados só para a finalidade informada.
 - **"Qual o critério do certificado?"** Check-in em pelo menos 50% das atividades ofertadas (3 de 6). É um parâmetro em `js/config.js`; se o número de atividades mudar, o mínimo é recalculado sozinho.

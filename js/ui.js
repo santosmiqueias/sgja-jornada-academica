@@ -141,7 +141,21 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarRodape(); });
+  // Aviso de modo demonstração nas áreas restritas (para ninguém lançar dados reais nele).
+  function avisoDemonstracao() {
+    const api = window.SGJA_API;
+    const pagina = location.pathname.split("/").pop();
+    if (!api || api.backend !== "local" || !["painel.html", "checkin.html"].includes(pagina)) return;
+    const alvo = document.querySelector("main.container");
+    if (!alvo) return;
+    const el = document.createElement("div");
+    el.className = "alert alert-warning small";
+    el.setAttribute("role", "note");
+    el.innerHTML = "<strong>Modo demonstração.</strong> Os dados ficam só neste navegador e o acesso é conferido no próprio aparelho. Para o evento, configure o modo servidor (veja docs/seguranca.md).";
+    alvo.prepend(el);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarRodape(); avisoDemonstracao(); });
 
   window.SGJA_UI = { aviso, formatarData, formatarDataHora, carregando, qrDataURL, confirmar };
 })();

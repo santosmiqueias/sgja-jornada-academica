@@ -17,9 +17,8 @@ const C = require("../../js/core.js");
 const whatsapp = require("./whatsapp");
 
 const RAIZ = path.join(__dirname, "..", "..");
-const DADOS = process.env.LEMBRETES_DADOS || path.join(__dirname, "dados");
+const DADOS = process.env.DADOS_DIR || path.join(__dirname, "dados");
 const ARQ_LOG = path.join(DADOS, "lembretes-enviados.json");
-const ARQ_INSCRITOS = path.join(DADOS, "inscritos.json");
 const MAX_TENTATIVAS = 3;
 
 // Mesma configuração do site (js/config.js): uma única fonte para eventos e horários.
@@ -39,15 +38,12 @@ function gravarJSON(arq, dados) {
   fs.renameSync(tmp, arq); // troca atômica: o log nunca fica corrompido pela metade
 }
 
-// Inscritos: do Base44 (produção) ou do arquivo exportado pelo painel (modo demonstração).
+// Inscritos: do mesmo armazenamento do servidor (arquivos em dados/ ou Base44).
+const { criarStore } = require("./store");
+let store = null;
 async function carregarInscritos() {
-  const { BASE44_APP_ID, BASE44_API_KEY } = process.env;
-  if (BASE44_APP_ID && BASE44_API_KEY) {
-    const r = await fetch(`https://app.base44.com/api/apps/${BASE44_APP_ID}/entities/Aluno`, { headers: { api_key: BASE44_API_KEY } });
-    if (!r.ok) throw new Error(`Base44 respondeu ${r.status}`);
-    return r.json();
-  }
-  return lerJSON(ARQ_INSCRITOS, []);
+  if (!store) store = criarStore();
+  return store.list("Aluno");
 }
 
 let rodando = false;

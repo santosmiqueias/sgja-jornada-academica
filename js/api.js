@@ -1,325 +1,196 @@
 /*
- * Camada de dados (API). As telas só falam com window.SGJA_API.
- * Por baixo existem dois "drivers" com a mesma interface:
- *   - LocalStore  : salva no navegador (demonstração, funciona offline)
- *   - Base44Store : REST das entidades do Base44
- * As regras (bloquear CPF/e-mail duplicado, check-in único etc.) ficam aqui,
- * valendo para os dois drivers.
+ * Camada de dados usada pelas telas (window.SGJA_API). Dois modos, mesmas funções:
+ *
+ *   backend: "servidor"  -> evento real. Tudo passa pela API (servicos/api-gateway), com login por perfil.
+ *                           O navegador nunca recebe a lista completa de inscritos sem login de professor,
+ *                           e nenhum segredo ou senha fica no site.
+ *   backend: "local"     -> demonstração. As mesmas regras (js/servico.js) rodam no navegador, com os dados
+ *                           no localStorage deste aparelho. Serve para apresentar, NÃO para dados reais.
  */
 (function () {
   "use strict";
   const C = window.SGJACore;
   const CFG = window.SGJA_CONFIG;
+  const { ErroNegocio, criarServico, ENT } = window.SGJAServico;
+  const MODO = CFG.backend === "servidor" ? "servidor" : "local";
 
-  const ENTIDADES = { aluno: "Aluno", frequencia: "Frequencia", certificado: "Certificado", email: "EmailEnviado", membro: "MembroComissao" };
+  const sessao = {
+    ler(k) { try { return JSON.parse(sessionStorage.getItem(k) || "null"); } catch (_) { return null; } },
+    gravar(k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+    apagar(k) { try { sessionStorage.removeItem(k); } catch (_) {} }
+  };
+  const valida = (s) => s && s.expira > Date.now() ? s : null;
+  const pdfBase64 = (doc) => doc.output("datauristring").split(",")[1];
 
-  class ErroNegocio extends Error {
-    constructor(mensagem, campo) { super(mensagem); this.name = "ErroNegocio"; this.campo = campo; }
-  }
-
-  /* ---------------- Driver: navegador ---------------- */
-  class LocalStore {
-    constructor(prefixo) {
-      this.prefixo = prefixo;
-      this.memoria = {};
-    }
-    _ler(ent) {
-      try {
-        const raw = localStorage.getItem(this.prefixo + ent);
-        return raw ? JSON.parse(raw) : [];
-      } catch (_) { return this.memoria[ent] || []; }
-    }
-    _gravar(ent, lista) {
-      this.memoria[ent] = lista;
-      try { localStorage.setItem(this.prefixo + ent, JSON.stringify(lista)); } catch (_) { /* modo privado */ }
-    }
-    async list(ent) { return this._ler(ent); }
-    async create(ent, obj) {
-      const lista = this._ler(ent);
-      const novo = { id: C.gerarId(ent.slice(0, 2)), created_date: new Date().toISOString(), ...obj };
-      lista.push(novo);
-      this._gravar(ent, lista);
-      return novo;
-    }
-    async update(ent, id, patch) {
-      const lista = this._ler(ent);
-      const i = lista.findIndex((x) => x.id === id);
-      if (i < 0) throw new ErroNegocio("Registro não encontrado.");
-      lista[i] = { ...lista[i], ...patch, updated_date: new Date().toISOString() };
-      this._gravar(ent, lista);
-      return lista[i];
-    }
-    async remove(ent, id) {
-      this._gravar(ent, this._ler(ent).filter((x) => x.id !== id));
-    }
-    async limparTudo() {
-      Object.values(ENTIDADES).forEach((e) => this._gravar(e, []));
-    }
-  }
-
-  /* ---------------- Driver: Base44 ---------------- */
-  class Base44Store {
-    constructor({ appId, apiKey, baseUrl }) {
-      if (!appId || !apiKey) throw new Error("Configure base44.appId e base44.apiKey em js/config.js");
-      this.url = `${baseUrl.replace(/\/$/, "")}/${appId}/entities`;
-      this.headers = { "api_key": apiKey, "Content-Type": "application/json" };
-    }
-    async _req(metodo, caminho, corpo) {
-      const resp = await fetch(`${this.url}/${caminho}`, {
-        method: metodo, headers: this.headers, body: corpo ? JSON.stringify(corpo) : undefined
-      });
-      if (!resp.ok) throw new Error(`Base44 respondeu ${resp.status} em ${metodo} ${caminho}`);
-      return resp.status === 204 ? null : resp.json();
-    }
-    list(ent) { return this._req("GET", ent); }
-    create(ent, obj) { return this._req("POST", ent, obj); }
-    update(ent, id, patch) { return this._req("PUT", `${ent}/${encodeURIComponent(id)}`, patch); }
-    remove(ent, id) { return this._req("DELETE", `${ent}/${encodeURIComponent(id)}`); }
-    async limparTudo() { throw new Error("Limpeza em massa desativada no Base44 por segurança."); }
-  }
-
-  const store = CFG.backend === "base44" ? new Base44Store(CFG.base44) : new LocalStore("sgja_v1_");
-
-  // Trava contra clique duplo / requisições simultâneas da mesma operação.
-  const emAndamento = new Set();
-  async function comTrava(chave, fn) {
-    if (emAndamento.has(chave)) throw new ErroNegocio("Aguarde, essa operação já está sendo processada.");
-    emAndamento.add(chave);
-    try { return await fn(); } finally { emAndamento.delete(chave); }
-  }
-
-  /* ---------------- Operações (a API usada pelas telas) ---------------- */
-  const API = {
+  const comum = {
     ErroNegocio,
-    backend: CFG.backend,
-
+    backend: MODO,
     eventos() { return CFG.eventos.slice(); },
     atividadesMinimas() { return C.atividadesMinimas(CFG.eventos.length, CFG.evento.percentualMinimoAtividades); },
     cargaTotal() { return CFG.eventos.reduce((s, e) => s + e.cargaHoraria, 0); },
-
-    async listarAlunos() {
-      const lista = await store.list(ENTIDADES.aluno);
-      return lista.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-    },
-
-    async buscarAluno(id) {
-      return (await store.list(ENTIDADES.aluno)).find((a) => a.id === id) || null;
-    },
-
-    async buscarAlunoPorCPF(cpf) {
-      const d = C.soDigitos(cpf);
-      return (await store.list(ENTIDADES.aluno)).find((a) => a.cpf === d) || null;
-    },
-
-    // POST /alunos — valida tudo de novo (nunca confiar só no front) e bloqueia duplicados.
-    async criarAluno(dados) {
-      return comTrava("criarAluno", async () => {
-        const aluno = {
-          nome: C.capitalizarNome(dados.nome),
-          email: C.normalizarEmail(dados.email),
-          telefone: C.soDigitos(dados.telefone),
-          cpf: C.soDigitos(dados.cpf),
-          matricula: C.soDigitos(dados.matricula),
-          curso: String(dados.curso || "").trim(),
-          periodo: String(dados.periodo || "").trim(),
-          consentimentoLGPD: dados.consentimentoLGPD === true,
-          aceitaWhatsApp: dados.aceitaWhatsApp === true,
-          // mantém a ordem da programação
-          atividades: CFG.eventos.map((e) => e.id).filter((id) => Array.isArray(dados.atividades) && dados.atividades.includes(id))
-        };
-        if (!C.validarNome(aluno.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "nome");
-        if (!C.validarEmail(aluno.email)) throw new ErroNegocio("E-mail inválido.", "email");
-        if (!C.validarTelefone(aluno.telefone)) throw new ErroNegocio("Telefone inválido.", "telefone");
-        if (!C.validarCPF(aluno.cpf)) throw new ErroNegocio("CPF inválido.", "cpf");
-        if (!C.validarMatricula(aluno.matricula)) throw new ErroNegocio("Matrícula deve ter de 6 a 12 dígitos.", "matricula");
-        if (!CFG.cursos.includes(aluno.curso)) throw new ErroNegocio("Selecione um curso da lista.", "curso");
-        if (!C.validarAtividades(aluno.atividades, CFG.eventos)) throw new ErroNegocio("Escolha pelo menos uma atividade.", "atividades");
-        if (!aluno.consentimentoLGPD) throw new ErroNegocio("É preciso aceitar o termo de uso de dados.", "lgpd");
-
-        const todos = await store.list(ENTIDADES.aluno);
-        if (todos.some((a) => a.cpf === aluno.cpf)) throw new ErroNegocio("Este CPF já está inscrito na Jornada.", "cpf");
-        if (todos.some((a) => a.email === aluno.email)) throw new ErroNegocio("Este e-mail já está inscrito na Jornada.", "email");
-        if (todos.some((a) => a.matricula === aluno.matricula)) throw new ErroNegocio("Esta matrícula já está inscrita.", "matricula");
-
-        const criado = await store.create(ENTIDADES.aluno, aluno);
-        const token = await C.gerarTokenIngresso(criado.id, criado.cpf, CFG.segredoAssinatura);
-        return store.update(ENTIDADES.aluno, criado.id, { tokenIngresso: token });
-      });
-    },
-
-    async listarFrequencias() { return store.list(ENTIDADES.frequencia); },
-
-    // POST /frequencias — idempotente: o mesmo aluno não ganha duas presenças na mesma atividade.
-    // registradoPor: { id, nome } do membro da comissão que confirmou a presença.
-    async registrarCheckin(alunoId, eventoId, origem, registradoPor) {
-      return comTrava(`checkin:${alunoId}:${eventoId}`, async () => {
-        if (!CFG.eventos.some((e) => e.id === eventoId)) throw new ErroNegocio("Atividade inexistente.");
-        const aluno = await API.buscarAluno(alunoId);
-        if (!aluno) throw new ErroNegocio("Participante não encontrado.");
-        const existentes = await store.list(ENTIDADES.frequencia);
-        const ja = existentes.find((f) => f.alunoId === alunoId && f.eventoId === eventoId);
-        if (ja) return { novo: false, frequencia: ja, aluno };
-        const frequencia = await store.create(ENTIDADES.frequencia, {
-          alunoId, eventoId, checkIn: true, timestamp: new Date().toISOString(), origem: origem || "painel",
-          registradoPorId: registradoPor ? registradoPor.id : null, registradoPorNome: registradoPor ? registradoPor.nome : null
-        });
-        return { novo: true, frequencia, aluno };
-      });
-    },
-
-    // Valida o QR Code do ingresso (assinatura confere com o CPF cadastrado).
-    async validarIngresso(texto) {
-      const t = C.lerTokenIngresso(texto);
-      if (!t) throw new ErroNegocio("QR Code não pertence à Jornada.");
-      const aluno = await API.buscarAluno(t.alunoId);
-      if (!aluno) throw new ErroNegocio("Ingresso de participante não cadastrado.");
-      const esperado = await C.gerarTokenIngresso(aluno.id, aluno.cpf, CFG.segredoAssinatura);
-      if (esperado !== String(texto).trim()) throw new ErroNegocio("QR Code adulterado ou inválido.");
-      return aluno;
-    },
-
-    async removerCheckin(alunoId, eventoId) {
-      const f = (await store.list(ENTIDADES.frequencia)).find((x) => x.alunoId === alunoId && x.eventoId === eventoId);
-      if (f) await store.remove(ENTIDADES.frequencia, f.id);
-    },
-
-    // Situação de um aluno (horas, mínimo, aprovado).
-    async situacao(alunoId, frequencias) {
-      const freqs = frequencias || (await store.list(ENTIDADES.frequencia));
-      const { horas, atividades } = C.calcularHoras(freqs, CFG.eventos, alunoId);
+    situacaoDe(alunoId, frequencias) {
+      const { horas, atividades } = C.calcularHoras(frequencias, CFG.eventos, alunoId);
       return { ...C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas), atividades };
     },
-
-    /* ---------- Comissão organizadora ---------- */
-
-    // Membro sem campos sensíveis (para as telas).
-    _membroPublico(m) {
-      if (!m) return null;
-      const { senhaHash, salt, ...resto } = m;
-      return resto;
-    },
-
-    // Cadastro feito pelo próprio membro. Fica "pendente" até um professor liberar.
-    async cadastrarMembro(dados) {
-      return comTrava("cadastrarMembro", async () => {
-        const membro = {
-          nome: C.capitalizarNome(dados.nome),
-          email: C.normalizarEmail(dados.email),
-          cpf: C.soDigitos(dados.cpf),
-          telefone: C.soDigitos(dados.telefone)
-        };
-        if (!C.validarNome(membro.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "m-nome");
-        if (!C.validarEmail(membro.email)) throw new ErroNegocio("E-mail inválido.", "m-email");
-        if (!C.validarCPF(membro.cpf)) throw new ErroNegocio("CPF inválido.", "m-cpf");
-        if (!C.validarTelefone(membro.telefone)) throw new ErroNegocio("Telefone inválido.", "m-telefone");
-        if (!C.validarSenha(dados.senha)) throw new ErroNegocio("A senha precisa de pelo menos 8 caracteres, com letras e números.", "m-senha");
-        const todos = await store.list(ENTIDADES.membro);
-        if (todos.some((m) => m.email === membro.email)) throw new ErroNegocio("Já existe cadastro com este e-mail.", "m-email");
-        if (todos.some((m) => m.cpf === membro.cpf)) throw new ErroNegocio("Já existe cadastro com este CPF.", "m-cpf");
-        const salt = C.gerarSalt();
-        const senhaHash = await C.hashSenha(dados.senha, salt);
-        const criado = await store.create(ENTIDADES.membro, { ...membro, salt, senhaHash, status: "pendente" });
-        return API._membroPublico(criado);
-      });
-    },
-
-    async autenticarMembro(email, senha) {
-      const m = (await store.list(ENTIDADES.membro)).find((x) => x.email === C.normalizarEmail(email));
-      // Mesmo cálculo com ou sem cadastro, para não revelar quais e-mails existem.
-      const hash = await C.hashSenha(String(senha || ""), m ? m.salt : "00000000000000000000000000000000");
-      if (!m || hash !== m.senhaHash) throw new ErroNegocio("E-mail ou senha incorretos.");
-      if (m.status === "pendente") throw new ErroNegocio("Seu cadastro ainda não foi liberado por um professor.");
-      if (m.status === "bloqueado") throw new ErroNegocio("Seu acesso ao check-in está bloqueado. Fale com a coordenação.");
-      return API._membroPublico(m);
-    },
-
-    async buscarMembro(id) {
-      return API._membroPublico((await store.list(ENTIDADES.membro)).find((m) => m.id === id));
-    },
-
-    async listarMembros() {
-      return (await store.list(ENTIDADES.membro)).map(API._membroPublico)
-        .sort((a, b) => (a.status === "pendente" ? -1 : 0) - (b.status === "pendente" ? -1 : 0) || a.nome.localeCompare(b.nome, "pt-BR"));
-    },
-
-    // Professor libera (ativo), bloqueia ou reativa um membro.
-    async definirStatusMembro(id, status) {
-      if (!["ativo", "bloqueado", "pendente"].includes(status)) throw new ErroNegocio("Situação inválida.");
-      const patch = { status };
-      if (status === "ativo") patch.liberadoEm = new Date().toISOString();
-      return API._membroPublico(await store.update(ENTIDADES.membro, id, patch));
-    },
-
-    async listarCertificados() { return store.list(ENTIDADES.certificado); },
-
-    // atividades: ids dos eventos com presença (vão no verso do certificado e na validação).
-    async salvarCertificado(aluno, horas, atividades) {
-      const codigo = await C.gerarCodigoCertificado(aluno.id, aluno.cpf, horas, CFG.segredoAssinatura);
-      const lista = await store.list(ENTIDADES.certificado);
-      const existente = lista.find((c) => c.alunoId === aluno.id);
-      const ids = CFG.eventos.map((e) => e.id).filter((id) => Array.isArray(atividades) && atividades.includes(id));
-      const dados = { alunoId: aluno.id, nome: aluno.nome, curso: aluno.curso, horas, atividades: ids, codigo, emitidoEm: new Date().toISOString() };
-      if (existente) return store.update(ENTIDADES.certificado, existente.id, { ...dados, emitidoEm: existente.emitidoEm });
-      return store.create(ENTIDADES.certificado, { ...dados, enviadoPorEmail: false });
-    },
-
-    async marcarCertificadoEnviado(certId) {
-      return store.update(ENTIDADES.certificado, certId, { enviadoPorEmail: true, enviadoEm: new Date().toISOString() });
-    },
-
-    async buscarCertificadoPorCodigo(codigo) {
-      const c = String(codigo || "").trim().toUpperCase();
-      return (await store.list(ENTIDADES.certificado)).find((x) => x.codigo === c) || null;
-    },
-
-    async registrarEmail(registro) { return store.create(ENTIDADES.email, registro); },
-    async listarEmails() {
-      return (await store.list(ENTIDADES.email)).sort((a, b) => b.created_date.localeCompare(a.created_date));
-    },
-
-    async limparTudo() { return store.limparTudo(); },
-
-    // Dados fictícios para demonstração do pitch (CPFs válidos gerados pelo algoritmo).
-    async popularDemo() {
-      const nomes = [
-        ["Ana Beatriz Sousa", "Análise e Desenvolvimento de Sistemas"], ["Carlos Eduardo Lima", "Ciência da Computação"],
-        ["Fernanda Rocha Alves", "Direito"], ["João Pedro Carvalho", "Análise e Desenvolvimento de Sistemas"],
-        ["Mariana Costa Ribeiro", "Enfermagem"], ["Rafael Nunes Barbosa", "Engenharia Civil"],
-        ["Larissa Mendes Prado", "Psicologia"], ["Thiago Oliveira Santos", "Sistemas de Informação"],
-        ["Juliana Freitas Moura", "Administração"], ["Lucas Almeida Teixeira", "Análise e Desenvolvimento de Sistemas"]
-      ];
-      const presencas = [6, 6, 5, 4, 6, 3, 5, 2, 6, 4]; // quantas atividades cada um assistiu
-      const gerarCPF = (semente) => {
-        const base = String(100000000 + semente * 7919).slice(0, 9).split("").map(Number);
-        const dv = (arr) => { const s = arr.reduce((acc, n, i) => acc + n * (arr.length + 1 - i), 0); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
-        base.push(dv(base)); base.push(dv(base));
-        return base.join("");
-      };
-      for (let i = 0; i < nomes.length; i++) {
-        const [nome, curso] = nomes[i];
-        const primeiro = nome.split(" ")[0].toLowerCase();
-        try {
-          const aluno = await API.criarAluno({
-            nome, curso, email: `${primeiro}.demo${i}@exemplo.com`, telefone: `8699${String(1000000 + i * 1371).slice(0, 7)}`,
-            cpf: gerarCPF(i + 11), matricula: String(20260000 + i * 37), periodo: `${(i % 8) + 1}º`, consentimentoLGPD: true, aceitaWhatsApp: i % 4 !== 3,
-            atividades: CFG.eventos.slice(0, Math.min(CFG.eventos.length, presencas[i] + (i % 2))).map((e) => e.id)
-          });
-          for (let k = 0; k < presencas[i]; k++) await API.registrarCheckin(aluno.id, CFG.eventos[k].id, "demo");
-        } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
-      }
-      // Comissão de exemplo: um membro liberado e um aguardando liberação.
-      const membros = [
-        { nome: "Paula Martins Lima", email: "comissao@exemplo.com", cpf: "39053344705", telefone: "86999991111", senha: "jornada2026", status: "ativo" },
-        { nome: "Bruno Rocha Alves", email: "bruno.comissao@exemplo.com", cpf: "15350946056", telefone: "86999992222", senha: "jornada2026", status: "pendente" }
-      ];
-      for (const m of membros) {
-        try {
-          const criado = await API.cadastrarMembro(m);
-          if (m.status === "ativo") await API.definirStatusMembro(criado.id, "ativo");
-        } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
-      }
-    }
+    sessaoComissao() { return valida(sessao.ler("sgja_sessao_comissao")); },
+    sessaoProfessor() { return !!valida(sessao.ler("sgja_sessao_professor")); },
+    sairComissao() { sessao.apagar("sgja_sessao_comissao"); },
+    sairProfessor() { sessao.apagar("sgja_sessao_professor"); }
   };
 
-  window.SGJA_API = API;
+  /* ======================= Modo servidor ======================= */
+  function criarModoServidor() {
+    const BASE = String(CFG.servidor && CFG.servidor.url || "").replace(/\/$/, "");
+    if (!/^https:\/\/|^http:\/\/localhost(:\d+)?$|^http:\/\/127\.0\.0\.1(:\d+)?$/.test(BASE)) {
+      console.error("config.servidor.url precisa usar HTTPS (ou localhost em testes).");
+    }
+
+    async function req(metodo, caminho, corpo, perfil) {
+      const headers = { "Content-Type": "application/json" };
+      const s = perfil && valida(sessao.ler(`sgja_sessao_${perfil}`));
+      if (perfil) {
+        if (!s) throw new ErroNegocio("Sua sessão terminou. Entre de novo.", null, 401);
+        headers.Authorization = `Bearer ${s.token}`;
+      }
+      let r;
+      try {
+        r = await fetch(`${BASE}/api/v1${caminho}`, { method: metodo, headers, body: corpo ? JSON.stringify(corpo) : undefined, credentials: "omit", cache: "no-store" });
+      } catch (_) { throw new ErroNegocio("Sem conexão com o servidor. Verifique a internet e tente de novo.", null, 0); }
+      const dados = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 401 && perfil) sessao.apagar(`sgja_sessao_${perfil}`);
+        throw new ErroNegocio(dados.erro || "Não foi possível concluir agora.", dados.campo, r.status);
+      }
+      return dados;
+    }
+
+    return {
+      ...comum,
+      async contarInscritos() { return (await req("GET", "/publico/resumo")).inscritos; },
+      async criarAluno(d) { return (await req("POST", "/publico/inscricoes", d)).aluno; },
+      async cpfJaInscrito(cpf) { return (await req("POST", "/publico/cpf-inscrito", { cpf })).inscrito; },
+      async consultarParticipante(cpf, email) { return req("POST", "/publico/participante", { cpf, email }); },
+      async emitirCertificadoParticipante(cpf, email) { return (await req("POST", "/publico/certificado", { cpf, email })).certificado; },
+      async enviarCertificadoParticipante(cpf, email, _aluno, _cert, doc) {
+        return req("POST", "/publico/certificado/email", { cpf, email, pdfBase64: pdfBase64(doc) });
+      },
+      async buscarCertificadoPorCodigo(codigo) {
+        try { return (await req("GET", `/publico/certificados/${encodeURIComponent(codigo)}`)).certificado; }
+        catch (e) { if (e.status === 404) return null; throw e; }
+      },
+
+      async cadastrarMembro(d) { return (await req("POST", "/comissao/cadastro", d)).membro; },
+      async entrarComissao(email, senha) {
+        const r = await req("POST", "/comissao/login", { email, senha });
+        sessao.gravar("sgja_sessao_comissao", { token: r.token, id: r.membro.id, nome: r.membro.nome, expira: Date.now() + ((CFG.comissao && CFG.comissao.sessaoMinutos) || 240) * 60000 });
+        return r.membro;
+      },
+      async chamada(eventoId) { return req("GET", `/comissao/chamada?eventoId=${encodeURIComponent(eventoId)}`, null, "comissao"); },
+      async checkin(dados) { return req("POST", "/comissao/checkin", dados, "comissao"); },
+      async removerCheckin(alunoId, eventoId) { return req("POST", "/comissao/checkin/remover", { alunoId, eventoId }, "comissao"); },
+
+      async entrarProfessor(senha) {
+        const r = await req("POST", "/professor/login", { senha });
+        sessao.gravar("sgja_sessao_professor", { token: r.token, expira: Date.now() + CFG.painel.sessaoMinutos * 60000 });
+      },
+      async dadosPainel() { return req("GET", "/professor/dados", null, "professor"); },
+      async definirStatusMembro(id, status) { return (await req("PUT", `/professor/membros/${encodeURIComponent(id)}`, { status }, "professor")).membro; },
+      async emitirCertificadoProfessor(alunoId) { return (await req("POST", `/professor/certificados/${encodeURIComponent(alunoId)}`, null, "professor")).certificado; },
+      async enviarCertificadoProfessor(aluno, _cert, doc) {
+        return req("POST", `/professor/certificados/${encodeURIComponent(aluno.id)}/email`, { pdfBase64: pdfBase64(doc) }, "professor");
+      },
+      async agendaLembretes() { try { return await req("GET", "/professor/lembretes/agenda", null, "professor"); } catch (_) { return null; } },
+      async popularDemo() { return req("POST", "/professor/demo", null, "professor"); },
+      async limparTudo() { return req("POST", "/professor/limpar", null, "professor"); }
+    };
+  }
+
+  /* ======================= Modo local (demonstração) ======================= */
+  function criarModoLocal() {
+    class LocalStore {
+      constructor(prefixo) { this.prefixo = prefixo; this.memoria = {}; }
+      _ler(ent) { try { const raw = localStorage.getItem(this.prefixo + ent); return raw ? JSON.parse(raw) : []; } catch (_) { return this.memoria[ent] || []; } }
+      _gravar(ent, lista) { this.memoria[ent] = lista; try { localStorage.setItem(this.prefixo + ent, JSON.stringify(lista)); } catch (_) {} }
+      async list(ent) { return this._ler(ent).map((x) => ({ ...x })); }
+      async create(ent, obj) { const novo = { ...obj, id: C.gerarId(ent.slice(0, 2)), created_date: new Date().toISOString() }; this._gravar(ent, [...this._ler(ent), novo]); return { ...novo }; }
+      async update(ent, id, patch) {
+        const lista = this._ler(ent); const i = lista.findIndex((x) => x.id === id);
+        if (i < 0) throw new ErroNegocio("Registro não encontrado.", null, 404);
+        lista[i] = { ...lista[i], ...patch, id: lista[i].id, updated_date: new Date().toISOString() };
+        this._gravar(ent, lista); return { ...lista[i] };
+      }
+      async remove(ent, id) { this._gravar(ent, this._ler(ent).filter((x) => x.id !== id)); }
+      async limparTudo() { Object.values(ENT).forEach((e) => this._gravar(e, [])); }
+    }
+    const S = criarServico({ store: new LocalStore("sgja_v1_"), config: CFG, core: C, segredo: CFG.segredoAssinatura });
+
+    const membroSessao = () => {
+      const s = comum.sessaoComissao();
+      if (!s) throw new ErroNegocio("Sua sessão terminou. Entre de novo.", null, 401);
+      return s.id;
+    };
+    const exigirProfessor = () => { if (!comum.sessaoProfessor()) throw new ErroNegocio("Faça login para continuar.", null, 401); };
+
+    // E-mail na demonstração: "simulado" (só registra) ou "emailjs" (envia pelo navegador).
+    async function enviarEmail(aluno, cert, doc) {
+      const assunto = CFG.email.assunto;
+      const mensagem = `Olá, ${aluno.nome.split(" ")[0]}!\n\nObrigado por participar da ${CFG.evento.nome} da ${CFG.evento.sigla} Teresina.\n` +
+        `Segue em anexo o seu certificado de ${cert.horas} horas.\n\nCódigo de autenticidade: ${cert.codigo}\n\nComissão Organizadora — ${CFG.evento.instituicao}`;
+      const anexo = window.SGJA_PDF.nomeArquivo(aluno);
+      let status = "simulado";
+      if (CFG.email.modo === "emailjs") {
+        const ej = CFG.email.emailjs;
+        if (!window.emailjs || !ej.publicKey) throw new ErroNegocio("EmailJS não configurado em js/config.js.");
+        await window.emailjs.send(ej.serviceId, ej.templateId, { to_email: aluno.email, to_name: aluno.nome, subject: assunto, message: mensagem, certificado: `data:application/pdf;base64,${pdfBase64(doc)}` }, { publicKey: ej.publicKey });
+        status = "enviado";
+      }
+      await S.registrarEnvio(aluno, cert, assunto, mensagem, anexo, status, CFG.email.modo);
+      const [u, d] = aluno.email.split("@");
+      return { status, para: `${u.slice(0, 2)}***@${d}` };
+    }
+
+    return {
+      ...comum,
+      contarInscritos: () => S.contarInscritos(),
+      criarAluno: (d) => S.criarAluno(d),
+      cpfJaInscrito: (cpf) => S.cpfJaInscrito(cpf),
+      consultarParticipante: (cpf, email) => S.consultarParticipante(cpf, email),
+      emitirCertificadoParticipante: (cpf, email) => S.emitirCertificadoParticipante(cpf, email),
+      async enviarCertificadoParticipante(cpf, email, _aluno, _cert, doc) {
+        const aluno = await S.identificarParticipante(cpf, email);
+        return enviarEmail(aluno, await S.emitirCertificado(aluno.id), doc);
+      },
+      buscarCertificadoPorCodigo: (codigo) => S.buscarCertificadoPorCodigo(codigo),
+
+      cadastrarMembro: (d) => S.cadastrarMembro(d),
+      async entrarComissao(email, senha) {
+        const m = await S.autenticarMembro(email, senha);
+        sessao.gravar("sgja_sessao_comissao", { id: m.id, nome: m.nome, expira: Date.now() + ((CFG.comissao && CFG.comissao.sessaoMinutos) || 240) * 60000 });
+        return m;
+      },
+      chamada: (eventoId) => S.chamada(membroSessao(), eventoId),
+      async checkin(d) {
+        const id = membroSessao();
+        if (d.qr) return S.checkinPorQR(id, d.qr, d.eventoId);
+        if (d.cpf) return S.checkinPorCPF(id, d.cpf, d.eventoId);
+        return S.registrarCheckin(id, d.alunoId, d.eventoId, d.origem);
+      },
+      removerCheckin: (alunoId, eventoId) => S.removerCheckin(membroSessao(), alunoId, eventoId),
+
+      // Na demonstração o PIN é conferido no navegador. Para o evento real, use backend "servidor".
+      async entrarProfessor(pin) {
+        if ((await C.sha256Hex(String(pin || ""))) !== CFG.painel.pinHash) throw new ErroNegocio("PIN incorreto.", null, 401);
+        sessao.gravar("sgja_sessao_professor", { expira: Date.now() + CFG.painel.sessaoMinutos * 60000 });
+      },
+      async dadosPainel() { exigirProfessor(); return S.dadosPainel(); },
+      async definirStatusMembro(id, status) { exigirProfessor(); return S.definirStatusMembro(id, status); },
+      async emitirCertificadoProfessor(alunoId) { exigirProfessor(); return S.emitirCertificado(alunoId); },
+      async enviarCertificadoProfessor(aluno, cert, doc) { exigirProfessor(); return enviarEmail(aluno, cert, doc); },
+      async agendaLembretes() { return null; },
+      async popularDemo() { return S.popularDemo(); },
+      async limparTudo() { exigirProfessor(); return S.limparTudo(); }
+    };
+  }
+
+  window.SGJA_API = MODO === "servidor" ? criarModoServidor() : criarModoLocal();
 })();
