@@ -44,7 +44,7 @@ test("Validação da escolha de atividades", () => {
 });
 
 test("Mensagem tem nome, atividade, hora e sala", () => {
-  const m = C.mensagemLembrete({ nome: "maria da silva" }, ev, "6ª Jornada Acadêmica", 30);
+  const m = C.mensagemLembrete({ nome: "maria da silva" }, ev, "VI Jornada Acadêmica", 30);
   for (const trecho of ["maria", "30 minutos", "Abertura", "08:00", "Auditório", "QR Code"]) assert.ok(m.includes(trecho), trecho);
 });
 

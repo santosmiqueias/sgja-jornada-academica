@@ -5,7 +5,7 @@
  */
 window.SGJA_CONFIG = {
   evento: {
-    nome: "6ª Jornada Acadêmica",
+    nome: "VI Jornada Acadêmica",
     nomeCertificado: "VI Jornada Acadêmica",
     instituicao: "Centro Universitário Maurício de Nassau",
     sigla: "UNINASSAU",
@@ -57,7 +57,7 @@ window.SGJA_CONFIG = {
     modo: "simulado",
     microsservicoUrl: "http://localhost:3000/api/v1/certificados/enviar",
     emailjs: { publicKey: "", serviceId: "", templateId: "" },
-    assunto: "Seu certificado — 6ª Jornada Acadêmica UNINASSAU"
+    assunto: "Seu certificado — VI Jornada Acadêmica UNINASSAU"
   },
 
   // Lembrete por WhatsApp antes de cada atividade (enviado pelo servidor: servicos/api-gateway).
