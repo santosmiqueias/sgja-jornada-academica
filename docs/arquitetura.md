@@ -33,9 +33,10 @@
 |---|---|---|
 | **Aluno** | id, nome, email, telefone, cpf, matricula, curso, periodo, atividades[] (ids dos eventos escolhidos), consentimentoLGPD, aceitaWhatsApp, tokenIngresso | `cpf`, `email` e `matricula` únicos |
 | **Evento** | codigo (EV01…EV06), titulo, data, turno, horario, sala, cargaHoraria | soma das cargas = 20h |
-| **Frequencia** | id, alunoId → Aluno, eventoId → Evento, checkIn, timestamp, origem | par (alunoId, eventoId) único |
+| **Frequencia** | id, alunoId → Aluno, eventoId → Evento, checkIn, timestamp, origem, registradoPorId → MembroComissao | par (alunoId, eventoId) único |
 | **Certificado** | id, alunoId → Aluno, horas, codigo, emitidoEm, enviadoPorEmail | um por aluno; `codigo` único |
 | **EmailEnviado** | para, assunto, anexo, codigo, status | log de auditoria dos envios |
+| **MembroComissao** | nome, email, cpf, telefone, senhaHash, salt, status (pendente/ativo/bloqueado) | e-mail e CPF únicos; só `ativo` registra presença |
 | **LembreteWhatsApp** | chave (alunoId:eventoId), telefone, status, tentativas | chave única: um lembrete por aluno e atividade |
 
 Relacionamentos: Aluno N—N Evento (inscrição, campo `atividades`); Aluno 1—N Frequencia N—1 Evento; Aluno 1—1 Certificado.
@@ -111,7 +112,8 @@ Para rodar: `cd servicos/api-gateway && npm install && cp .env.example .env` (pr
 | Robôs | campo-armadilha invisível no formulário |
 | XSS | todo dado do usuário passa por `escaparHTML` ou `textContent` antes de ir para a tela |
 | Injeção de fórmula no CSV | células que começam com `= + - @` recebem apóstrofo |
-| Acesso ao painel | PIN com hash SHA-256 (nunca em texto puro), sessão com expiração, bloqueio de 60s após 5 erros |
+| Acesso ao painel do professor | PIN com hash SHA-256 (nunca em texto puro), sessão com expiração, bloqueio de 60s após 5 erros |
+| Acesso ao check-in | conta individual por membro da comissão; senha guardada só como PBKDF2-SHA256 (100 mil repetições, salt aleatório); conta nasce pendente e só funciona depois de liberada por um professor; bloqueio vale na hora (conferido a cada registro); 5 erros de senha bloqueiam por 60s; mensagem de erro igual para e-mail inexistente e senha errada; cada presença guarda quem a registrou |
 | QR Code falsificado | assinatura SHA-256 com segredo |
 | Certificado falso | código único validável publicamente |
 | Chave do Base44 exposta | em produção o front chama o microsserviço; a chave fica no `.env` do servidor |

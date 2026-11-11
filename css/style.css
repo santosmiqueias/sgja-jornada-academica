@@ -22,7 +22,8 @@ body { background: var(--fundo); color: var(--texto); }
   display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
   background: var(--amarelo); color: var(--navy); font-weight: 800; font-size: .9rem;
 }
-.navbar .nav-link { font-weight: 500; }
+.navbar .nav-link { font-weight: 500; white-space: nowrap; }
+@media (min-width: 1200px) { .navbar .nav-link { padding-inline: .55rem !important; font-size: .95rem; } }
 .navbar .nav-link.active { color: var(--amarelo) !important; }
 
 .btn-primary { --bs-btn-bg: var(--navy); --bs-btn-border-color: var(--navy); --bs-btn-hover-bg: var(--azul); --bs-btn-hover-border-color: var(--azul); --bs-btn-active-bg: var(--navy-escuro); --bs-btn-disabled-bg: var(--navy); --bs-btn-disabled-border-color: var(--navy); }

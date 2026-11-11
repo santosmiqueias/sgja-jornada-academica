@@ -20,7 +20,7 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 
 ## 1:40 – 2:50 · Check-in em segundos
 
-1. **Painel do professor**, PIN.
+1. Página **Check-in** do menu: o membro da comissão entra com o próprio e-mail e senha (o professor liberou o acesso no painel).
 2. Ler o QR do celular com a câmera → bipe, "Presença confirmada", contador sobe.
 3. Mostrar o check-in por CPF (modo totem) e a lista com caixas de seleção.
 

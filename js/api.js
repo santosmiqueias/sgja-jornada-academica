@@ -11,7 +11,7 @@
   const C = window.SGJACore;
   const CFG = window.SGJA_CONFIG;
 
-  const ENTIDADES = { aluno: "Aluno", frequencia: "Frequencia", certificado: "Certificado", email: "EmailEnviado" };
+  const ENTIDADES = { aluno: "Aluno", frequencia: "Frequencia", certificado: "Certificado", email: "EmailEnviado", membro: "MembroComissao" };
 
   class ErroNegocio extends Error {
     constructor(mensagem, campo) { super(mensagem); this.name = "ErroNegocio"; this.campo = campo; }
@@ -150,7 +150,8 @@
     async listarFrequencias() { return store.list(ENTIDADES.frequencia); },
 
     // POST /frequencias — idempotente: o mesmo aluno não ganha duas presenças na mesma atividade.
-    async registrarCheckin(alunoId, eventoId, origem) {
+    // registradoPor: { id, nome } do membro da comissão que confirmou a presença.
+    async registrarCheckin(alunoId, eventoId, origem, registradoPor) {
       return comTrava(`checkin:${alunoId}:${eventoId}`, async () => {
         if (!CFG.eventos.some((e) => e.id === eventoId)) throw new ErroNegocio("Atividade inexistente.");
         const aluno = await API.buscarAluno(alunoId);
@@ -159,7 +160,8 @@
         const ja = existentes.find((f) => f.alunoId === alunoId && f.eventoId === eventoId);
         if (ja) return { novo: false, frequencia: ja, aluno };
         const frequencia = await store.create(ENTIDADES.frequencia, {
-          alunoId, eventoId, checkIn: true, timestamp: new Date().toISOString(), origem: origem || "painel"
+          alunoId, eventoId, checkIn: true, timestamp: new Date().toISOString(), origem: origem || "painel",
+          registradoPorId: registradoPor ? registradoPor.id : null, registradoPorNome: registradoPor ? registradoPor.nome : null
         });
         return { novo: true, frequencia, aluno };
       });
@@ -186,6 +188,66 @@
       const freqs = frequencias || (await store.list(ENTIDADES.frequencia));
       const { horas, atividades } = C.calcularHoras(freqs, CFG.eventos, alunoId);
       return { ...C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas), atividades };
+    },
+
+    /* ---------- Comissão organizadora ---------- */
+
+    // Membro sem campos sensíveis (para as telas).
+    _membroPublico(m) {
+      if (!m) return null;
+      const { senhaHash, salt, ...resto } = m;
+      return resto;
+    },
+
+    // Cadastro feito pelo próprio membro. Fica "pendente" até um professor liberar.
+    async cadastrarMembro(dados) {
+      return comTrava("cadastrarMembro", async () => {
+        const membro = {
+          nome: C.capitalizarNome(dados.nome),
+          email: C.normalizarEmail(dados.email),
+          cpf: C.soDigitos(dados.cpf),
+          telefone: C.soDigitos(dados.telefone)
+        };
+        if (!C.validarNome(membro.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "m-nome");
+        if (!C.validarEmail(membro.email)) throw new ErroNegocio("E-mail inválido.", "m-email");
+        if (!C.validarCPF(membro.cpf)) throw new ErroNegocio("CPF inválido.", "m-cpf");
+        if (!C.validarTelefone(membro.telefone)) throw new ErroNegocio("Telefone inválido.", "m-telefone");
+        if (!C.validarSenha(dados.senha)) throw new ErroNegocio("A senha precisa de pelo menos 8 caracteres, com letras e números.", "m-senha");
+        const todos = await store.list(ENTIDADES.membro);
+        if (todos.some((m) => m.email === membro.email)) throw new ErroNegocio("Já existe cadastro com este e-mail.", "m-email");
+        if (todos.some((m) => m.cpf === membro.cpf)) throw new ErroNegocio("Já existe cadastro com este CPF.", "m-cpf");
+        const salt = C.gerarSalt();
+        const senhaHash = await C.hashSenha(dados.senha, salt);
+        const criado = await store.create(ENTIDADES.membro, { ...membro, salt, senhaHash, status: "pendente" });
+        return API._membroPublico(criado);
+      });
+    },
+
+    async autenticarMembro(email, senha) {
+      const m = (await store.list(ENTIDADES.membro)).find((x) => x.email === C.normalizarEmail(email));
+      // Mesmo cálculo com ou sem cadastro, para não revelar quais e-mails existem.
+      const hash = await C.hashSenha(String(senha || ""), m ? m.salt : "00000000000000000000000000000000");
+      if (!m || hash !== m.senhaHash) throw new ErroNegocio("E-mail ou senha incorretos.");
+      if (m.status === "pendente") throw new ErroNegocio("Seu cadastro ainda não foi liberado por um professor.");
+      if (m.status === "bloqueado") throw new ErroNegocio("Seu acesso ao check-in está bloqueado. Fale com a coordenação.");
+      return API._membroPublico(m);
+    },
+
+    async buscarMembro(id) {
+      return API._membroPublico((await store.list(ENTIDADES.membro)).find((m) => m.id === id));
+    },
+
+    async listarMembros() {
+      return (await store.list(ENTIDADES.membro)).map(API._membroPublico)
+        .sort((a, b) => (a.status === "pendente" ? -1 : 0) - (b.status === "pendente" ? -1 : 0) || a.nome.localeCompare(b.nome, "pt-BR"));
+    },
+
+    // Professor libera (ativo), bloqueia ou reativa um membro.
+    async definirStatusMembro(id, status) {
+      if (!["ativo", "bloqueado", "pendente"].includes(status)) throw new ErroNegocio("Situação inválida.");
+      const patch = { status };
+      if (status === "ativo") patch.liberadoEm = new Date().toISOString();
+      return API._membroPublico(await store.update(ENTIDADES.membro, id, patch));
     },
 
     async listarCertificados() { return store.list(ENTIDADES.certificado); },
@@ -241,6 +303,17 @@
             atividades: CFG.eventos.slice(0, Math.min(CFG.eventos.length, presencas[i] + (i % 2))).map((e) => e.id)
           });
           for (let k = 0; k < presencas[i]; k++) await API.registrarCheckin(aluno.id, CFG.eventos[k].id, "demo");
+        } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
+      }
+      // Comissão de exemplo: um membro liberado e um aguardando liberação.
+      const membros = [
+        { nome: "Paula Martins Lima", email: "comissao@exemplo.com", cpf: "39053344705", telefone: "86999991111", senha: "jornada2026", status: "ativo" },
+        { nome: "Bruno Rocha Alves", email: "bruno.comissao@exemplo.com", cpf: "15350946056", telefone: "86999992222", senha: "jornada2026", status: "pendente" }
+      ];
+      for (const m of membros) {
+        try {
+          const criado = await API.cadastrarMembro(m);
+          if (m.status === "ativo") await API.definirStatusMembro(criado.id, "ativo");
         } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
       }
     }

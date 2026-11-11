@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Check-in · 6ª Jornada Acadêmica</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026.11.12">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <div class="cabecalho-pagina">
+    <div class="container d-flex justify-content-between align-items-end flex-wrap gap-2">
+      <div>
+        <h1 class="fw-bold mb-1">Check-in</h1>
+        <p class="mb-0 opacity-75" id="subtitulo">Área da comissão organizadora</p>
+      </div>
+      <button class="btn btn-sm btn-outline-light d-none" id="btn-sair"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- Entrar / Criar cadastro -->
+    <div class="row justify-content-center" id="tela-acesso">
+      <div class="col-md-8 col-lg-5">
+        <div class="card p-4">
+          <ul class="nav nav-pills nav-fill gap-1 mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#aba-entrar" type="button" role="tab">Entrar</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-cadastro" type="button" role="tab">Criar cadastro</button></li>
+          </ul>
+          <div class="tab-content">
+            <section class="tab-pane fade show active" id="aba-entrar" role="tabpanel">
+              <form id="form-entrar" novalidate>
+                <div class="mb-3">
+                  <label for="e-email" class="form-label">E-mail</label>
+                  <input type="email" id="e-email" class="form-control" autocomplete="username" inputmode="email" required>
+                </div>
+                <div class="mb-2">
+                  <label for="e-senha" class="form-label">Senha</label>
+                  <input type="password" id="e-senha" class="form-control" autocomplete="current-password" required>
+                </div>
+                <div class="text-danger small" id="erro-entrar" role="alert"></div>
+                <button class="btn btn-primary w-100 mt-3" id="btn-entrar">Entrar</button>
+                <p class="small text-muted mt-3 mb-0">Ainda não tem acesso? Crie seu cadastro. Um professor precisa liberar antes do primeiro uso.</p>
+              </form>
+            </section>
+            <section class="tab-pane fade" id="aba-cadastro" role="tabpanel">
+              <form id="form-cadastro" novalidate>
+                <div class="mb-3">
+                  <label for="m-nome" class="form-label">Nome completo</label>
+                  <input type="text" id="m-nome" class="form-control" autocomplete="name" maxlength="100" required>
+                  <div class="invalid-feedback">Informe nome e sobrenome.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="m-email" class="form-label">E-mail</label>
+                  <input type="email" id="m-email" class="form-control" autocomplete="email" inputmode="email" maxlength="120" required>
+                  <div class="invalid-feedback">E-mail inválido.</div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="m-cpf" class="form-label">CPF</label>
+                    <input type="text" id="m-cpf" class="form-control" inputmode="numeric" placeholder="000.000.000-00" required>
+                    <div class="invalid-feedback">CPF inválido.</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="m-telefone" class="form-label">Telefone</label>
+                    <input type="tel" id="m-telefone" class="form-control" inputmode="numeric" placeholder="(86) 99999-9999" autocomplete="tel-national" required>
+                    <div class="invalid-feedback">Telefone inválido.</div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="m-senha" class="form-label">Senha</label>
+                  <input type="password" id="m-senha" class="form-control" autocomplete="new-password" required>
+                  <div class="form-text">Pelo menos 8 caracteres, com letras e números.</div>
+                  <div class="invalid-feedback">A senha precisa de pelo menos 8 caracteres, com letras e números.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="m-senha2" class="form-label">Repita a senha</label>
+                  <input type="password" id="m-senha2" class="form-control" autocomplete="new-password" required>
+                  <div class="invalid-feedback">As senhas não são iguais.</div>
+                </div>
+                <button class="btn btn-amarelo w-100" id="btn-cadastrar">Criar cadastro</button>
+              </form>
+              <div class="alert alert-success mt-3 mb-0 d-none" id="cadastro-ok" role="status">
+                <strong>Cadastro enviado.</strong> Assim que um professor liberar seu acesso, entre com seu e-mail e senha.
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Check-in (após entrar) -->
+    <div class="d-none" id="tela-checkin">
+      <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+          <label for="sel-atividade" class="form-label">Atividade da chamada</label>
+          <select id="sel-atividade" class="form-select form-select-lg"></select>
+        </div>
+        <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-presentes">0</div><div class="rotulo">Presentes</div></div></div>
+        <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-inscritos">0</div><div class="rotulo">Inscritos</div></div></div>
+        <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-pct">0%</div><div class="rotulo">Presença</div></div></div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="card p-3 mb-3">
+            <h2 class="h6 fw-bold"><i class="bi bi-person-badge me-1"></i>Check-in rápido por CPF</h2>
+            <form id="form-cpf-rapido" class="input-group" novalidate>
+              <input type="text" class="form-control" id="cpf-rapido" inputmode="numeric" placeholder="Digite o CPF e Enter" aria-label="CPF para check-in">
+              <button class="btn btn-primary" aria-label="Confirmar check-in"><i class="bi bi-check-lg"></i></button>
+            </form>
+          </div>
+          <div class="card p-3 mb-3">
+            <h2 class="h6 fw-bold"><i class="bi bi-qr-code-scan me-1"></i>Leitura de QR Code</h2>
+            <div id="leitor" class="mb-2"></div>
+            <button class="btn btn-amarelo w-100" id="btn-camera"><i class="bi bi-camera me-1"></i>Abrir câmera</button>
+            <div class="small text-muted mt-2">Aponte para o ingresso do aluno. A presença é registrada na hora.</div>
+          </div>
+          <div class="card p-3">
+            <h2 class="h6 fw-bold mb-2">Últimos registros</h2>
+            <ul class="list-unstyled small mb-0" id="ultimos"><li class="text-muted">Nenhum check-in ainda.</li></ul>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card p-3">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <input type="search" id="busca-chamada" class="form-control flex-grow-1" style="max-width: 360px" placeholder="Buscar por nome, matrícula ou CPF" aria-label="Buscar aluno na chamada">
+              <select id="filtro-chamada" class="form-select" style="max-width: 230px" aria-label="Filtrar">
+                <option value="inscritos">Inscritos nesta atividade</option><option value="ausentes">Inscritos ausentes</option><option value="presentes">Só presentes</option><option value="todos">Todos os participantes</option>
+              </select>
+              <button class="btn btn-outline-primary ms-auto" id="btn-marcar-todos"><i class="bi bi-check2-all me-1"></i>Confirmar visíveis</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover lista-chamada mb-0">
+                <thead><tr><th style="width:56px">Presente</th><th>Aluno</th><th class="d-none d-md-table-cell">Curso</th><th class="d-none d-sm-table-cell">Matrícula</th><th class="d-none d-lg-table-cell">Registrado por</th></tr></thead>
+                <tbody id="tb-chamada"></tbody>
+              </table>
+            </div>
+            <div class="text-muted small mt-2" id="info-chamada"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="vendor/html5-qrcode.min.js"></script>
+  <script src="js/config.js?v=2026.11.12"></script>
+  <script src="js/core.js?v=2026.11.12"></script>
+  <script src="js/api.js?v=2026.11.12"></script>
+  <script src="js/ui.js?v=2026.11.12"></script>
+  <script src="js/checkin.js?v=2026.11.12"></script>
+</body>
+</html>

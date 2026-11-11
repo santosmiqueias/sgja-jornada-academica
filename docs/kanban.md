@@ -23,6 +23,7 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 | 9 | API de inscrição com bloqueio de CPF/e-mail duplicado | 3 | 2º cadastro com o mesmo CPF é recusado | js/api.js |
 | 10 | API de frequência (check-in idempotente) | 3 | presença não duplica | js/api.js |
 | 11 | Microsserviço proxy (esconder chave do Base44) | 3 | `/health` responde e POST retorna 409 em duplicado | servicos/api-gateway |
+| 12b | Cadastro e login individual da comissão no check-in, com liberação pelo professor | 2/3 | membro pendente não entra; bloqueado perde acesso na hora | checkin.html, js/checkin.js |
 | 12 | Login do painel do professor | 2/3 | PIN errado bloqueia após 5 tentativas | js/painel.js |
 | 13 | Painel de chamada com caixas de seleção e busca | 2 | marcar presença em 1 clique | painel.html |
 | 14 | Leitor de QR Code e check-in por CPF | 2 | ler QR registra presença e dá bipe | js/painel.js |

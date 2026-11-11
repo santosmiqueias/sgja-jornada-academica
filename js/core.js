@@ -153,6 +153,28 @@
     return `${h.slice(0, 4)}-${h.slice(4, 8)}-${h.slice(8, 12)}`;
   }
 
+  /* ---------- Senhas da comissão organizadora ---------- */
+
+  // Mínimo de 8 caracteres, com pelo menos uma letra e um número.
+  function validarSenha(valor) {
+    const s = String(valor || "");
+    return s.length >= 8 && s.length <= 72 && /[A-Za-z]/.test(s) && /\d/.test(s);
+  }
+
+  function gerarSalt() {
+    const c = (typeof crypto !== "undefined" && crypto.getRandomValues) ? crypto : require("crypto").webcrypto;
+    return [...c.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // PBKDF2-SHA256 com 100 mil repetições: a senha nunca é guardada, só este resultado.
+  async function hashSenha(senha, saltHex) {
+    const c = (typeof crypto !== "undefined" && crypto.subtle) ? crypto : require("crypto").webcrypto;
+    const salt = new Uint8Array(saltHex.match(/../g).map((h) => parseInt(h, 16)));
+    const chave = await c.subtle.importKey("raw", new TextEncoder().encode(String(senha)), "PBKDF2", false, ["deriveBits"]);
+    const bits = await c.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, chave, 256);
+    return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
   function escaparHTML(v) {
     return String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -220,6 +242,7 @@
     calcularHoras, atividadesMinimas, situacaoAluno,
     sha256Hex, gerarTokenIngresso, lerTokenIngresso, gerarCodigoCertificado,
     inicioEvento, eventosParaLembrete, telefoneE164, mensagemLembrete, recebeLembrete, validarAtividades,
+    validarSenha, gerarSalt, hashSenha,
     escaparHTML, gerarId
   };
 });

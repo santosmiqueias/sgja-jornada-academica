@@ -5,6 +5,7 @@
   "description": "S.G.J.A — Sistema de Gestão da 6ª Jornada Acadêmica UNINASSAU (inscrição, check-in e certificados)",
   "scripts": {
     "start": "npx --yes serve -l 5500 .",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "versao": "node scripts/versao.js"
   }
 }

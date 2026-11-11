@@ -108,3 +108,17 @@ test("Colar dados com sujeira: CPF com texto e telefone com +55", () => {
   assert.equal(C.mascaraCPF("CPF: 529.982.247-25"), "529.982.247-25");
   assert.equal(C.mascaraTelefone("+55 (86) 99999-8888"), "(86) 99999-8888");
 });
+
+test("Senha da comissão: regras e hash PBKDF2", async () => {
+  assert.equal(C.validarSenha("jornada2026"), true);
+  assert.equal(C.validarSenha("curta1"), false);
+  assert.equal(C.validarSenha("somenteletras"), false);
+  assert.equal(C.validarSenha("12345678"), false);
+  const salt = C.gerarSalt();
+  assert.match(salt, /^[a-f0-9]{32}$/);
+  const h = await C.hashSenha("jornada2026", salt);
+  assert.match(h, /^[a-f0-9]{64}$/);
+  assert.equal(h, await C.hashSenha("jornada2026", salt));
+  assert.notEqual(h, await C.hashSenha("jornada2027", salt));
+  assert.notEqual(h, await C.hashSenha("jornada2026", C.gerarSalt())); // mesmo texto, salt diferente
+});

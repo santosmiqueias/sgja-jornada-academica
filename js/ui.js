@@ -9,6 +9,7 @@
     { href: "inscricao.html", rotulo: "Inscrição", icone: "person-plus" },
     { href: "certificado.html", rotulo: "Meu certificado", icone: "award" },
     { href: "validar.html", rotulo: "Validar", icone: "patch-check" },
+    { href: "checkin.html", rotulo: "Check-in", icone: "qr-code-scan" },
     { href: "painel.html", rotulo: "Painel do professor", icone: "clipboard-check" }
   ];
 
@@ -22,7 +23,7 @@
       return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}"><i class="bi bi-${l.icone} me-1" aria-hidden="true"></i>${l.rotulo}</a></li>`;
     }).join("");
     alvo.innerHTML = `
-      <nav class="navbar navbar-expand-lg navbar-dark bg-navy sticky-top shadow-sm">
+      <nav class="navbar navbar-expand-xl navbar-dark bg-navy sticky-top shadow-sm">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
             <span class="brand-badge">6ª</span><span class="fw-bold">Jornada Acadêmica</span>

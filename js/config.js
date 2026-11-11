@@ -74,6 +74,12 @@ window.SGJA_CONFIG = {
     sessaoMinutos: 120
   },
 
+  // Comissão organizadora: cada membro cria o próprio cadastro em checkin.html
+  // e só registra presença depois que um professor libera o acesso no painel.
+  comissao: {
+    sessaoMinutos: 240
+  },
+
   // Segredo usado para assinar QR Codes e códigos de certificado.
   segredoAssinatura: "SGJA-6JA-UNINASSAU-2026"
 };

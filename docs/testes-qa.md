@@ -28,6 +28,8 @@ Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo 
 | 10 | Colar CPF com texto | Colar `CPF: 529.982.247-25` | Máscara extrai os dígitos | ✅ (unitário) |
 | 11 | Telefone com +55 | Colar `+55 (86) 99999-8888` | `(86) 99999-8888` | ✅ (unitário) |
 | 12 | Script no nome | Digitar `<script>` | Caracteres `<>` são bloqueados | ✅ |
+| 13b | Comissão: cadastro e liberação | Criar cadastro em Check-in, tentar entrar, liberar no painel, entrar | Antes de liberar: "ainda não foi liberado". Depois: entra e registra presença com o nome do membro | ✅ |
+| 13c | Comissão: bloqueio | Professor bloqueia um membro logado | Na próxima ação o membro é desconectado e a presença não é registrada | ✅ |
 | 13 | PIN errado | Digitar `0000` | "PIN incorreto"; 5 erros bloqueiam 60s | ✅ |
 | 14 | Check-in por CPF | CPF + Enter | Presença registrada, aparece em "Últimos registros", bipe | ✅ |
 | 15 | Check-in repetido | Mesmo CPF 2 vezes | "Já estava presente", sem duplicar horas | ✅ (unitário + API) |

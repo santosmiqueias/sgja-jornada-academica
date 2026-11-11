@@ -8,7 +8,8 @@ Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de pape
 |---|---|---|
 | Landing page | `index.html` | Identidade visual, programação, como funciona, perguntas frequentes |
 | Inscrição | `inscricao.html` | Formulário com máscaras, validação de CPF (módulo 11), escolha das atividades, bloqueio de duplicados, consentimento LGPD, ingresso com QR Code |
-| Check-in | `painel.html` → aba Check-in | Login por PIN, chamada com caixas de seleção (mostra os inscritos na atividade), check-in por CPF (modo totem), leitor de QR Code pela câmera, presença em lote, contadores em tempo real |
+| Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora: cada membro cria cadastro (e-mail e senha) e só entra depois que um professor libera. Chamada com caixas de seleção (mostra os inscritos na atividade), check-in por CPF (modo totem), leitor de QR Code pela câmera, presença em lote, contadores em tempo real, registro de quem confirmou cada presença |
+| Comissão | `painel.html` → aba Comissão | Professor libera, bloqueia ou reativa cada membro da comissão e vê quantos check-ins cada um fez |
 | Inscritos | `painel.html` → aba Inscritos | Lista com horas e situação, exportação CSV para Excel |
 | Certificados | `painel.html` → aba Certificados / `certificado.html` | Libera com check-in em pelo menos 50% das atividades (3 de 6), PDF no modelo oficial com as horas cumpridas, envio por e-mail individual ou em lote |
 | Lembrete WhatsApp | `painel.html` → aba Lembretes + `servicos/api-gateway` | Mensagem automática 30 min antes de cada atividade, só para quem se inscreveu nela e autorizou ([guia](docs/whatsapp.md)) |
@@ -25,7 +26,8 @@ npm start
 
 Abra http://localhost:5500. No VS Code, a extensão **Live Server** também funciona.
 
-- **PIN do painel (demonstração):** `2026`
+- **PIN do painel do professor (demonstração):** `2026`
+- **Comissão de exemplo (check-in):** `comissao@exemplo.com`, senha `jornada2026` (criada pelo botão de dados de demonstração)
 - No painel, aba **Dados → Popular dados de demonstração** cria 10 alunos com presenças variadas.
 
 Testes automatizados das regras de negócio:
@@ -35,6 +37,9 @@ npm test
 ```
 
 ## Publicar (Squad 5)
+
+Antes de cada publicação, rode `npm run versao`. Ele atualiza o número de versão dos arquivos CSS e JS nas páginas, e assim o navegador de quem já visitou o site baixa a versão nova em vez de usar a cópia antiga.
+
 
 - **Netlify:** arraste a pasta do projeto em https://app.netlify.com/drop. Pronto.
 - **Vercel:** `npx vercel` na pasta do projeto (o `vercel.json` já configura cabeçalhos de segurança).
@@ -62,7 +67,8 @@ js/config.js               configuração central
 js/core.js                 regras puras: CPF, máscaras, horas, aprovação, assinaturas
 js/api.js                  camada de dados (driver local ou Base44) + regras de proteção
 js/inscricao.js            tela de inscrição
-js/painel.js               painel do professor
+js/checkin.js              check-in da comissão organizadora (cadastro, login, chamada, QR Code)
+js/painel.js               painel do professor (inscritos, certificados, lembretes, comissão, dados)
 js/certificado-pdf.js      gerador do PDF (jsPDF)
 js/email.js                envio do certificado por e-mail
 js/certificado-base64.js   fundo do certificado embutido

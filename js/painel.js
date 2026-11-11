@@ -1,4 +1,5 @@
-/* Painel do professor: login por PIN, chamada, QR Code, inscritos e certificados em lote. */
+/* Painel do professor: login por PIN, inscritos, certificados, lembretes, comissão organizadora e dados.
+   O check-in fica em checkin.html, com acesso individual da comissão. */
 (function () {
   "use strict";
   const C = window.SGJACore, API = window.SGJA_API, UI = window.SGJA_UI, CFG = window.SGJA_CONFIG;
@@ -40,25 +41,21 @@
 
   $("btn-sair").addEventListener("click", () => {
     try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (_) {}
-    pararCamera();
     location.reload();
   });
 
   /* ---------------- Estado ---------------- */
-  let alunos = [], frequencias = [], certificados = [];
-  let atividade = null;
-  const ultimos = [];
+  let alunos = [], frequencias = [], certificados = [], membros = [];
 
   async function recarregar() {
-    [alunos, frequencias, certificados] = await Promise.all([API.listarAlunos(), API.listarFrequencias(), API.listarCertificados()]);
-    desenharChamada(); desenharInscritos(); desenharLembretes(); await desenharCertificados();
+    [alunos, frequencias, certificados, membros] = await Promise.all([API.listarAlunos(), API.listarFrequencias(), API.listarCertificados(), API.listarMembros()]);
+    desenharInscritos(); desenharLembretes(); desenharComissao(); await desenharCertificados();
   }
 
   function abrirPainel() {
     $("tela-login").classList.add("d-none");
     $("tela-painel").classList.remove("d-none");
     $("btn-sair").classList.remove("d-none");
-    montarSeletor();
     desenharConfig();
     recarregar();
     consultarServidor();
@@ -68,149 +65,12 @@
     if (CFG.backend === "base44") setInterval(recarregar, 10000);
   }
 
-  /* ---------------- Check-in ---------------- */
-  function montarSeletor() {
-    const sel = $("sel-atividade");
-    const agora = new Date();
-    let sugerida = API.eventos()[0].id;
-    API.eventos().forEach((ev) => {
-      sel.add(new Option(`${UI.formatarData(ev.data)} · ${ev.turno} — ${ev.titulo} (${ev.cargaHoraria}h)`, ev.id));
-      const [ini] = ev.horario.split("–").map((s) => s.trim());
-      if (new Date(`${ev.data}T${ini}:00`) <= agora) sugerida = ev.id; // última atividade já iniciada
-    });
-    sel.value = sugerida;
-    atividade = sugerida;
-    sel.addEventListener("change", () => { atividade = sel.value; desenharChamada(); });
-  }
-
-  const presentesNaAtividade = () => new Set(frequencias.filter((f) => f.eventoId === atividade).map((f) => f.alunoId));
-
   function filtrarAlunos(texto) {
     const t = texto.trim().toLowerCase();
     const d = C.soDigitos(t);
     if (!t) return alunos;
     return alunos.filter((a) => a.nome.toLowerCase().includes(t) || (d && (a.cpf.includes(d) || a.matricula.includes(d))));
   }
-
-  const inscritoEm = (a, eventoId) => Array.isArray(a.atividades) && a.atividades.includes(eventoId);
-
-  function desenharChamada() {
-    const presentes = presentesNaAtividade();
-    const filtro = $("filtro-chamada").value;
-    const inscritos = alunos.filter((a) => inscritoEm(a, atividade));
-    let lista = filtrarAlunos($("busca-chamada").value);
-    if (filtro === "inscritos") lista = lista.filter((a) => inscritoEm(a, atividade) || presentes.has(a.id));
-    if (filtro === "ausentes") lista = lista.filter((a) => inscritoEm(a, atividade) && !presentes.has(a.id));
-    if (filtro === "presentes") lista = lista.filter((a) => presentes.has(a.id));
-
-    const presentesInscritos = inscritos.filter((a) => presentes.has(a.id)).length;
-    $("st-presentes").textContent = presentes.size;
-    $("st-inscritos").textContent = inscritos.length;
-    $("st-pct").textContent = inscritos.length ? `${Math.round((presentesInscritos / inscritos.length) * 100)}%` : "0%";
-
-    $("tb-chamada").innerHTML = lista.length ? lista.map((a) => {
-      const p = presentes.has(a.id);
-      const extra = inscritoEm(a, atividade) ? "" : ' <span class="badge text-bg-light" title="Não se inscreveu nesta atividade">não inscrito</span>';
-      return `<tr class="${p ? "presente" : ""}">
-        <td><input class="form-check-input chk-presenca" type="checkbox" data-id="${esc(a.id)}" ${p ? "checked" : ""} aria-label="Presença de ${esc(a.nome)}"></td>
-        <td><div class="fw-semibold">${esc(a.nome)}${extra}</div><div class="small text-muted">CPF ${C.mascararCPFParaExibicao(a.cpf)}</div></td>
-        <td class="d-none d-md-table-cell small">${esc(a.curso)}</td>
-        <td class="d-none d-sm-table-cell small">${esc(a.matricula)}</td></tr>`;
-    }).join("") : `<tr><td colspan="4" class="text-center text-muted py-4">${alunos.length ? "Nenhum aluno nesta lista." : "Nenhum inscrito ainda. Use a aba Dados para criar alunos de demonstração."}</td></tr>`;
-    $("info-chamada").textContent = `${lista.length} aluno(s) na lista`;
-  }
-
-  $("busca-chamada").addEventListener("input", desenharChamada);
-  $("filtro-chamada").addEventListener("change", desenharChamada);
-
-  $("tb-chamada").addEventListener("change", async (e) => {
-    if (!e.target.classList.contains("chk-presenca")) return;
-    const id = e.target.dataset.id;
-    e.target.disabled = true;
-    try {
-      if (e.target.checked) { const r = await API.registrarCheckin(id, atividade, "painel"); registrarUltimo(r.aluno, r.novo); }
-      else await API.removerCheckin(id, atividade);
-      frequencias = await API.listarFrequencias();
-      desenharChamada(); desenharInscritos(); await desenharCertificados();
-    } catch (err) {
-      e.target.checked = !e.target.checked;
-      UI.aviso(err.message || "Erro ao registrar presença.", "erro");
-    } finally { e.target.disabled = false; }
-  });
-
-  $("btn-marcar-todos").addEventListener("click", async (e) => {
-    const presentes = presentesNaAtividade();
-    const ids = [...document.querySelectorAll(".chk-presenca")].map((c) => c.dataset.id).filter((id) => !presentes.has(id));
-    if (!ids.length) { UI.aviso("Todos os alunos visíveis já estão presentes.", "info"); return; }
-    const botao = e.currentTarget;
-    if (!(await UI.confirmar(`Registrar presença de ${ids.length} aluno(s) nesta atividade?`, { titulo: "Confirmar presenças", botao: "Registrar presenças" }))) return;
-    UI.carregando(botao, true, "Registrando...");
-    try {
-      for (const id of ids) await API.registrarCheckin(id, atividade, "lote");
-      await recarregar();
-      UI.aviso(`${ids.length} presença(s) registradas.`, "sucesso");
-    } finally { UI.carregando(botao, false); }
-  });
-
-  function registrarUltimo(aluno, novo) {
-    ultimos.unshift({ nome: aluno.nome, novo, hora: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) });
-    ultimos.splice(8);
-    $("ultimos").innerHTML = ultimos.map((u) =>
-      `<li class="mb-1"><i class="bi ${u.novo ? "bi-check-circle-fill text-success" : "bi-info-circle text-primary"} me-1"></i><strong>${esc(u.nome)}</strong> <span class="text-muted">· ${u.hora}${u.novo ? "" : " · já estava presente"}</span></li>`).join("");
-  }
-
-  async function checkinAluno(aluno, origem) {
-    const r = await API.registrarCheckin(aluno.id, atividade, origem);
-    registrarUltimo(r.aluno, r.novo);
-    if (r.novo && !inscritoEm(r.aluno, atividade)) UI.aviso(`${r.aluno.nome} não se inscreveu nesta atividade. Presença registrada mesmo assim.`, "alerta");
-    else UI.aviso(r.novo ? `Presença confirmada: ${r.aluno.nome}` : `${r.aluno.nome} já estava presente.`, r.novo ? "sucesso" : "info");
-    bipe(r.novo);
-    frequencias = await API.listarFrequencias();
-    desenharChamada(); desenharInscritos(); await desenharCertificados();
-  }
-
-  $("cpf-rapido").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
-  $("form-cpf-rapido").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const cpf = $("cpf-rapido").value;
-    if (!C.validarCPF(cpf)) { UI.aviso("CPF inválido.", "erro"); bipe(false); return; }
-    const aluno = await API.buscarAlunoPorCPF(cpf);
-    if (!aluno) { UI.aviso("CPF não inscrito na Jornada.", "erro"); bipe(false); return; }
-    try { await checkinAluno(aluno, "cpf"); $("cpf-rapido").value = ""; } catch (err) { UI.aviso(err.message, "erro"); }
-  });
-
-  function bipe(ok) {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.frequency.value = ok ? 880 : 220; g.gain.value = 0.08;
-      o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + (ok ? 0.12 : 0.3));
-    } catch (_) { /* sem áudio */ }
-  }
-
-  /* ---------------- Leitor de QR Code ---------------- */
-  let leitor = null, ultimaLeitura = { texto: "", em: 0 };
-  async function pararCamera() {
-    if (leitor) { try { await leitor.stop(); leitor.clear(); } catch (_) {} leitor = null; }
-    $("btn-camera").innerHTML = '<i class="bi bi-camera me-1"></i>Abrir câmera';
-  }
-  $("btn-camera").addEventListener("click", async () => {
-    if (leitor) { pararCamera(); return; }
-    if (!window.Html5Qrcode) { UI.aviso("Leitor de QR Code indisponível neste navegador.", "erro"); return; }
-    leitor = new Html5Qrcode("leitor");
-    try {
-      await leitor.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 230, height: 230 } }, async (texto) => {
-        if (texto === ultimaLeitura.texto && Date.now() - ultimaLeitura.em < 3000) return; // mesma leitura em sequência
-        ultimaLeitura = { texto, em: Date.now() };
-        try { await checkinAluno(await API.validarIngresso(texto), "qrcode"); }
-        catch (err) { UI.aviso(err.message, "erro"); bipe(false); }
-      });
-      $("btn-camera").innerHTML = '<i class="bi bi-stop-circle me-1"></i>Fechar câmera';
-    } catch (err) {
-      leitor = null;
-      UI.aviso("Não foi possível abrir a câmera. Verifique a permissão ou use o check-in por CPF.", "erro");
-    }
-  });
 
   /* ---------------- Inscritos ---------------- */
   function situacaoDe(aluno) {
@@ -355,6 +215,44 @@
     UI.aviso(`${lista.length} inscrito(s) exportados.`, "sucesso");
   });
 
+  /* ---------------- Comissão organizadora ---------------- */
+  const ROTULO_STATUS = { pendente: ["Aguardando liberação", "badge-pend"], ativo: ["Com acesso", "badge-ok"], bloqueado: ["Bloqueado", "text-bg-danger"] };
+
+  function desenharComissao() {
+    const conta = (st) => membros.filter((m) => m.status === st).length;
+    const pend = conta("pendente");
+    $("st-membros-pendentes").textContent = pend;
+    $("st-membros-ativos").textContent = conta("ativo");
+    $("st-membros-bloqueados").textContent = conta("bloqueado");
+    $("badge-pendentes").textContent = pend;
+    $("badge-pendentes").classList.toggle("d-none", !pend);
+    const feitos = (id) => frequencias.filter((f) => f.registradoPorId === id).length;
+    $("tb-comissao").innerHTML = membros.length ? membros.map((m) => {
+      const [rotulo, cor] = ROTULO_STATUS[m.status] || [m.status, "text-bg-light"];
+      const acao = m.status === "ativo"
+        ? `<button class="btn btn-sm btn-outline-danger btn-membro" data-id="${esc(m.id)}" data-status="bloqueado">Bloquear</button>`
+        : `<button class="btn btn-sm btn-primary btn-membro" data-id="${esc(m.id)}" data-status="ativo">${m.status === "pendente" ? "Liberar acesso" : "Reativar"}</button>`;
+      return `<tr><td class="fw-semibold small">${esc(m.nome)}</td><td class="small">${esc(m.email)}</td>
+        <td class="small d-none d-md-table-cell">${C.mascararCPFParaExibicao(m.cpf)}</td>
+        <td><span class="badge ${cor}">${rotulo}</span></td><td class="small d-none d-md-table-cell">${feitos(m.id)}</td>
+        <td class="text-end">${acao}</td></tr>`;
+    }).join("") : `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum membro cadastrado. Peça à comissão para criar o cadastro na página Check-in.</td></tr>`;
+  }
+
+  $("tb-comissao").addEventListener("click", async (e) => {
+    const b = e.target.closest(".btn-membro");
+    if (!b) return;
+    const m = membros.find((x) => x.id === b.dataset.id);
+    const status = b.dataset.status;
+    if (status === "bloqueado" && !(await UI.confirmar(`${m.nome} não poderá mais registrar check-in até ser reativado.`, { titulo: "Bloquear acesso", botao: "Bloquear", perigo: true }))) return;
+    try {
+      await API.definirStatusMembro(m.id, status);
+      membros = await API.listarMembros();
+      desenharComissao();
+      UI.aviso(status === "ativo" ? `Acesso liberado para ${m.nome}.` : `Acesso de ${m.nome} bloqueado.`, "sucesso");
+    } catch (err) { UI.aviso(err.message, "erro"); }
+  });
+
   /* ---------------- Dados ---------------- */
   function desenharConfig() {
     const total = API.cargaTotal();
@@ -369,14 +267,15 @@
   }
 
   $("btn-demo").addEventListener("click", async (e) => {
-    UI.carregando(e.currentTarget, true, "Criando...");
+    const botao = e.currentTarget; // guardar antes do await: depois dele, currentTarget vira null
+    UI.carregando(botao, true, "Criando...");
     try { await API.popularDemo(); await recarregar(); UI.aviso("Dados de demonstração criados.", "sucesso"); }
     catch (err) { UI.aviso(err.message, "erro"); }
-    finally { UI.carregando(e.currentTarget, false); }
+    finally { UI.carregando(botao, false); }
   });
 
   $("btn-limpar").addEventListener("click", async () => {
-    if (!(await UI.confirmar("Isso apaga todos os inscritos, presenças e certificados deste navegador.", { titulo: "Apagar todos os dados", botao: "Apagar tudo", perigo: true, exigirTexto: "APAGAR" }))) return;
+    if (!(await UI.confirmar("Isso apaga todos os inscritos, presenças, certificados e cadastros da comissão deste navegador.", { titulo: "Apagar todos os dados", botao: "Apagar tudo", perigo: true, exigirTexto: "APAGAR" }))) return;
     try { await API.limparTudo(); await recarregar(); UI.aviso("Dados apagados.", "sucesso"); }
     catch (err) { UI.aviso(err.message, "erro"); }
   });
