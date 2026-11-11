@@ -31,11 +31,14 @@ body { background: var(--fundo); color: var(--texto); }
 .btn-outline-primary { --bs-btn-color: var(--navy); --bs-btn-border-color: var(--navy); --bs-btn-hover-bg: var(--navy); --bs-btn-hover-border-color: var(--navy); }
 
 /* Hero */
-.hero { background: #fff; border-bottom: 6px solid var(--amarelo); }
+.hero { background: #fff; }
 .hero img.logo { max-width: 100%; height: auto; }
 
 .secao-titulo { font-weight: 800; color: var(--navy); }
 .secao-titulo::after { content: ""; display: block; width: 64px; height: 4px; background: var(--amarelo); border-radius: 2px; margin-top: .5rem; }
+/* Faixa azul com o título da seção por cima (substitui a linha amarela abaixo da logo) */
+.faixa-titulo { background: var(--navy); padding-block: 1.75rem; }
+.faixa-titulo-texto { margin: 0; text-align: center; color: #fff; font-weight: 800; font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.2rem); text-wrap: balance; }
 .text-center .secao-titulo::after, .secao-titulo.text-center::after { margin-left: auto; margin-right: auto; }
 
 .card { border: 0; border-radius: 14px; box-shadow: 0 4px 18px rgba(11, 42, 111, .08); }
