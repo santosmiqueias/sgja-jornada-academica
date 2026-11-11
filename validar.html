@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validar certificado · 6ª Jornada Acadêmica</title>
+  <link rel="icon" href="assets/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="menu"></div>
+  <div class="cabecalho-pagina">
+    <div class="container">
+      <h1 class="fw-bold mb-1">Validar certificado</h1>
+      <p class="mb-0 opacity-75">Confira se um certificado da Jornada é autêntico</p>
+    </div>
+  </div>
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="card p-4 p-md-5">
+          <form id="form-validar" class="row g-2 align-items-end" novalidate>
+            <div class="col-sm-8">
+              <label for="codigo" class="form-label">Código de autenticidade</label>
+              <input type="text" class="form-control form-control-lg font-monospace text-uppercase" id="codigo" maxlength="14" placeholder="XXXX-XXXX-XXXX" required>
+            </div>
+            <div class="col-sm-4 d-grid"><button class="btn btn-primary btn-lg"><i class="bi bi-patch-check me-1"></i>Validar</button></div>
+          </form>
+          <div id="resultado" class="mt-4" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    (function () {
+      const C = SGJACore, API = SGJA_API, UI = SGJA_UI, CFG = SGJA_CONFIG;
+      const campo = document.getElementById("codigo"), res = document.getElementById("resultado");
+      campo.addEventListener("input", () => {
+        const v = campo.value.toUpperCase().replace(/[^A-F0-9]/g, "").slice(0, 12);
+        campo.value = v.match(/.{1,4}/g)?.join("-") || "";
+      });
+      async function validar() {
+        const codigo = campo.value.trim();
+        if (!/^[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(codigo)) {
+          res.innerHTML = `<div class="alert alert-warning">Digite o código completo, no formato XXXX-XXXX-XXXX.</div>`; return;
+        }
+        const cert = await API.buscarCertificadoPorCodigo(codigo);
+        if (!cert) {
+          res.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-octagon me-1"></i><strong>Certificado não encontrado.</strong> Este código não foi emitido pela ${C.escaparHTML(CFG.evento.nome)}.</div>`; return;
+        }
+        res.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-patch-check-fill me-1"></i><strong>Certificado autêntico.</strong>
+          <dl class="row mb-0 mt-2 small">
+            <dt class="col-4">Participante</dt><dd class="col-8">${C.escaparHTML(cert.nome)}</dd>
+            <dt class="col-4">Curso</dt><dd class="col-8">${C.escaparHTML(cert.curso)}</dd>
+            <dt class="col-4">Carga horária</dt><dd class="col-8">${cert.horas} horas</dd>
+            <dt class="col-4">Evento</dt><dd class="col-8">${C.escaparHTML(CFG.evento.nomeCertificado)} · ${C.escaparHTML(CFG.evento.datasTexto)}</dd>
+            <dt class="col-4">Emitido em</dt><dd class="col-8">${UI.formatarDataHora(cert.emitidoEm)}</dd>
+          </dl></div>`;
+      }
+      document.getElementById("form-validar").addEventListener("submit", (e) => { e.preventDefault(); validar(); });
+      const doLink = new URLSearchParams(location.search).get("codigo");
+      if (doLink) { campo.value = doLink.toUpperCase(); validar(); }
+    })();
+  </script>
+</body>
+</html>

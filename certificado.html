@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu certificado · 6ª Jornada Acadêmica</title>
+  <link rel="icon" href="assets/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <div class="cabecalho-pagina">
+    <div class="container">
+      <h1 class="fw-bold mb-1">Meu certificado</h1>
+      <p class="mb-0 opacity-75">Consulte sua presença, recupere seu ingresso e baixe o certificado</p>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card p-4 p-md-5">
+          <form id="form-consulta" class="row g-2 align-items-end" novalidate>
+            <div class="col-sm-8">
+              <label for="cpf" class="form-label">Seu CPF</label>
+              <input type="text" class="form-control form-control-lg" id="cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+              <div class="invalid-feedback">CPF inválido.</div>
+            </div>
+            <div class="col-sm-4 d-grid">
+              <button class="btn btn-primary btn-lg" id="btn-consultar"><i class="bi bi-search me-1"></i>Consultar</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="resultado" class="mt-4" aria-live="polite"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/emailjs.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/certificado-base64.js"></script>
+  <script src="js/certificado-pdf.js"></script>
+  <script src="js/email.js"></script>
+  <script>
+    (function () {
+      const C = SGJACore, API = SGJA_API, UI = SGJA_UI, CFG = SGJA_CONFIG;
+      const $ = (id) => document.getElementById(id);
+      const res = $("resultado");
+      $("cpf").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
+
+      let atual = null;
+
+      $("form-consulta").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const cpf = $("cpf").value;
+        const ok = C.validarCPF(cpf);
+        $("cpf").classList.toggle("is-invalid", !ok);
+        if (!ok) return;
+        UI.carregando($("btn-consultar"), true, "Consultando...");
+        try {
+          const aluno = await API.buscarAlunoPorCPF(cpf);
+          if (!aluno) {
+            res.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i>Não encontramos inscrição com este CPF. <a href="inscricao.html" class="alert-link">Inscreva-se aqui</a>.</div>`;
+            return;
+          }
+          const sit = await API.situacao(aluno.id);
+          atual = { aluno, sit };
+          desenhar(aluno, sit);
+        } catch (err) {
+          console.error(err); UI.aviso("Erro ao consultar. Tente novamente.", "erro");
+        } finally { UI.carregando($("btn-consultar"), false); }
+      });
+
+      function desenhar(aluno, sit) {
+        const pct = Math.min(100, Math.round((sit.feitas / sit.minimo) * 100));
+        const linhas = API.eventos().map((ev) => {
+          const foi = sit.atividades.includes(ev.id);
+          const inscrito = (aluno.atividades || []).includes(ev.id);
+          return `<li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><i class="bi ${foi ? "bi-check-circle-fill text-success" : "bi-circle text-secondary"} me-2" aria-hidden="true"></i>${C.escaparHTML(ev.titulo)}
+            <span class="small text-muted d-block ms-4">${UI.formatarData(ev.data)} · ${C.escaparHTML(ev.turno)}${inscrito ? ' · <i class="bi bi-bookmark-check"></i> inscrito' : ""}</span></span>
+            <span class="badge ${foi ? "badge-ok" : "badge-pend"}">${foi ? "Presente" : "Sem registro"} · ${ev.cargaHoraria}h</span></li>`;
+        }).join("");
+
+        const blocoCert = sit.aprovado
+          ? `<div class="alert alert-success d-flex gap-2 align-items-center"><i class="bi bi-award fs-3"></i><div><strong>Parabéns! Certificado liberado.</strong><br>Você fez check-in em ${sit.feitas} de ${sit.total} atividades (mínimo ${sit.minimo}). Seu certificado terá ${sit.horas} horas.</div></div>
+             <div class="d-flex flex-wrap gap-2">
+               <button class="btn btn-amarelo btn-lg" id="btn-baixar"><i class="bi bi-file-earmark-pdf me-1"></i>Baixar certificado (PDF)</button>
+               <button class="btn btn-outline-primary btn-lg" id="btn-email"><i class="bi bi-envelope me-1"></i>Enviar para meu e-mail</button>
+             </div>`
+          : `<div class="alert alert-warning"><i class="bi bi-hourglass-split me-1"></i>Certificado ainda não liberado: você fez check-in em <strong>${sit.feitas}</strong> atividade(s) e precisa de <strong>${sit.minimo}</strong> (${CFG.evento.percentualMinimoAtividades}% das atividades ofertadas). Falta(m) ${sit.faltam}.</div>`;
+
+        res.innerHTML = `
+          <div class="card p-4 p-md-5">
+            <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
+              <div class="flex-grow-1">
+                <h2 class="h4 fw-bold text-navy mb-1">${C.escaparHTML(aluno.nome)}</h2>
+                <div class="text-muted small">${C.escaparHTML(aluno.curso)} · Matrícula ${C.escaparHTML(aluno.matricula)} · CPF ${C.mascararCPFParaExibicao(aluno.cpf)}</div>
+                <div class="mt-3 d-flex justify-content-between small fw-semibold"><span>Atividades com check-in</span><span>${sit.feitas} de ${sit.minimo} necessárias · ${sit.horas}h</span></div>
+                <div class="progress mt-1" role="progressbar" aria-label="Atividades com check-in" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar ${sit.aprovado ? "bg-success" : ""}" style="width:${pct}%"></div></div>
+                <div class="small text-muted mt-1">Critério: check-in em pelo menos ${sit.minimo} das ${sit.total} atividades.</div>
+              </div>
+              <div class="ingresso p-3 text-center">
+                <img id="qr" alt="QR Code do seu ingresso" width="150" height="150" style="width:150px;height:150px">
+                <div class="small fw-semibold mt-1">Seu ingresso</div>
+              </div>
+            </div>
+            <hr class="my-4">
+            ${blocoCert}
+            <h3 class="h6 fw-bold mt-4">Sua presença por atividade</h3>
+            <ul class="list-group list-group-flush">${linhas}</ul>
+          </div>`;
+        $("qr").src = UI.qrDataURL(aluno.tokenIngresso, 300);
+        if (sit.aprovado) {
+          $("btn-baixar").addEventListener("click", baixar);
+          $("btn-email").addEventListener("click", enviarEmail);
+        }
+      }
+
+      async function prepararPDF() {
+        const cert = await API.salvarCertificado(atual.aluno, atual.sit.horas);
+        return { cert, doc: SGJA_PDF.gerar(atual.aluno, cert) };
+      }
+
+      async function baixar(e) {
+        const b = e.currentTarget;
+        UI.carregando(b, true, "Gerando PDF...");
+        try {
+          const { doc } = await prepararPDF();
+          doc.save(SGJA_PDF.nomeArquivo(atual.aluno));
+          UI.aviso("Certificado gerado!", "sucesso");
+        } catch (err) { console.error(err); UI.aviso("Falha ao gerar o certificado.", "erro"); }
+        finally { UI.carregando(b, false); }
+      }
+
+      async function enviarEmail(e) {
+        const b = e.currentTarget;
+        UI.carregando(b, true, "Enviando...");
+        try {
+          const { cert, doc } = await prepararPDF();
+          await SGJA_EMAIL.enviar(atual.aluno, cert, doc);
+          const [u, d] = atual.aluno.email.split("@");
+          UI.aviso(`Certificado enviado para ${u.slice(0, 2)}***@${d}`, "sucesso");
+        } catch (err) { console.error(err); UI.aviso("Não foi possível enviar o e-mail agora.", "erro"); }
+        finally { UI.carregando(b, false); }
+      }
+    })();
+  </script>
+</body>
+</html>

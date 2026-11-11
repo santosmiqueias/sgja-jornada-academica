@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inscrição · 6ª Jornada Acadêmica</title>
+  <link rel="icon" href="assets/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <div class="cabecalho-pagina">
+    <div class="container">
+      <h1 class="fw-bold mb-1">Inscrição</h1>
+      <p class="mb-0 opacity-75">Gratuita · leva menos de 1 minuto · você recebe um ingresso com QR Code</p>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <div class="card p-4 p-md-5" id="cartao-form">
+          <form id="form-inscricao" novalidate autocomplete="on">
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="nome" class="form-label">Nome completo</label>
+                <input type="text" class="form-control form-control-lg" id="nome" name="nome" maxlength="100" autocomplete="name" placeholder="Como deve sair no certificado" required>
+                <div class="invalid-feedback">Informe nome e sobrenome, só com letras.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="email" name="email" maxlength="120" autocomplete="email" inputmode="email" placeholder="voce@email.com" required>
+                <div class="invalid-feedback">Informe um e-mail válido.</div>
+                <div class="form-text dica">O certificado será enviado para este e-mail.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="telefone" class="form-label">Telefone (WhatsApp)</label>
+                <input type="tel" class="form-control" id="telefone" name="telefone" autocomplete="tel-national" inputmode="numeric" placeholder="(86) 99999-9999" required>
+                <div class="invalid-feedback">Informe DDD + número (celular começa com 9).</div>
+              </div>
+              <div class="col-md-6">
+                <label for="cpf" class="form-label">CPF</label>
+                <input type="text" class="form-control" id="cpf" name="cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+                <div class="invalid-feedback" id="erro-cpf">CPF inválido. Confira os números.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="matricula" class="form-label">Matrícula</label>
+                <input type="text" class="form-control" id="matricula" name="matricula" inputmode="numeric" placeholder="Somente números" required>
+                <div class="invalid-feedback">A matrícula tem de 6 a 12 números.</div>
+              </div>
+              <div class="col-md-8">
+                <label for="curso" class="form-label">Curso</label>
+                <select class="form-select" id="curso" name="curso" required>
+                  <option value="">Selecione seu curso</option>
+                </select>
+                <div class="invalid-feedback">Selecione seu curso.</div>
+              </div>
+              <div class="col-md-4">
+                <label for="periodo" class="form-label">Período <span class="text-muted fw-normal">(opcional)</span></label>
+                <select class="form-select" id="periodo" name="periodo">
+                  <option value="">—</option>
+                  <option>1º</option><option>2º</option><option>3º</option><option>4º</option><option>5º</option>
+                  <option>6º</option><option>7º</option><option>8º</option><option>9º</option><option>10º</option>
+                  <option>Professor</option><option>Convidado</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <fieldset id="atividades" aria-describedby="resumo-atividades">
+                  <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-2">
+                    <legend class="form-label fs-6 mb-0 w-auto">Em quais atividades você vai se inscrever?</legend>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-todas">Marcar todas</button>
+                  </div>
+                  <div class="row g-2" id="lista-atividades"></div>
+                  <div class="small mt-2" id="resumo-atividades" aria-live="polite"></div>
+                  <div class="invalid-feedback" id="erro-atividades">Escolha pelo menos uma atividade.</div>
+                </fieldset>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="lgpd" required>
+                  <label class="form-check-label" for="lgpd">
+                    Autorizo o uso dos meus dados para inscrição, controle de presença e emissão do certificado da Jornada, conforme a LGPD (Lei 13.709/2018).
+                  </label>
+                  <div class="invalid-feedback">É preciso aceitar para concluir a inscrição.</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="whatsapp">
+                  <label class="form-check-label" for="whatsapp">
+                    <i class="bi bi-whatsapp text-success me-1" aria-hidden="true"></i>Quero receber no WhatsApp um lembrete 30 minutos antes das atividades em que me inscrevi.
+                  </label>
+                </div>
+              </div>
+              <!-- Campo-armadilha contra robôs: pessoas não veem nem preenchem -->
+              <div class="d-none" aria-hidden="true"><label for="site">Site</label><input type="text" id="site" tabindex="-1" autocomplete="off"></div>
+              <div class="col-12 d-grid mt-2">
+                <button type="submit" class="btn btn-amarelo btn-lg" id="btn-enviar"><i class="bi bi-check2-circle me-1"></i>Confirmar inscrição</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-4 p-md-5 d-none" id="cartao-sucesso" tabindex="-1">
+          <div class="text-center">
+            <div class="icone-redondo mx-auto mb-3 bg-success-subtle text-success"><i class="bi bi-check-lg"></i></div>
+            <h2 class="h3 fw-bold text-navy">Inscrição confirmada!</h2>
+            <p class="text-muted">Guarde este ingresso. Mostre o QR Code no check-in de cada atividade.</p>
+          </div>
+          <div class="ingresso p-4 mx-auto text-center" style="max-width: 380px;">
+            <div class="small text-uppercase fw-semibold text-muted">6ª Jornada Acadêmica · Ingresso</div>
+            <img id="qr-ingresso" alt="QR Code do ingresso" class="my-3">
+            <div class="fw-bold fs-5" id="ing-nome"></div>
+            <div class="small text-muted" id="ing-curso"></div>
+            <div class="small text-muted">CPF <span id="ing-cpf"></span> · Matrícula <span id="ing-matricula"></span></div>
+            <hr>
+            <div class="small fw-semibold text-start mb-1">Suas atividades</div>
+            <ul class="small text-start ps-3 mb-0" id="ing-atividades"></ul>
+          </div>
+          <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+            <a class="btn btn-primary" id="btn-baixar-qr" download="ingresso-jornada.png"><i class="bi bi-download me-1"></i>Baixar QR Code</a>
+            <a class="btn btn-outline-primary" href="index.html#programacao"><i class="bi bi-calendar3 me-1"></i>Ver programação</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/inscricao.js"></script>
+</body>
+</html>

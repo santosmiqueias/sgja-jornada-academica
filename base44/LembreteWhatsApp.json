@@ -1,0 +1,15 @@
+{
+  "name": "LembreteWhatsApp",
+  "type": "object",
+  "properties": {
+    "chave": { "type": "string", "description": "alunoId:eventoId — único, impede envio repetido" },
+    "alunoId": { "type": "string" },
+    "eventoId": { "type": "string" },
+    "telefone": { "type": "string" },
+    "status": { "type": "string", "enum": ["enviado", "simulado", "falhou"] },
+    "tentativas": { "type": "number" },
+    "erro": { "type": "string" },
+    "enviadoEm": { "type": "string", "format": "date-time" }
+  },
+  "required": ["chave", "alunoId", "eventoId", "status"]
+}

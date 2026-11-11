@@ -1,0 +1,15 @@
+{
+  "name": "Certificado",
+  "type": "object",
+  "properties": {
+    "alunoId": { "type": "string" },
+    "nome": { "type": "string" },
+    "curso": { "type": "string" },
+    "horas": { "type": "number" },
+    "codigo": { "type": "string", "description": "XXXX-XXXX-XXXX, usado na validação pública" },
+    "emitidoEm": { "type": "string", "format": "date-time" },
+    "enviadoPorEmail": { "type": "boolean", "default": false },
+    "enviadoEm": { "type": "string", "format": "date-time" }
+  },
+  "required": ["alunoId", "codigo", "horas"]
+}

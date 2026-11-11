@@ -1,0 +1,12 @@
+{
+  "name": "Frequencia",
+  "type": "object",
+  "properties": {
+    "alunoId": { "type": "string", "description": "id do Aluno" },
+    "eventoId": { "type": "string", "description": "id da atividade (EV01..EV06)" },
+    "checkIn": { "type": "boolean", "default": true },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "origem": { "type": "string", "enum": ["painel", "qrcode", "cpf", "lote", "demo"] }
+  },
+  "required": ["alunoId", "eventoId", "timestamp"]
+}

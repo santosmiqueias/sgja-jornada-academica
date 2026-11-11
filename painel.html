@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do professor · 6ª Jornada Acadêmica</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <div class="cabecalho-pagina">
+    <div class="container d-flex justify-content-between align-items-end flex-wrap gap-2">
+      <div>
+        <h1 class="fw-bold mb-1">Painel do professor</h1>
+        <p class="mb-0 opacity-75">Check-in, inscritos e certificados em tempo real</p>
+      </div>
+      <button class="btn btn-sm btn-outline-light d-none" id="btn-sair"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- Login -->
+    <div class="row justify-content-center" id="tela-login">
+      <div class="col-md-6 col-lg-4">
+        <div class="card p-4">
+          <h2 class="h5 fw-bold text-navy"><i class="bi bi-shield-lock me-1"></i>Acesso restrito</h2>
+          <p class="small text-muted">Área exclusiva para professores e organização.</p>
+          <form id="form-login" novalidate>
+            <label for="pin" class="form-label">PIN de acesso</label>
+            <input type="password" id="pin" class="form-control form-control-lg text-center" inputmode="numeric" maxlength="12" autocomplete="current-password" required>
+            <div class="form-text">Demonstração: PIN <code>2026</code></div>
+            <div class="text-danger small mt-2" id="erro-login" role="alert"></div>
+            <button class="btn btn-primary w-100 mt-3" id="btn-entrar">Entrar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel -->
+    <div class="d-none" id="tela-painel">
+      <div class="card p-3 mb-3">
+        <ul class="nav nav-pills flex-wrap gap-1" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#aba-checkin" type="button" role="tab"><i class="bi bi-qr-code-scan me-1"></i>Check-in</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-inscritos" type="button" role="tab"><i class="bi bi-people me-1"></i>Inscritos</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-certificados" type="button" role="tab"><i class="bi bi-award me-1"></i>Certificados</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-lembretes" type="button" role="tab"><i class="bi bi-whatsapp me-1"></i>Lembretes</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-config" type="button" role="tab"><i class="bi bi-gear me-1"></i>Dados</button></li>
+        </ul>
+      </div>
+
+      <div class="tab-content">
+
+        <!-- CHECK-IN -->
+        <section class="tab-pane fade show active" id="aba-checkin" role="tabpanel">
+          <div class="row g-3 mb-3">
+            <div class="col-lg-6">
+              <label for="sel-atividade" class="form-label">Atividade da chamada</label>
+              <select id="sel-atividade" class="form-select form-select-lg"></select>
+            </div>
+            <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-presentes">0</div><div class="rotulo">Presentes</div></div></div>
+            <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-inscritos">0</div><div class="rotulo">Inscritos</div></div></div>
+            <div class="col-4 col-lg-2"><div class="stat"><div class="valor" id="st-pct">0%</div><div class="rotulo">Presença</div></div></div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-lg-4">
+              <div class="card p-3 mb-3">
+                <h2 class="h6 fw-bold"><i class="bi bi-person-badge me-1"></i>Check-in rápido por CPF</h2>
+                <form id="form-cpf-rapido" class="input-group" novalidate>
+                  <input type="text" class="form-control" id="cpf-rapido" inputmode="numeric" placeholder="Digite o CPF e Enter" aria-label="CPF para check-in">
+                  <button class="btn btn-primary" aria-label="Confirmar check-in"><i class="bi bi-check-lg"></i></button>
+                </form>
+              </div>
+              <div class="card p-3 mb-3">
+                <h2 class="h6 fw-bold"><i class="bi bi-qr-code-scan me-1"></i>Leitura de QR Code</h2>
+                <div id="leitor" class="mb-2"></div>
+                <button class="btn btn-amarelo w-100" id="btn-camera"><i class="bi bi-camera me-1"></i>Abrir câmera</button>
+                <div class="small text-muted mt-2">Aponte para o ingresso do aluno. A presença é registrada na hora.</div>
+              </div>
+              <div class="card p-3">
+                <h2 class="h6 fw-bold mb-2">Últimos registros</h2>
+                <ul class="list-unstyled small mb-0" id="ultimos"><li class="text-muted">Nenhum check-in ainda.</li></ul>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <div class="card p-3">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <input type="search" id="busca-chamada" class="form-control flex-grow-1" style="max-width: 360px" placeholder="Buscar por nome, matrícula ou CPF" aria-label="Buscar aluno na chamada">
+                  <select id="filtro-chamada" class="form-select" style="max-width: 230px" aria-label="Filtrar">
+                    <option value="inscritos">Inscritos nesta atividade</option><option value="ausentes">Inscritos ausentes</option><option value="presentes">Só presentes</option><option value="todos">Todos os participantes</option>
+                  </select>
+                  <button class="btn btn-outline-primary ms-auto" id="btn-marcar-todos"><i class="bi bi-check2-all me-1"></i>Confirmar visíveis</button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-hover lista-chamada mb-0">
+                    <thead><tr><th style="width:56px">Presente</th><th>Aluno</th><th class="d-none d-md-table-cell">Curso</th><th class="d-none d-sm-table-cell">Matrícula</th></tr></thead>
+                    <tbody id="tb-chamada"></tbody>
+                  </table>
+                </div>
+                <div class="text-muted small mt-2" id="info-chamada"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- INSCRITOS -->
+        <section class="tab-pane fade" id="aba-inscritos" role="tabpanel">
+          <div class="card p-3">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <input type="search" id="busca-inscritos" class="form-control" style="max-width: 360px" placeholder="Buscar inscrito" aria-label="Buscar inscrito">
+              <button class="btn btn-outline-primary ms-auto" id="btn-csv"><i class="bi bi-filetype-csv me-1"></i>Exportar CSV</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr><th>Nome</th><th>Curso</th><th>CPF</th><th>Matrícula</th><th>Inscrito em</th><th>Check-ins</th><th>Situação</th><th title="Lembrete WhatsApp"><i class="bi bi-whatsapp" aria-label="Lembrete WhatsApp"></i></th></tr></thead>
+                <tbody id="tb-inscritos"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- CERTIFICADOS -->
+        <section class="tab-pane fade" id="aba-certificados" role="tabpanel">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-aprovados">0</div><div class="rotulo">Aptos ao certificado</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-pendentes">0</div><div class="rotulo">Abaixo do mínimo</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-enviados">0</div><div class="rotulo">Certificados enviados</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-minimo">0</div><div class="rotulo">Mínimo de atividades</div></div></div>
+          </div>
+          <div class="card p-3 mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <div class="flex-grow-1">
+                <h2 class="h6 fw-bold mb-1">Emissão automática</h2>
+                <div class="small text-muted">Gera o PDF de cada aluno apto e envia por e-mail. Quem já recebeu não recebe de novo. Modo de envio: <strong id="modo-email"></strong></div>
+              </div>
+              <button class="btn btn-amarelo" id="btn-lote"><i class="bi bi-send me-1"></i>Gerar e enviar para todos os aptos</button>
+            </div>
+            <div class="progress mt-3 d-none" id="progresso-lote" role="progressbar" aria-label="Progresso do envio"><div class="progress-bar" style="width:0%"></div></div>
+            <div class="small mt-2" id="status-lote" aria-live="polite"></div>
+          </div>
+          <div class="row g-3">
+            <div class="col-lg-7">
+              <div class="card p-3">
+                <h2 class="h6 fw-bold">Alunos aptos</h2>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Nome</th><th>Check-ins</th><th>E-mail</th><th></th></tr></thead>
+                    <tbody id="tb-aptos"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="card p-3">
+                <h2 class="h6 fw-bold">Caixa de saída</h2>
+                <ul class="list-group list-group-flush small" id="caixa-saida"></ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- LEMBRETES WHATSAPP -->
+        <section class="tab-pane fade" id="aba-lembretes" role="tabpanel">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-whats">0</div><div class="rotulo">Autorizaram WhatsApp</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-sem-whats">0</div><div class="rotulo">Sem autorização</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-antecedencia">30 min</div><div class="rotulo">Antecedência</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor fs-5" id="st-servidor">—</div><div class="rotulo">Servidor de envio</div></div></div>
+          </div>
+          <div class="row g-3">
+            <div class="col-lg-7">
+              <div class="card p-3">
+                <h2 class="h6 fw-bold">Agenda de envios</h2>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead><tr><th>Atividade</th><th class="text-nowrap">Início</th><th class="text-nowrap">Lembrete sai</th><th>Situação</th></tr></thead>
+                    <tbody id="tb-lembretes"></tbody>
+                  </table>
+                </div>
+                <p class="small text-muted mt-3 mb-0">Cada lembrete vai só para quem <strong>se inscreveu naquela atividade</strong> e autorizou WhatsApp. O envio é feito pelo servidor (<code>servicos/api-gateway</code>), mesmo com o site fechado, uma única vez por aluno e atividade.</p>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="card p-3 mb-3">
+                <h2 class="h6 fw-bold">Prévia da mensagem</h2>
+                <div class="p-3 rounded small" style="background:#dcf8c6; white-space:pre-line" id="previa-whats"></div>
+              </div>
+              <div class="card p-3">
+                <h2 class="h6 fw-bold">Enviar lista ao servidor</h2>
+                <p class="small text-muted">No modo demonstração os inscritos ficam neste navegador. Exporte o arquivo e salve em <code>servicos/api-gateway/dados/inscritos.json</code>. Com Base44 configurado, o servidor lê direto do banco.</p>
+                <button class="btn btn-primary" id="btn-exportar-whats"><i class="bi bi-download me-1"></i>Exportar inscritos.json</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DADOS -->
+        <section class="tab-pane fade" id="aba-config" role="tabpanel">
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <div class="card p-4 h-100">
+                <h2 class="h6 fw-bold">Configuração atual</h2>
+                <dl class="row small mb-0" id="dl-config"></dl>
+                <p class="small text-muted mt-3 mb-0">Para mudar banco, regra de presença ou e-mail, edite <code>js/config.js</code>.</p>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card p-4 h-100">
+                <h2 class="h6 fw-bold">Dados de demonstração</h2>
+                <p class="small text-muted">Cria 10 alunos fictícios com presenças variadas para ensaiar o pitch.</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <button class="btn btn-primary" id="btn-demo"><i class="bi bi-magic me-1"></i>Popular dados de demonstração</button>
+                  <button class="btn btn-outline-danger" id="btn-limpar"><i class="bi bi-trash me-1"></i>Apagar todos os dados</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/html5-qrcode.min.js"></script>
+  <script src="vendor/emailjs.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/certificado-base64.js"></script>
+  <script src="js/certificado-pdf.js"></script>
+  <script src="js/email.js"></script>
+  <script src="js/painel.js"></script>
+</body>
+</html>

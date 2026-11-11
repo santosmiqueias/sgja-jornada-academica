@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6ª Jornada Acadêmica · UNINASSAU Teresina</title>
+  <meta name="description" content="Inscrição, check-in e certificados da 6ª Jornada Acadêmica da UNINASSAU Teresina — 09 e 10 de dezembro de 2026.">
+  <link rel="icon" href="assets/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <header class="hero py-4 py-lg-5">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7 text-center">
+          <img class="logo" src="assets/img/logo-jornada.jpg" alt="Logo da 6ª Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI" width="1600" height="900">
+        </div>
+        <div class="col-lg-5">
+          <span class="badge rounded-pill text-bg-warning mb-2"><i class="bi bi-calendar-event me-1"></i>09 e 10 de dezembro de 2026</span>
+          <h1 class="fw-bold text-navy display-6">Conhecimento que conecta pessoas e transforma realidades</h1>
+          <p class="lead">Dois dias de palestras, oficinas, mostra científica e hackathon. Faça sua inscrição em 1 minuto, receba seu ingresso com QR Code e baixe o certificado ao final.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="inscricao.html" class="btn btn-amarelo btn-lg"><i class="bi bi-person-plus me-1"></i>Quero me inscrever</a>
+            <a href="certificado.html" class="btn btn-outline-primary btn-lg"><i class="bi bi-award me-1"></i>Meu certificado</a>
+          </div>
+          <p class="small text-muted mt-3 mb-0"><i class="bi bi-people me-1"></i><span id="contador-inscritos">—</span> inscritos até agora · <span id="vagas-texto">20 horas de certificado</span></p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="faixa-pilares py-3" aria-label="Pilares da Jornada">
+    <div class="container">
+      <div class="row text-center g-2 small fw-semibold text-uppercase">
+        <div class="col"><i class="bi bi-mortarboard d-block"></i>Ensino</div>
+        <div class="col"><i class="bi bi-search d-block"></i>Pesquisa</div>
+        <div class="col"><i class="bi bi-people d-block"></i>Extensão</div>
+        <div class="col"><i class="bi bi-lightbulb d-block"></i>Inovação</div>
+        <div class="col"><i class="bi bi-graph-up-arrow d-block"></i>Transformação</div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="container py-5" id="como-funciona">
+      <h2 class="secao-titulo text-center mb-4">Como funciona</h2>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card card-destaque h-100 p-4">
+            <div class="icone-redondo mb-3"><i class="bi bi-1-circle"></i></div>
+            <h3 class="h5 fw-bold">Inscreva-se</h3>
+            <p class="mb-0">Preencha nome, e-mail, telefone, CPF, matrícula e curso. O sistema confere tudo na hora e não aceita inscrição duplicada.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-destaque h-100 p-4">
+            <div class="icone-redondo mb-3"><i class="bi bi-2-circle"></i></div>
+            <h3 class="h5 fw-bold">Faça check-in</h3>
+            <p class="mb-0">Em cada atividade, mostre o QR Code do seu ingresso ou informe o CPF. O professor confirma a presença em segundos.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card card-destaque h-100 p-4">
+            <div class="icone-redondo mb-3"><i class="bi bi-3-circle"></i></div>
+            <h3 class="h5 fw-bold">Receba o certificado</h3>
+            <p class="mb-0">Com check-in em <strong id="regra-minimo">pelo menos 3 atividades</strong>, o certificado em PDF é liberado para download e enviado ao seu e-mail, com código de autenticidade.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white py-5" id="programacao">
+      <div class="container">
+        <h2 class="secao-titulo text-center mb-2">Programação</h2>
+        <p class="text-center text-muted mb-4">Carga horária total de <strong id="carga-total">20</strong> horas · <span id="local-evento"></span></p>
+        <div class="row g-4" id="lista-programacao"></div>
+      </div>
+    </section>
+
+    <section class="container py-5" id="faq">
+      <h2 class="secao-titulo text-center mb-4">Dúvidas frequentes</h2>
+      <div class="accordion col-lg-9 mx-auto" id="acordeao-faq">
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1" aria-expanded="true">Quem pode participar?</button></h3>
+          <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#acordeao-faq"><div class="accordion-body">Alunos, professores e convidados da UNINASSAU Teresina. A inscrição é gratuita e exige matrícula.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Perdi meu ingresso. E agora?</button></h3>
+          <div id="f2" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Acesse <a href="certificado.html">Meu certificado</a>, informe seu CPF e o QR Code aparece de novo. No check-in, o professor também encontra você pelo CPF.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">Como sei se um certificado é verdadeiro?</button></h3>
+          <div id="f3" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Todo certificado traz um código e um QR Code. Qualquer pessoa pode conferir em <a href="validar.html">Validar certificado</a>.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f4">O que é feito com meus dados?</button></h3>
+          <div id="f4" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Seus dados são usados só para inscrição, presença e emissão do certificado (LGPD, Lei 13.709/2018). O CPF aparece mascarado nas telas do professor.</div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    (async () => {
+      const CFG = SGJA_CONFIG, API = SGJA_API, C = SGJACore, UI = SGJA_UI;
+      const total = API.cargaTotal();
+      document.getElementById("carga-total").textContent = total;
+      document.getElementById("local-evento").textContent = CFG.evento.local;
+      document.getElementById("regra-minimo").textContent = `pelo menos ${API.atividadesMinimas()} das ${CFG.eventos.length} atividades (${CFG.evento.percentualMinimoAtividades}%)`;
+      document.getElementById("vagas-texto").textContent = `${total} horas de certificado`;
+
+      const porDia = {};
+      API.eventos().forEach((e) => (porDia[e.data] = porDia[e.data] || []).push(e));
+      const nomesDia = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+      document.getElementById("lista-programacao").innerHTML = Object.entries(porDia).map(([data, evs], i) => {
+        const dia = nomesDia[new Date(data + "T12:00:00").getDay()];
+        const itens = evs.map((e) => `
+          <div class="atividade d-flex justify-content-between gap-3">
+            <div>
+              <div class="small text-muted"><i class="bi bi-clock me-1"></i>${C.escaparHTML(e.horario)} · ${C.escaparHTML(e.turno)}</div>
+              <div class="fw-semibold">${C.escaparHTML(e.titulo)}</div>
+              <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${C.escaparHTML(e.sala)}</div>
+            </div>
+            <span class="carga align-self-start">${e.cargaHoraria}h</span>
+          </div>`).join("");
+        return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">Dia ${i + 1} · ${dia}, ${UI.formatarData(data)}</h3>${itens}</div></div>`;
+      }).join("");
+
+      try { document.getElementById("contador-inscritos").textContent = (await API.listarAlunos()).length; }
+      catch (_) { document.getElementById("contador-inscritos").textContent = "—"; }
+    })();
+  </script>
+</body>
+</html>
