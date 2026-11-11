@@ -114,7 +114,94 @@
     const site = /^https?:/.test(location.protocol) ? `${location.host}${location.pathname.replace(/[^/]*$/, "")}validar.html` : "validar.html";
     doc.text(`Valide em: ${site}`.slice(0, 60), mmX(1370), mmY(560) + q + 9.5, { align: "center" });
 
+    desenharVerso(doc, aluno, cert, site);
     return doc;
+  }
+
+  /*
+   * Verso: relação das atividades em que o participante fez check-in, com a carga horária de cada uma.
+   * cert.atividades = ids dos eventos com presença (ordem da programação).
+   */
+  function desenharVerso(doc, aluno, cert, site) {
+    const ev = CFG.evento;
+    const AMARELO = [245, 196, 0], CLARO = [242, 245, 251], BORDA = [214, 220, 234];
+    const ids = Array.isArray(cert.atividades) ? cert.atividades : [];
+    const feitas = CFG.eventos.filter((e) => ids.includes(e.id));
+    const total = feitas.reduce((s, e) => s + e.cargaHoraria, 0);
+    const M = 18;                                   // margem lateral
+    doc.addPage("a4", "landscape");
+
+    // Cabeçalho azul com faixa amarela
+    doc.setFillColor(...AZUL); doc.rect(0, 0, PAG_W, 26, "F");
+    doc.setFillColor(...AMARELO); doc.rect(0, 26, PAG_W, 1.6, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    doc.text("Relação de atividades com presença", M, 13);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text(`${ev.nomeCertificado} · ${ev.datasTexto} · ${ev.instituicao} – ${ev.cidade}`, M, 20);
+
+    // Participante
+    let y = 40;
+    doc.setTextColor(...CINZA); doc.setFontSize(8.5);
+    doc.text("PARTICIPANTE", M, y);
+    doc.text("CURSO", 150, y);
+    doc.text("CPF", 240, y);
+    doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.text(doc.splitTextToSize(aluno.nome.toUpperCase(), 128)[0], M, y + 6);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    doc.text(doc.splitTextToSize(aluno.curso, 86)[0], 150, y + 6);
+    doc.text(C.mascararCPFParaExibicao(aluno.cpf), 240, y + 6);
+
+    // Tabela
+    const col = { atividade: M + 3, data: 168, horario: 196, carga: PAG_W - M - 3 };
+    y = 58;
+    doc.setFillColor(...AZUL); doc.rect(M, y, PAG_W - 2 * M, 9, "F");
+    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(9.5);
+    doc.text("Atividade", col.atividade, y + 6);
+    doc.text("Data", col.data, y + 6);
+    doc.text("Horário", col.horario, y + 6);
+    doc.text("Carga horária", col.carga, y + 6, { align: "right" });
+    y += 9;
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    if (!feitas.length) {
+      doc.setTextColor(...CINZA);
+      doc.text("Nenhuma atividade com presença registrada.", col.atividade, y + 7);
+      y += 11;
+    }
+    feitas.forEach((e, i) => {
+      const linhas = doc.splitTextToSize(e.titulo, col.data - col.atividade - 6);
+      const h = Math.max(9, 4 + linhas.length * 4.6);
+      if (i % 2 === 0) { doc.setFillColor(...CLARO); doc.rect(M, y, PAG_W - 2 * M, h, "F"); }
+      doc.setTextColor(...AZUL);
+      doc.text(linhas, col.atividade, y + 6);
+      doc.setTextColor(...CINZA);
+      doc.text(UI.formatarData(e.data), col.data, y + 6);
+      doc.text(`${e.horario} (${e.turno})`, col.horario, y + 6);
+      doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold");
+      doc.text(`${e.cargaHoraria} horas`, col.carga, y + 6, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      y += h;
+    });
+    doc.setDrawColor(...BORDA); doc.setLineWidth(0.3); doc.rect(M, 58, PAG_W - 2 * M, y - 58);
+
+    // Total
+    doc.setFillColor(255, 246, 204); doc.rect(M, y, PAG_W - 2 * M, 11, "F");
+    doc.setDrawColor(...AMARELO); doc.setLineWidth(0.6); doc.line(M, y, PAG_W - M, y);
+    doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text(`Atividades com presença: ${feitas.length} de ${CFG.eventos.length}`, col.atividade, y + 7.3);
+    doc.text(`Carga horária total: ${total} horas`, col.carga, y + 7.3, { align: "right" });
+    y += 11;
+
+    // Critério e autenticidade
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...CINZA);
+    const minimo = C.atividadesMinimas(CFG.eventos.length, ev.percentualMinimoAtividades);
+    doc.text(`Critério para o certificado: check-in em pelo menos ${minimo} das ${CFG.eventos.length} atividades ofertadas (${ev.percentualMinimoAtividades}%).`, M, y + 8);
+
+    doc.setFillColor(...AZUL); doc.rect(0, PAG_H - 14, PAG_W, 14, "F");
+    doc.setTextColor(255, 255, 255); doc.setFontSize(9);
+    doc.text(`Código de autenticidade: ${cert.codigo}`, M, PAG_H - 5.5);
+    doc.text(`Valide em: ${site}`.slice(0, 80), PAG_W - M, PAG_H - 5.5, { align: "right" });
   }
 
   function nomeArquivo(aluno) {

@@ -252,11 +252,13 @@
 
     async listarCertificados() { return store.list(ENTIDADES.certificado); },
 
-    async salvarCertificado(aluno, horas) {
+    // atividades: ids dos eventos com presença (vão no verso do certificado e na validação).
+    async salvarCertificado(aluno, horas, atividades) {
       const codigo = await C.gerarCodigoCertificado(aluno.id, aluno.cpf, horas, CFG.segredoAssinatura);
       const lista = await store.list(ENTIDADES.certificado);
       const existente = lista.find((c) => c.alunoId === aluno.id);
-      const dados = { alunoId: aluno.id, nome: aluno.nome, curso: aluno.curso, horas, codigo, emitidoEm: new Date().toISOString() };
+      const ids = CFG.eventos.map((e) => e.id).filter((id) => Array.isArray(atividades) && atividades.includes(id));
+      const dados = { alunoId: aluno.id, nome: aluno.nome, curso: aluno.curso, horas, atividades: ids, codigo, emitidoEm: new Date().toISOString() };
       if (existente) return store.update(ENTIDADES.certificado, existente.id, { ...dados, emitidoEm: existente.emitidoEm });
       return store.create(ENTIDADES.certificado, { ...dados, enviadoPorEmail: false });
     },

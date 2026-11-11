@@ -73,6 +73,8 @@
   }
 
   /* ---------------- Inscritos ---------------- */
+  const atividadesDe = (aluno) => C.calcularHoras(frequencias, CFG.eventos, aluno.id).atividades;
+
   function situacaoDe(aluno) {
     const { horas, atividades } = C.calcularHoras(frequencias, CFG.eventos, aluno.id);
     return C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas);
@@ -136,7 +138,7 @@
     const b = e.target.closest(".btn-pdf");
     if (!b) return;
     const aluno = alunos.find((a) => a.id === b.dataset.id);
-    const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas);
+    const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas, atividadesDe(aluno));
     SGJA_PDF.gerar(aluno, cert).save(SGJA_PDF.nomeArquivo(aluno));
     certificados = await API.listarCertificados();
   });
@@ -154,7 +156,7 @@
       const aluno = fila[i];
       $("status-lote").textContent = `Processando ${i + 1} de ${fila.length}: ${aluno.nome}`;
       try {
-        const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas);
+        const cert = await API.salvarCertificado(aluno, situacaoDe(aluno).horas, atividadesDe(aluno));
         await SGJA_EMAIL.enviar(aluno, cert, SGJA_PDF.gerar(aluno, cert));
         ok++;
       } catch (err) { console.error(err); falhas++; }

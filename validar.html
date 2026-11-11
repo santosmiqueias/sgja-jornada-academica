@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Validar certificado · VI Jornada Acadêmica</title>
-  <link rel="icon" href="assets/img/favicon.png?v=202611112208">
+  <link rel="icon" href="assets/img/favicon.png?v=202611112219">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611112208">
+  <link rel="stylesheet" href="css/style.css?v=202611112219">
 </head>
 <body>
   <div id="menu"></div>
@@ -37,10 +37,10 @@
   <div id="rodape"></div>
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js?v=202611112208"></script>
-  <script src="js/core.js?v=202611112208"></script>
-  <script src="js/api.js?v=202611112208"></script>
-  <script src="js/ui.js?v=202611112208"></script>
+  <script src="js/config.js?v=202611112219"></script>
+  <script src="js/core.js?v=202611112219"></script>
+  <script src="js/api.js?v=202611112219"></script>
+  <script src="js/ui.js?v=202611112219"></script>
   <script>
     (function () {
       const C = SGJACore, API = SGJA_API, UI = SGJA_UI, CFG = SGJA_CONFIG;
@@ -63,6 +63,7 @@
             <dt class="col-4">Participante</dt><dd class="col-8">${C.escaparHTML(cert.nome)}</dd>
             <dt class="col-4">Curso</dt><dd class="col-8">${C.escaparHTML(cert.curso)}</dd>
             <dt class="col-4">Carga horária</dt><dd class="col-8">${cert.horas} horas</dd>
+            ${Array.isArray(cert.atividades) && cert.atividades.length ? `<dt class="col-4">Atividades</dt><dd class="col-8"><ul class="mb-0 ps-3">${CFG.eventos.filter((e) => cert.atividades.includes(e.id)).map((e) => `<li>${C.escaparHTML(e.titulo)} · ${e.cargaHoraria}h</li>`).join("")}</ul></dd>` : ""}
             <dt class="col-4">Evento</dt><dd class="col-8">${C.escaparHTML(CFG.evento.nomeCertificado)} · ${C.escaparHTML(CFG.evento.datasTexto)}</dd>
             <dt class="col-4">Emitido em</dt><dd class="col-8">${UI.formatarDataHora(cert.emitidoEm)}</dd>
           </dl></div>`;

@@ -37,7 +37,7 @@ Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo 
 | 17 | QR Code falso | Ler QR qualquer | "QR Code não pertence à Jornada" | manual |
 | 18 | Critério do certificado | Consultar aluno com 2 check-ins e outro com 3 | 2: "Falta(m) 1", sem botão de PDF. 3: certificado liberado | ✅ |
 | 19 | Envio em lote | Certificados → Gerar e enviar | Barra de progresso; 2º clique não reenvia | ✅ |
-| 20 | PDF | Baixar certificado | Nome, horas, curso, data e código nas posições certas | ✅ |
+| 20 | PDF | Baixar certificado | Frente: nome, horas, curso, data e código nas posições certas. Verso: só as atividades com check-in, carga de cada uma e total | ✅ |
 | 21 | Validação | Abrir `validar.html?codigo=` do PDF | "Certificado autêntico" | ✅ |
 | 22 | Código falso | `AAAA-BBBB-CCCC` | "Certificado não encontrado" | ✅ |
 | 23 | Celular | Abrir em 390 px de largura | Sem rolagem lateral, botões grandes | ✅ |

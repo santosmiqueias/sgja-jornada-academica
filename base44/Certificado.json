@@ -2,14 +2,45 @@
   "name": "Certificado",
   "type": "object",
   "properties": {
-    "alunoId": { "type": "string" },
-    "nome": { "type": "string" },
-    "curso": { "type": "string" },
-    "horas": { "type": "number" },
-    "codigo": { "type": "string", "description": "XXXX-XXXX-XXXX, usado na validação pública" },
-    "emitidoEm": { "type": "string", "format": "date-time" },
-    "enviadoPorEmail": { "type": "boolean", "default": false },
-    "enviadoEm": { "type": "string", "format": "date-time" }
+    "alunoId": {
+      "type": "string"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "curso": {
+      "type": "string"
+    },
+    "horas": {
+      "type": "number"
+    },
+    "codigo": {
+      "type": "string",
+      "description": "XXXX-XXXX-XXXX, usado na validação pública"
+    },
+    "emitidoEm": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "enviadoPorEmail": {
+      "type": "boolean",
+      "default": false
+    },
+    "enviadoEm": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "atividades": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ids das atividades com presença (EV01..EV06), impressas no verso"
+    }
   },
-  "required": ["alunoId", "codigo", "horas"]
+  "required": [
+    "alunoId",
+    "codigo",
+    "horas"
+  ]
 }
