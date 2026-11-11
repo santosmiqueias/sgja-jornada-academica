@@ -142,13 +142,14 @@
     const presentes = presentesNaAtividade();
     const ids = [...document.querySelectorAll(".chk-presenca")].map((c) => c.dataset.id).filter((id) => !presentes.has(id));
     if (!ids.length) { UI.aviso("Todos os alunos visíveis já estão presentes.", "info"); return; }
-    if (!confirm(`Confirmar presença de ${ids.length} aluno(s) nesta atividade?`)) return;
-    UI.carregando(e.currentTarget, true, "Registrando...");
+    const botao = e.currentTarget;
+    if (!(await UI.confirmar(`Registrar presença de ${ids.length} aluno(s) nesta atividade?`, { titulo: "Confirmar presenças", botao: "Registrar presenças" }))) return;
+    UI.carregando(botao, true, "Registrando...");
     try {
       for (const id of ids) await API.registrarCheckin(id, atividade, "lote");
       await recarregar();
       UI.aviso(`${ids.length} presença(s) registradas.`, "sucesso");
-    } finally { UI.carregando(e.currentTarget, false); }
+    } finally { UI.carregando(botao, false); }
   });
 
   function registrarUltimo(aluno, novo) {
@@ -285,7 +286,7 @@
     const jaEnviados = new Set(certificados.filter((c) => c.enviadoPorEmail).map((c) => c.alunoId));
     const fila = alunos.filter((a) => situacaoDe(a).aprovado && !jaEnviados.has(a.id));
     if (!fila.length) { UI.aviso("Nenhum certificado pendente de envio.", "info"); return; }
-    if (!confirm(`Gerar e enviar ${fila.length} certificado(s) por e-mail?`)) return;
+    if (!(await UI.confirmar(`Gerar e enviar ${fila.length} certificado(s) por e-mail? Quem já recebeu não recebe de novo.`, { titulo: "Enviar certificados", botao: "Gerar e enviar" }))) return;
     UI.carregando(btn, true, "Enviando...");
     const barra = $("progresso-lote"); barra.classList.remove("d-none");
     let ok = 0, falhas = 0;
@@ -375,7 +376,7 @@
   });
 
   $("btn-limpar").addEventListener("click", async () => {
-    if (prompt('Isso apaga inscritos, presenças e certificados. Digite APAGAR para confirmar.') !== "APAGAR") return;
+    if (!(await UI.confirmar("Isso apaga todos os inscritos, presenças e certificados deste navegador.", { titulo: "Apagar todos os dados", botao: "Apagar tudo", perigo: true, exigirTexto: "APAGAR" }))) return;
     try { await API.limparTudo(); await recarregar(); UI.aviso("Dados apagados.", "sucesso"); }
     catch (err) { UI.aviso(err.message, "erro"); }
   });

@@ -96,7 +96,51 @@
     return canvas ? canvas.toDataURL("image/png") : tmp.querySelector("img").src;
   }
 
+  /*
+   * Confirmação dentro da página (substitui confirm/prompt do navegador).
+   * exigirTexto: a pessoa precisa digitar essa palavra para liberar o botão (ações destrutivas).
+   * Retorna uma Promise<boolean>.
+   */
+  function confirmar(mensagem, opcoes) {
+    const o = Object.assign({ titulo: "Confirmar", botao: "Confirmar", perigo: false, exigirTexto: "" }, opcoes);
+    return new Promise((resolver) => {
+      const el = document.createElement("div");
+      el.className = "modal fade";
+      el.tabIndex = -1;
+      el.setAttribute("aria-labelledby", "confirmar-titulo");
+      el.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+          <div class="modal-header"><h2 class="modal-title h5" id="confirmar-titulo"></h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancelar"></button></div>
+          <div class="modal-body"><p class="mb-0" data-msg></p>
+            <div class="mt-3" data-campo hidden><label class="form-label small" for="confirmar-texto"></label>
+              <input class="form-control" id="confirmar-texto" autocomplete="off"></div></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn ${o.perigo ? "btn-danger" : "btn-primary"}" data-ok></button></div>
+        </div></div>`;
+      el.querySelector(".modal-title").textContent = o.titulo;
+      el.querySelector("[data-msg]").textContent = mensagem;
+      const ok = el.querySelector("[data-ok]");
+      ok.textContent = o.botao;
+      const campo = el.querySelector("#confirmar-texto");
+      if (o.exigirTexto) {
+        el.querySelector("[data-campo]").hidden = false;
+        el.querySelector("label[for=confirmar-texto]").textContent = `Digite ${o.exigirTexto} para confirmar`;
+        ok.disabled = true;
+        campo.addEventListener("input", () => { ok.disabled = campo.value.trim().toUpperCase() !== o.exigirTexto; });
+      }
+      document.body.appendChild(el);
+      const modal = new bootstrap.Modal(el);
+      let resposta = false;
+      ok.addEventListener("click", () => { resposta = true; modal.hide(); });
+      el.addEventListener("shown.bs.modal", () => (o.exigirTexto ? campo : ok).focus());
+      el.addEventListener("hidden.bs.modal", () => { el.remove(); resolver(resposta); });
+      modal.show();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarRodape(); });
 
-  window.SGJA_UI = { aviso, formatarData, formatarDataHora, carregando, qrDataURL };
+  window.SGJA_UI = { aviso, formatarData, formatarDataHora, carregando, qrDataURL, confirmar };
 })();
