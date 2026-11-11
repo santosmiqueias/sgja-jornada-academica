@@ -40,7 +40,7 @@
     const alvo = document.getElementById("rodape");
     if (!alvo) return;
     alvo.innerHTML = `
-      <footer class="bg-navy text-white-50 py-4 mt-5">
+      <footer class="bg-navy text-white-50 py-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
           <span><strong class="text-white">${CFG.evento.nome}</strong> · ${CFG.evento.instituicao} · ${CFG.evento.cidade}</span>
           <span>S.G.J.A — Sistema de Gestão da Jornada Acadêmica · Seus dados são tratados conforme a LGPD</span>

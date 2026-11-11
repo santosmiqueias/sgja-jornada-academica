@@ -14,6 +14,13 @@
 }
 
 body { background: var(--fundo); color: var(--texto); }
+/* Rodapé sempre na parte de baixo: a página ocupa a altura da tela e o conteúdo empurra o rodapé para o fim. */
+body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+body > main { flex: 1 0 auto; }
+#rodape { margin-top: auto; }
+#rodape footer { margin-top: 3rem; }
+/* O menu acompanha a rolagem em todas as páginas. */
+#menu { position: sticky; top: 0; z-index: 1030; }
 .bg-navy { background: var(--navy) !important; }
 .text-navy { color: var(--navy) !important; }
 .text-amarelo { color: var(--amarelo) !important; }
