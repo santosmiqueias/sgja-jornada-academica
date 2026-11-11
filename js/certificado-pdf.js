@@ -102,17 +102,8 @@
       doc.text(ev.cidade, mmX(x), mmY(930), { align: "center" });
     });
 
-    // Autenticidade: QR Code + código.
-    const qr = UI.qrDataURL(urlValidacao(cert.codigo), 300);
-    const q = 24;
-    doc.addImage(qr, "PNG", mmX(1370) - q / 2, mmY(560), q, q);
-    doc.setFontSize(7); doc.setTextColor(...CINZA);
-    doc.text("Código de autenticidade", mmX(1370), mmY(560) + q + 3, { align: "center" });
-    doc.setFont("courier", "bold"); doc.setFontSize(8.5); doc.setTextColor(...AZUL);
-    doc.text(cert.codigo, mmX(1370), mmY(560) + q + 6.5, { align: "center" });
-    doc.setFont("helvetica", "normal"); doc.setFontSize(6.5); doc.setTextColor(...CINZA);
+    // O QR Code de autenticidade fica no verso.
     const site = /^https?:/.test(location.protocol) ? `${location.host}${location.pathname.replace(/[^/]*$/, "")}validar.html` : "validar.html";
-    doc.text(`Valide em: ${site}`.slice(0, 60), mmX(1370), mmY(560) + q + 9.5, { align: "center" });
 
     desenharVerso(doc, aluno, cert, site);
     return doc;
@@ -197,6 +188,18 @@
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...CINZA);
     const minimo = C.atividadesMinimas(CFG.eventos.length, ev.percentualMinimoAtividades);
     doc.text(`Critério para o certificado: check-in em pelo menos ${minimo} das ${CFG.eventos.length} atividades ofertadas (${ev.percentualMinimoAtividades}%).`, M, y + 8);
+
+    // QR Code de autenticidade (canto inferior direito, acima do rodapé)
+    const q = 34;
+    const qx = PAG_W - M - q, qy = Math.max(y + 14, PAG_H - 14 - q - 14);
+    doc.setDrawColor(...BORDA); doc.setLineWidth(0.3);
+    doc.roundedRect(qx - 4, qy - 4, q + 8, q + 15, 2, 2);
+    doc.addImage(UI.qrDataURL(urlValidacao(cert.codigo), 300), "PNG", qx, qy, q, q);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...CINZA);
+    doc.text("Escaneie para validar", qx + q / 2, qy + q + 4, { align: "center" });
+    doc.setFont("courier", "bold"); doc.setFontSize(9); doc.setTextColor(...AZUL);
+    doc.text(cert.codigo, qx + q / 2, qy + q + 8.5, { align: "center" });
+    doc.setFont("helvetica", "normal");
 
     doc.setFillColor(...AZUL); doc.rect(0, PAG_H - 14, PAG_W, 14, "F");
     doc.setTextColor(255, 255, 255); doc.setFontSize(9);

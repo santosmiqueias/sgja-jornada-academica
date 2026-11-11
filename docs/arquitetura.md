@@ -99,7 +99,7 @@ Para rodar: `cd servicos/api-gateway && npm install && cp .env.example .env` (pr
    - parágrafo com evento, datas e **carga horária realmente cumprida** em negrito;
    - curso e CPF mascarado;
    - data, nomes e cargos das assinaturas (configuráveis);
-   - QR Code e código de autenticidade.
+   - no verso: relação das atividades com presença, carga de cada uma, total, QR Code e código de autenticidade.
 3. O fundo está embutido em `js/certificado-base64.js`, então o PDF é gerado até abrindo o HTML direto do disco.
 
 ## 6. Segurança e LGPD
