@@ -26,7 +26,7 @@
       <nav class="navbar navbar-expand-xl navbar-dark bg-navy sticky-top shadow-sm">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
-            <span class="brand-badge">VI</span><span class="fw-bold">Jornada Acadêmica</span>
+            <span class="brand-badge">6ª</span><span class="fw-bold">Jornada Acadêmica</span>
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Abrir menu">
             <span class="navbar-toggler-icon"></span>
