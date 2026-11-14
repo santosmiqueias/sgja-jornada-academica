@@ -111,6 +111,7 @@
                 <li>${ev.instituicao} — ${ev.cidade}</li>
                 <li>${ev.datasTexto}</li>
                 ${insta ? `<li><a href="${insta}" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram me-1" aria-hidden="true"></i>${usuario}</a></li>` : ""}
+                <li><a href="privacidade.html">Política de privacidade</a></li>
                 <li><a class="rodape-sublinhado" href="painel.html">Painel da organização</a></li>
               </ul>
             </div>

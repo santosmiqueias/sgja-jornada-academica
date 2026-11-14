@@ -218,3 +218,7 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .separador-ou { display: flex; align-items: center; gap: .75rem; color: var(--texto-suave); font-size: .85rem; margin: 1.1rem 0; }
 .separador-ou::before, .separador-ou::after { content: ""; flex: 1; border-top: 1px solid var(--bs-border-color); }
 .botao-google { display: flex; justify-content: center; min-height: 44px; }
+
+/* Política de privacidade */
+.politica h2 { font-size: 1.15rem; font-weight: 700; color: var(--destaque); margin-top: 1.6rem; }
+.politica h2:first-of-type { margin-top: .5rem; }
