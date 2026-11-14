@@ -117,7 +117,7 @@ window.SGJA_CONFIG = {
   // Google Cloud (termina em .apps.googleusercontent.com). Não é segredo. O mesmo valor vai no servidor
   // (GOOGLE_CLIENT_ID no Render). Vazio: o botão do Google não aparece.
   google: {
-    clientId: ""
+    clientId: "154757061583-1okir59e812fhohd1tvofk64nc2vhndh.apps.googleusercontent.com"
   },
 
   // Comissão organizadora: cada membro cria o próprio cadastro em checkin.html
