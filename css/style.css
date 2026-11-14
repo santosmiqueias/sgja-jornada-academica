@@ -222,3 +222,5 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 /* Política de privacidade */
 .politica h2 { font-size: 1.15rem; font-weight: 700; color: var(--destaque); margin-top: 1.6rem; }
 .politica h2:first-of-type { margin-top: .5rem; }
+/* O botão do Google é um iframe com tema claro: sem isto, no modo escuro o navegador pinta um fundo branco atrás dele. */
+.botao-google, .botao-google iframe { color-scheme: light; }
