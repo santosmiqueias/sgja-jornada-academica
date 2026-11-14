@@ -250,7 +250,7 @@ test("limite de submissões por minuto contra robôs", async () => {
 
 test("Hash do professor: tolera nome/aspas/espaços colados, recusa hash cortado e senha errada", () => {
   const h = auth.gerarHash("Senha Teste 2026");
-  for (const v of [h, `PROFESSOR_SENHA_HASH=${h}`, `"${h}" `, `“${h}”`], `${h.slice(0, 40)}\n  ${h.slice(40)}`]) {
+  for (const v of [h, `PROFESSOR_SENHA_HASH=${h}`, `"${h}" `, `“${h}”`, `${h.slice(0, 40)}\n  ${h.slice(40)}`]) {
     assert.equal(auth.conferirHash("Senha Teste 2026", v), true);
     assert.equal(auth.conferirHash("Senha Errada 2026", v), false);
   }
