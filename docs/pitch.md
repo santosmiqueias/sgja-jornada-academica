@@ -45,7 +45,7 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 ## 4:40 – 5:00 · Fechamento
 
 > "O S.G.J.A elimina o retrabalho, protege os dados e entrega o certificado no mesmo dia.
-> Está pronto para rodar na 6ª Jornada em dezembro. Obrigado!"
+> Está pronto para rodar na VI Jornada em dezembro. Obrigado!"
 
 ## Perguntas prováveis da banca
 

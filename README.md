@@ -1,6 +1,6 @@
 # S.G.J.A — Sistema de Gestão da Jornada Acadêmica
 
-Site oficial da **6ª Jornada Acadêmica da UNINASSAU Teresina** (09 e 10 de dezembro de 2026).
+Site oficial da **VI Jornada Acadêmica da UNINASSAU Teresina** (09 e 10 de dezembro de 2026).
 Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de papel, e unificar
 **Inscrição → Check-in → Certificado** num só sistema.
 

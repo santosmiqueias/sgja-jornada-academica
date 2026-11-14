@@ -5,9 +5,9 @@
  */
 window.SGJA_CONFIG = {
   evento: {
-    nome: "6ª Jornada Acadêmica",
-    nomeCompleto: "6ª Jornada Acadêmica da UNINASSAU Teresina",
-    nomeCertificado: "6ª Jornada Acadêmica",
+    nome: "VI Jornada Acadêmica",
+    nomeCompleto: "VI Jornada Acadêmica da UNINASSAU Teresina",
+    nomeCertificado: "VI Jornada Acadêmica",
     instituicao: "Centro Universitário Maurício de Nassau",
     sigla: "UNINASSAU",
     cidade: "Teresina - PI",
@@ -24,7 +24,7 @@ window.SGJA_CONFIG = {
     tema: "Conhecimento que conecta pessoas e transforma realidades",
     assinaturas: [
       { nome: "Profª. Drª. Roselane Moita Pierot", cargo: "Reitora" },
-      { nome: "Prof. [Nome do Coordenador]", cargo: "Coordenador da 6ª Jornada Acadêmica" }
+      { nome: "Prof. [Nome do Coordenador]", cargo: "Coordenador da VI Jornada Acadêmica" }
     ]
   },
 
@@ -45,7 +45,7 @@ window.SGJA_CONFIG = {
     { quando: "16 a 30/11/2026", oque: "Período de submissão de trabalhos" },
     { quando: "05/12/2026", oque: "Divulgação dos trabalhos selecionados" },
     { quando: "05/12/2026", oque: "Definição de dia e horário das apresentações" },
-    { quando: "09 e 10/12/2026", oque: "6ª Jornada Acadêmica" },
+    { quando: "09 e 10/12/2026", oque: "VI Jornada Acadêmica" },
     { quando: "A partir de 14/12/2026", oque: "Certificados disponíveis no site do evento" }
   ],
 
@@ -97,7 +97,7 @@ window.SGJA_CONFIG = {
   email: {
     modo: "simulado",
     emailjs: { publicKey: "", serviceId: "", templateId: "" },
-    assunto: "Seu certificado — 6ª Jornada Acadêmica UNINASSAU"
+    assunto: "Seu certificado — VI Jornada Acadêmica UNINASSAU"
   },
 
   // Lembrete por WhatsApp antes de cada atividade (enviado pelo servidor: servicos/api-gateway).

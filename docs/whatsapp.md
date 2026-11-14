@@ -13,7 +13,7 @@
 Exemplo de mensagem:
 
 ```
-Olá, Maria! ⏰ Faltam 30 minutos para "Abertura e Palestra Magna" na 6ª Jornada Acadêmica.
+Olá, Maria! ⏰ Faltam 30 minutos para "Abertura e Palestra Magna" na VI Jornada Acadêmica.
 🕗 Início: 08:00
 📍 Local: Auditório Principal
 Leve o QR Code do seu ingresso para o check-in. Até já!
@@ -65,7 +65,7 @@ No sandbox, só recebe quem fez o `join`. Para todos os alunos, é preciso um n�
 3. Em **Modelos de mensagem**, crie o modelo `lembrete_atividade`, categoria **Utilidade**, idioma **Português (BR)**:
 
    ```
-   Olá, {{1}}! Faltam {{2}} minutos para "{{3}}" na 6ª Jornada Acadêmica.
+   Olá, {{1}}! Faltam {{2}} minutos para "{{3}}" na VI Jornada Acadêmica.
    Início: {{4}}
    Local: {{5}}
    Leve o QR Code do seu ingresso para o check-in.
