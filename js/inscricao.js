@@ -10,7 +10,6 @@
   CFG.cursos.forEach((c) => selectCurso.add(new Option(c, c)));
 
   // Lista de atividades para o aluno escolher.
-  const minimo = API.atividadesMinimas();
   $("lista-atividades").innerHTML = API.eventos().map((ev) => `
     <div class="col-md-6">
       <label class="opcao-atividade">
@@ -28,10 +27,8 @@
     const horas = API.eventos().filter((e) => ids.includes(e.id)).reduce((s, e) => s + e.cargaHoraria, 0);
     const r = $("resumo-atividades");
     if (!ids.length) { r.innerHTML = '<span class="text-muted">Nenhuma atividade escolhida.</span>'; }
-    else if (ids.length < minimo) {
-      r.innerHTML = `<i class="bi bi-exclamation-triangle text-warning me-1" aria-hidden="true"></i>${ids.length} atividade(s) · ${horas}h. Para ter certificado, é preciso fazer check-in em pelo menos <strong>${minimo} atividades</strong>.`;
-    } else {
-      r.innerHTML = `<i class="bi bi-check-circle text-success me-1" aria-hidden="true"></i>${ids.length} atividade(s) · ${horas}h. Com check-in em ${minimo} delas você já garante o certificado.`;
+    else {
+      r.innerHTML = `<i class="bi bi-check-circle text-success me-1" aria-hidden="true"></i>${ids.length} atividade(s) · ${horas}h. Participando de pelo menos ${API.diasMinimos()} dia do evento, você recebe o certificado de ${CFG.evento.cargaHorariaTotal} horas.`;
     }
     $("btn-todas").textContent = ids.length === API.eventos().length ? "Desmarcar todas" : "Marcar todas";
     if (ids.length) $("atividades").classList.remove("is-invalid");

@@ -127,6 +127,22 @@
     return { aprovado: feitas >= minimo, feitas, total: totalAtividades, minimo, faltam: Math.max(0, minimo - feitas), horas: horas || 0 };
   }
 
+  /*
+   * Critério do certificado: participar de pelo menos N dias do evento (ter check-in em
+   * alguma atividade daquele dia). Quem cumpre recebe o certificado da carga total do evento.
+   */
+  function avaliarCertificado(frequencias, eventos, alunoId, diasMinimos, cargaEvento) {
+    const { horas, atividades } = calcularHoras(frequencias, eventos, alunoId);
+    const diasEvento = [...new Set(eventos.map((e) => e.data))];
+    const dias = [...new Set(eventos.filter((e) => atividades.includes(e.id)).map((e) => e.data))];
+    const minimo = Math.max(1, Number(diasMinimos) || 1);
+    return {
+      aprovado: dias.length >= minimo, feitas: atividades.length, total: eventos.length,
+      dias: dias.length, totalDias: diasEvento.length, minimo, faltam: Math.max(0, minimo - dias.length),
+      horas, horasCertificado: Number(cargaEvento) || 0, atividades
+    };
+  }
+
   /* ---------- Assinaturas (QR Code e código do certificado) ---------- */
 
   async function sha256Hex(texto) {
@@ -232,14 +248,14 @@
     const hora = String(ev.horario).split(/[–-]/)[0].trim();
     return `Olá, ${primeiro}! ⏰ Faltam ${minutos || 30} minutos para "${ev.titulo}" na ${nomeEvento}.\n` +
       `🕗 Início: ${hora}\n📍 Local: ${ev.sala}\n` +
-      `Leve o QR Code do seu ingresso para o check-in. Até já!`;
+      `Leve o QR Code do seu ingresso para o check-in e 1 kg de alimento para doação. Até já!`;
   }
 
   return {
     soDigitos, validarCPF, validarEmail, validarTelefone, validarNome, validarMatricula,
     aplicarMascara, mascaraCPF, mascaraTelefone, mascaraMatricula,
     normalizarNome, capitalizarNome, normalizarEmail, mascararCPFParaExibicao,
-    calcularHoras, atividadesMinimas, situacaoAluno,
+    calcularHoras, atividadesMinimas, situacaoAluno, avaliarCertificado,
     sha256Hex, gerarTokenIngresso, lerTokenIngresso, gerarCodigoCertificado,
     inicioEvento, eventosParaLembrete, telefoneE164, mensagemLembrete, recebeLembrete, validarAtividades,
     validarSenha, gerarSalt, hashSenha,

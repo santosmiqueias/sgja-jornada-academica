@@ -26,11 +26,10 @@
     ErroNegocio,
     backend: MODO,
     eventos() { return CFG.eventos.slice(); },
-    atividadesMinimas() { return C.atividadesMinimas(CFG.eventos.length, CFG.evento.percentualMinimoAtividades); },
+    diasMinimos() { return Math.max(1, Number(CFG.evento.diasMinimosCertificado) || 1); },
     cargaTotal() { return CFG.eventos.reduce((s, e) => s + e.cargaHoraria, 0); },
     situacaoDe(alunoId, frequencias) {
-      const { horas, atividades } = C.calcularHoras(frequencias, CFG.eventos, alunoId);
-      return { ...C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas), atividades };
+      return C.avaliarCertificado(frequencias, CFG.eventos, alunoId, CFG.evento.diasMinimosCertificado, CFG.evento.cargaHorariaTotal);
     },
     sessaoComissao() { return valida(sessao.ler("sgja_sessao_comissao")); },
     sessaoProfessor() { return !!valida(sessao.ler("sgja_sessao_professor")); },

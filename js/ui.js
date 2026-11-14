@@ -39,12 +39,15 @@
   function montarRodape() {
     const alvo = document.getElementById("rodape");
     if (!alvo) return;
+    const insta = CFG.evento.instagram;
+    const usuario = insta ? "@" + insta.replace(/\/+$/, "").split("/").pop() : "";
     alvo.innerHTML = `
       <footer class="bg-navy text-white-50 py-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
-          <span><strong class="text-white">${CFG.evento.nome}</strong> · ${CFG.evento.instituicao} · ${CFG.evento.cidade}</span>
-          <span>S.G.J.A — Sistema de Gestão da Jornada Acadêmica · Seus dados são tratados conforme a LGPD</span>
+          <span><strong class="text-white">${CFG.evento.nomeCompleto || CFG.evento.nome}</strong> · ${CFG.evento.instituicao} · ${CFG.evento.cidade}</span>
+          ${insta ? `<a class="link-rede" href="${insta}" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram me-1" aria-hidden="true"></i>${usuario}</a>` : ""}
         </div>
+        <div class="container small mt-2">S.G.J.A — Sistema de Gestão da Jornada Acadêmica · Seus dados são tratados conforme a LGPD</div>
       </footer>`;
   }
 

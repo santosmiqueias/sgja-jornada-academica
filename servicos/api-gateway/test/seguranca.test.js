@@ -130,13 +130,13 @@ test("QR Code forjado é recusado; QR verdadeiro registra presença com o nome d
   assert.equal(dados.frequencias.find((f) => f.alunoId === ana.id).registradoPorNome, "Paula Martins Lima");
 });
 
-test("certificado: participante não apto não emite; horas não podem ser impostas", async () => {
-  const r = await chamar("POST", "/publico/certificado", { cpf: alunoBase(0).cpf, email: alunoBase(0).email, horas: 20 });
-  assert.equal(r.status, 403);
-  for (const ev of ["EV02", "EV03"]) await chamar("POST", "/comissao/checkin", { cpf: alunoBase(0).cpf, eventoId: ev }, tokenCom);
-  const ok = await chamar("POST", "/publico/certificado", { cpf: alunoBase(0).cpf, email: alunoBase(0).email, horas: 20 });
+test("certificado: sem presença não emite; com 1 dia sai de 20h; horas não podem ser impostas", async () => {
+  const dados = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados;
+  const semPresenca = dados.alunos.find((a) => !dados.frequencias.some((f) => f.alunoId === a.id));
+  assert.equal((await chamar("POST", `/professor/certificados/${semPresenca.id}`, undefined, tokenProf)).status, 403);
+  const ok = await chamar("POST", "/publico/certificado", { cpf: alunoBase(0).cpf, email: alunoBase(0).email, horas: 5 });
   assert.equal(ok.status, 200);
-  assert.equal(ok.dados.certificado.horas, 10); // calculado pelas presenças, não pelo que foi enviado
+  assert.equal(ok.dados.certificado.horas, 20); // regra do evento, não o que foi enviado
   const v = await chamar("GET", `/publico/certificados/${ok.dados.certificado.codigo}`);
   assert.equal(v.status, 200);
   assert.ok(!("cpf" in v.dados.certificado) && !("alunoId" in v.dados.certificado));

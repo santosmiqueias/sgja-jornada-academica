@@ -27,7 +27,7 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 | 12 | Login do painel do professor | 2/3 | PIN errado bloqueia após 5 tentativas | js/painel.js |
 | 13 | Painel de chamada com caixas de seleção e busca | 2 | marcar presença em 1 clique | painel.html |
 | 14 | Leitor de QR Code e check-in por CPF | 2 | ler QR registra presença e dá bipe | js/painel.js |
-| 15 | Critério do certificado: check-in em 50% das atividades (3 de 6) | 4 | aluno com 2 check-ins não recebe; com 3 recebe | js/core.js |
+| 15 | Critério do certificado: 1 dia de participação = certificado de 20h | 4 | aluno sem presença não recebe; com 1 dia recebe 20h | js/core.js |
 | 16 | Gerar PDF no modelo oficial | 4 | nome, horas, curso e código nas posições certas | js/certificado-pdf.js |
 | 17 | Código de autenticidade + página de validação | 4 | código falso é recusado | validar.html |
 | 18 | Envio do certificado por e-mail (individual e lote) | 4 | aparece na caixa de saída; SMTP real pelo servidor, só para o e-mail da inscrição | js/api.js, servicos/api-gateway |

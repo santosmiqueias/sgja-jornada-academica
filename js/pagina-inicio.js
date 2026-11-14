@@ -3,7 +3,7 @@
   const total = API.cargaTotal();
   document.getElementById("carga-total").textContent = total;
   document.getElementById("local-evento").textContent = CFG.evento.local;
-  document.getElementById("regra-minimo").textContent = `pelo menos ${API.atividadesMinimas()} das ${CFG.eventos.length} atividades (${CFG.evento.percentualMinimoAtividades}%)`;
+  document.getElementById("regra-minimo").textContent = `pelo menos ${API.diasMinimos()} dia do evento`;
   document.getElementById("vagas-texto").textContent = `${total} horas de certificado`;
 
   const porDia = {};

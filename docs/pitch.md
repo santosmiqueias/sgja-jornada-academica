@@ -28,7 +28,7 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 
 ## 2:50 – 4:00 · Certificado automático
 
-1. Aba **Certificados**: "o sistema conta os check-ins: quem esteve em pelo menos 3 das 6 atividades recebe o certificado, com as horas que realmente cumpriu".
+1. Aba **Certificados**: "quem participou de pelo menos 1 dia do evento recebe o certificado de 20 horas; o verso traz toda a programação, para o Currículo Lattes".
 2. **Gerar e enviar para todos os aptos** → barra de progresso, caixa de saída.
 3. Abrir o PDF: modelo oficial, nome, horas cumpridas, código e QR de autenticidade.
 4. Escanear o QR do PDF → **Certificado autêntico**.
@@ -54,4 +54,4 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 - **"E se alguém tentar invadir?"** Senhas com hash, sessões assinadas, bloqueio após 5 erros, cada perfil só vê o necessário. Está tudo em `docs/seguranca.md`, com os testes de ataque.
 - **"Como impede fraude de presença?"** O QR é assinado com SHA-256 e só o professor autenticado registra presença.
 - **"E a LGPD?"** Consentimento obrigatório, CPF mascarado nas telas e no PDF, dados usados só para a finalidade informada.
-- **"Qual o critério do certificado?"** Check-in em pelo menos 50% das atividades ofertadas (3 de 6). É um parâmetro em `js/config.js`; se o número de atividades mudar, o mínimo é recalculado sozinho.
+- **"Qual o critério do certificado?"** Participar de pelo menos 1 dia do evento. O certificado é de 20 horas (carga total). Está em `js/config.js` (`diasMinimosCertificado`).

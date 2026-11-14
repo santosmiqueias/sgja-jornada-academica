@@ -55,8 +55,7 @@
     async function buscarAlunoPorCPF(cpf) { const d = C.soDigitos(cpf); return (await store.list(ENT.aluno)).find((a) => a.cpf === d) || null; }
 
     async function situacaoDe(alunoId, freqs) {
-      const { horas, atividades } = C.calcularHoras(freqs || (await store.list(ENT.frequencia)), CFG.eventos, alunoId);
-      return { ...C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas), atividades };
+      return C.avaliarCertificado(freqs || (await store.list(ENT.frequencia)), CFG.eventos, alunoId, CFG.evento.diasMinimosCertificado, CFG.evento.cargaHorariaTotal);
     }
 
     // Compara sem vazar tempo (evita descobrir o e-mail letra a letra).
@@ -261,10 +260,11 @@
         const a = await buscarAluno(alunoId);
         if (!a) throw new ErroNegocio("Participante não encontrado.", null, 404);
         const sit = await situacaoDe(a.id);
-        if (!sit.aprovado) throw new ErroNegocio(`Certificado ainda não liberado: faltam ${sit.faltam} atividade(s).`, null, 403);
-        const codigo = await C.gerarCodigoCertificado(a.id, a.cpf, sit.horas, segredo);
+        if (!sit.aprovado) throw new ErroNegocio("Certificado ainda não liberado: é preciso participar de pelo menos 1 dia do evento.", null, 403);
+        // O certificado é da carga total do evento (20h), conforme a coordenação.
+        const codigo = await C.gerarCodigoCertificado(a.id, a.cpf, sit.horasCertificado, segredo);
         const existente = (await store.list(ENT.certificado)).find((c) => c.alunoId === a.id);
-        const dados = { alunoId: a.id, nome: a.nome, curso: a.curso, horas: sit.horas, atividades: sit.atividades, codigo };
+        const dados = { alunoId: a.id, nome: a.nome, curso: a.curso, horas: sit.horasCertificado, atividades: sit.atividades, codigo };
         if (existente) return store.update(ENT.certificado, existente.id, dados);
         return store.create(ENT.certificado, { ...dados, emitidoEm: new Date().toISOString(), enviadoPorEmail: false });
       },

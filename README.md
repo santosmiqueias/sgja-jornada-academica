@@ -11,7 +11,7 @@ Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de pape
 | Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora: cada membro cria cadastro (e-mail e senha) e só entra depois que um professor libera. Chamada com caixas de seleção (mostra os inscritos na atividade), check-in por CPF (modo totem), leitor de QR Code pela câmera, presença em lote, contadores em tempo real, registro de quem confirmou cada presença |
 | Comissão | `painel.html` → aba Comissão | Professor libera, bloqueia ou reativa cada membro da comissão e vê quantos check-ins cada um fez |
 | Inscritos | `painel.html` → aba Inscritos | Lista com horas e situação, exportação CSV para Excel |
-| Certificados | `painel.html` → aba Certificados / `certificado.html` | Libera com check-in em pelo menos 50% das atividades (3 de 6), PDF no modelo oficial com as horas cumpridas e, no verso, a programação completa do evento (todas as atividades e a carga de cada uma, somando 20 horas, para registro no Currículo Lattes) com a presença do participante e o QR Code de validação, envio por e-mail individual ou em lote |
+| Certificados | `painel.html` → aba Certificados / `certificado.html` | Libera para quem participar de pelo menos 1 dia do evento (certificado de 20 horas), PDF no modelo oficial com as horas cumpridas e, no verso, a programação completa do evento (todas as atividades e a carga de cada uma, somando 20 horas, para registro no Currículo Lattes) com a presença do participante e o QR Code de validação, envio por e-mail individual ou em lote |
 | Lembrete WhatsApp | `painel.html` → aba Lembretes + `servicos/api-gateway` | Mensagem automática 30 min antes de cada atividade, só para quem se inscreveu nela e autorizou ([guia](docs/whatsapp.md)) |
 | Validação | `validar.html` | Qualquer pessoa confere se um certificado é verdadeiro (código ou QR Code impresso no PDF) |
 
@@ -53,7 +53,7 @@ Tudo fica em `js/config.js`:
 
 - `backend`: `"local"` (**demonstração**: dados no navegador, PIN 2026) ou `"servidor"` (**evento real**: login por perfil e dados protegidos no servidor). Veja [`docs/seguranca.md`](docs/seguranca.md).
 - `servidor.url`: endereço HTTPS do servidor (`servicos/api-gateway`).
-- `evento.percentualMinimoAtividades`: 50 = certificado para quem fez check-in em pelo menos metade das atividades (3 de 6).
+- `evento.diasMinimosCertificado`: 1 = quem participar de pelo menos 1 dia recebe o certificado de 20 horas (carga total do evento).
 - `eventos`: atividades, datas e carga horária.
 - `evento.assinaturas`: nomes do reitor e do coordenador no certificado.
 

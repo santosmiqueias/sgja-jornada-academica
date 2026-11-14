@@ -67,7 +67,7 @@ Detalhes de autenticação, limites e cabeçalhos em [`seguranca.md`](seguranca.
 
 **Cálculo de horas:** para o aluno, percorre as frequências, conta cada atividade uma única vez e soma a `cargaHoraria`. Atividade inexistente é ignorada.
 
-**Critério do certificado:** `minimo = teto(total de atividades × 50 / 100)`. Com 6 atividades → 3. Aprovado se o aluno tem check-in em `≥ minimo` atividades diferentes (presença repetida na mesma atividade conta uma vez). A carga horária impressa no certificado é a soma das horas das atividades com check-in.
+**Critério do certificado:** participar de pelo menos 1 dia do evento (ter check-in em alguma atividade daquele dia). Quem cumpre recebe o certificado da carga total do evento (20 horas). O número de dias fica em `evento.diasMinimosCertificado`. O verso lista toda a programação, com a coluna de presença.
 
 **QR Code do ingresso:** `SGJA|<alunoId>|<assinatura>`, onde `assinatura = SHA-256(alunoId|cpf|segredo)` (16 primeiros caracteres). Um QR forjado ou de outra pessoa é rejeitado na leitura.
 

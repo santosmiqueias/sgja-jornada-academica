@@ -6,8 +6,8 @@
 npm test
 ```
 
-21 testes unitários: regras (CPF, máscaras, nome, e-mail, telefone, horas, critério de 50% das atividades, QR Code, código do certificado, escape de XSS) e agendador de WhatsApp (janela de 30 min, só inscritos na atividade, envio único, autorização, telefone inválido, nova tentativa após falha).
-Resultado na entrega: **21/21 passando**.
+23 testes unitários: regras (CPF, máscaras, nome, e-mail, telefone, horas, critério de 1 dia de participação (certificado de 20h), QR Code, código do certificado, escape de XSS) e agendador de WhatsApp (janela de 30 min, só inscritos na atividade, envio único, autorização, telefone inválido, nova tentativa após falha).
+Resultado na entrega: **23/23 passando**.
 
 Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo os casos abaixo marcados com ✅.
 
@@ -35,7 +35,7 @@ Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo 
 | 15 | Check-in repetido | Mesmo CPF 2 vezes | "Já estava presente", sem duplicar horas | ✅ (unitário + API) |
 | 16 | CPF não inscrito no check-in | CPF válido que não existe | "CPF não inscrito" + bipe grave | manual |
 | 17 | QR Code falso | Ler QR qualquer | "QR Code não pertence à Jornada" | manual |
-| 18 | Critério do certificado | Consultar aluno com 2 check-ins e outro com 3 | 2: "Falta(m) 1", sem botão de PDF. 3: certificado liberado | ✅ |
+| 18 | Critério do certificado | Consultar aluno sem presença e outro com presença em 1 dia | Sem presença: sem botão de PDF. Com 1 dia: certificado de 20 horas | ✅ |
 | 19 | Envio em lote | Certificados → Gerar e enviar | Barra de progresso; 2º clique não reenvia | ✅ |
 | 20 | PDF | Baixar certificado | Frente: nome, horas, curso, data e código nas posições certas. Verso: todas as atividades do evento com a carga de cada uma e total de 20h, coluna de presença e QR Code | ✅ |
 | 21 | Validação | Abrir `validar.html?codigo=` do PDF | "Certificado autêntico" | ✅ |

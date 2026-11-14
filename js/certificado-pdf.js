@@ -121,7 +121,7 @@
     const todas = CFG.eventos;
     const feitas = todas.filter((e) => ids.includes(e.id));
     const totalEvento = todas.reduce((s, e) => s + e.cargaHoraria, 0);
-    const totalPresenca = feitas.reduce((s, e) => s + e.cargaHoraria, 0);
+    
     const M = 18;                                   // margem lateral
     doc.addPage("a4", "landscape");
 
@@ -183,13 +183,14 @@
     doc.setDrawColor(...AMARELO); doc.setLineWidth(0.6); doc.line(M, y, PAG_W - M, y);
     doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
     doc.text(`Carga horária total do evento: ${totalEvento} horas (${todas.length} atividades)`, col.atividade, y + 7.3);
-    doc.text(`Presença: ${feitas.length} de ${todas.length} atividades · ${totalPresenca} horas`, PAG_W - M - 3, y + 7.3, { align: "right" });
+    const diasPresenca = new Set(feitas.map((e) => e.data)).size, diasEvento = new Set(todas.map((e) => e.data)).size;
+    doc.text(`Presença: ${feitas.length} de ${todas.length} atividades, em ${diasPresenca} de ${diasEvento} dias`, PAG_W - M - 3, y + 7.3, { align: "right" });
     y += 11;
 
     // Critério e autenticidade
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...CINZA);
-    const minimo = C.atividadesMinimas(CFG.eventos.length, ev.percentualMinimoAtividades);
-    doc.text(`Critério para o certificado: check-in em pelo menos ${minimo} das ${CFG.eventos.length} atividades ofertadas (${ev.percentualMinimoAtividades}%).`, M, y + 8);
+    const minimo = Math.max(1, Number(ev.diasMinimosCertificado) || 1);
+    doc.text(`Critério para o certificado: participação em pelo menos ${minimo} dia do evento, com certificado da carga horária total de ${totalEvento} horas.`, M, y + 8);
 
     // QR Code de autenticidade (canto inferior direito, acima do rodapé)
     const q = 34;

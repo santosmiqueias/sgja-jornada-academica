@@ -30,7 +30,7 @@
   });
 
   function desenhar(aluno, sit) {
-    const pct = Math.min(100, Math.round((sit.feitas / sit.minimo) * 100));
+    const pct = Math.min(100, Math.round((sit.dias / sit.minimo) * 100));
     const linhas = API.eventos().map((ev) => {
       const foi = sit.atividades.includes(ev.id);
       const inscrito = (aluno.atividades || []).includes(ev.id);
@@ -41,12 +41,12 @@
     }).join("");
 
     const blocoCert = sit.aprovado
-      ? `<div class="alert alert-success d-flex gap-2 align-items-center"><i class="bi bi-award fs-3"></i><div><strong>Parabéns! Certificado liberado.</strong><br>Você fez check-in em ${sit.feitas} de ${sit.total} atividades (mínimo ${sit.minimo}). Seu certificado terá ${sit.horas} horas.</div></div>
+      ? `<div class="alert alert-success d-flex gap-2 align-items-center"><i class="bi bi-award fs-3"></i><div><strong>Parabéns! Certificado liberado.</strong><br>Você participou de ${sit.dias} de ${sit.totalDias} dias do evento (${sit.feitas} atividades). Seu certificado é de ${sit.horasCertificado} horas.</div></div>
          <div class="d-flex flex-wrap gap-2">
            <button class="btn btn-amarelo btn-lg" id="btn-baixar"><i class="bi bi-file-earmark-pdf me-1"></i>Baixar certificado (PDF)</button>
            <button class="btn btn-outline-primary btn-lg" id="btn-email"><i class="bi bi-envelope me-1"></i>Enviar para meu e-mail</button>
          </div>`
-      : `<div class="alert alert-warning"><i class="bi bi-hourglass-split me-1"></i>Certificado ainda não liberado: você fez check-in em <strong>${sit.feitas}</strong> atividade(s) e precisa de <strong>${sit.minimo}</strong> (${CFG.evento.percentualMinimoAtividades}% das atividades ofertadas). Falta(m) ${sit.faltam}.</div>`;
+      : `<div class="alert alert-warning"><i class="bi bi-hourglass-split me-1"></i>Certificado ainda não liberado: ainda não há presença registrada. Basta participar de <strong>pelo menos ${sit.minimo} dia</strong> do evento para receber o certificado de ${sit.horasCertificado} horas.</div>`;
 
     res.innerHTML = `
       <div class="card p-4 p-md-5">
@@ -54,9 +54,9 @@
           <div class="flex-grow-1">
             <h2 class="h4 fw-bold text-navy mb-1">${esc(aluno.nome)}</h2>
             <div class="text-muted small">${esc(aluno.curso)} · Matrícula ${esc(aluno.matricula)} · CPF ${C.mascararCPFParaExibicao(aluno.cpf)}</div>
-            <div class="mt-3 d-flex justify-content-between small fw-semibold"><span>Atividades com check-in</span><span>${sit.feitas} de ${sit.minimo} necessárias · ${sit.horas}h</span></div>
-            <div class="progress mt-1" role="progressbar" aria-label="Atividades com check-in" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar ${sit.aprovado ? "bg-success" : ""}" style="width:${pct}%"></div></div>
-            <div class="small text-muted mt-1">Critério: check-in em pelo menos ${sit.minimo} das ${sit.total} atividades.</div>
+            <div class="mt-3 d-flex justify-content-between small fw-semibold"><span>Dias com presença</span><span>${sit.dias} de ${sit.totalDias} · ${sit.feitas} atividade(s)</span></div>
+            <div class="progress mt-1" role="progressbar" aria-label="Dias com presença" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar ${sit.aprovado ? "bg-success" : ""}" style="width:${pct}%"></div></div>
+            <div class="small text-muted mt-1">Critério: participar de pelo menos ${sit.minimo} dia do evento. Certificado de ${sit.horasCertificado} horas.</div>
           </div>
           <div class="ingresso p-3 text-center">
             <img id="qr" alt="QR Code do seu ingresso" width="150" height="150" style="width:150px;height:150px">

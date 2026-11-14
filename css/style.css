@@ -67,6 +67,12 @@ body > main { flex: 1 0 auto; }
 .cabecalho-pagina { background: linear-gradient(120deg, var(--navy) 0%, var(--azul) 100%); color: #fff; padding: 2.2rem 0 4.5rem; }
 .cabecalho-pagina + .container { margin-top: -3rem; }
 
+/* Doação de alimento */
+.doacao { background: #fff6cc; border: 1px solid #f0dc8a; border-radius: 14px; }
+.doacao-icone { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--amarelo); color: var(--navy); font-size: 1.8rem; flex-shrink: 0; }
+.link-rede { color: #fff; font-weight: 600; text-decoration: none; }
+.link-rede:hover, .link-rede:focus { color: var(--amarelo); text-decoration: underline; }
+
 /* Ingresso */
 .ingresso { border: 2px dashed var(--navy); border-radius: 14px; background: #fff; }
 .ingresso img { width: 200px; height: 200px; }

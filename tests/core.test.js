@@ -122,3 +122,21 @@ test("Senha da comissão: regras e hash PBKDF2", async () => {
   assert.notEqual(h, await C.hashSenha("jornada2027", salt));
   assert.notEqual(h, await C.hashSenha("jornada2026", C.gerarSalt())); // mesmo texto, salt diferente
 });
+
+test("Certificado: participar de 1 dia do evento dá o certificado de 20 horas", () => {
+  const evs = [
+    { id: "A", data: "2026-12-09", cargaHoraria: 4 }, { id: "B", data: "2026-12-09", cargaHoraria: 4 }, { id: "C", data: "2026-12-09", cargaHoraria: 2 },
+    { id: "D", data: "2026-12-10", cargaHoraria: 4 }, { id: "E", data: "2026-12-10", cargaHoraria: 4 }, { id: "F", data: "2026-12-10", cargaHoraria: 2 }
+  ];
+  const f = (ids) => ids.map((eventoId) => ({ alunoId: "x", eventoId }));
+  const nenhum = C.avaliarCertificado(f([]), evs, "x", 1, 20);
+  assert.equal(nenhum.aprovado, false);
+  assert.equal(nenhum.faltam, 1);
+  const umaAtividade = C.avaliarCertificado(f(["F"]), evs, "x", 1, 20);
+  assert.equal(umaAtividade.aprovado, true);
+  assert.equal(umaAtividade.horasCertificado, 20);
+  assert.equal(umaAtividade.dias, 1);
+  const doisDias = C.avaliarCertificado(f(["A", "D", "D"]), evs, "x", 1, 20);
+  assert.deepEqual([doisDias.dias, doisDias.feitas, doisDias.totalDias, doisDias.horas], [2, 2, 2, 8]);
+  assert.equal(C.avaliarCertificado(f(["A"]), evs, "x", 2, 20).aprovado, false); // se exigirem 2 dias
+});

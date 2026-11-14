@@ -6,7 +6,8 @@
 window.SGJA_CONFIG = {
   evento: {
     nome: "6ª Jornada Acadêmica",
-    nomeCertificado: "VI Jornada Acadêmica",
+    nomeCompleto: "6ª Jornada Acadêmica da UNINASSAU Teresina",
+    nomeCertificado: "6ª Jornada Acadêmica",
     instituicao: "Centro Universitário Maurício de Nassau",
     sigla: "UNINASSAU",
     cidade: "Teresina - PI",
@@ -14,13 +15,15 @@ window.SGJA_CONFIG = {
     dataEmissao: "10 de dezembro de 2026",
     local: "UNINASSAU Teresina",
     cargaHorariaTotal: 20,
-    // Critério do certificado: check-in em pelo menos 50% das atividades ofertadas
-    // (6 atividades → mínimo de 3). O certificado mostra as horas efetivamente cumpridas.
-    percentualMinimoAtividades: 50,
+    // Critério do certificado: participar de pelo menos 1 dia do evento (check-in em alguma
+    // atividade daquele dia). Quem cumpre recebe o certificado de 20 horas (carga total do evento).
+    diasMinimosCertificado: 1,
+    instagram: "https://www.instagram.com/vi_jornadaacademicauninassau/",
+    doacao: "1 kg de alimento não perecível, que será doado a uma instituição beneficente",
     fusoHorario: "-03:00", // Teresina (sem horário de verão)
     assinaturas: [
-      { nome: "Prof. Dr. [Nome do Reitor]", cargo: "Reitor" },
-      { nome: "Prof. [Nome do Coordenador]", cargo: "Coordenador da VI Jornada Acadêmica" }
+      { nome: "Profª. Drª. Roselane Moita Pierot", cargo: "Reitora" },
+      { nome: "Prof. [Nome do Coordenador]", cargo: "Coordenador da 6ª Jornada Acadêmica" }
     ]
   },
 
@@ -39,7 +42,7 @@ window.SGJA_CONFIG = {
     "Engenharia de Software", "Redes de Computadores", "Administração", "Ciências Contábeis",
     "Direito", "Enfermagem", "Fisioterapia", "Nutrição", "Odontologia", "Psicologia",
     "Biomedicina", "Farmácia", "Educação Física", "Engenharia Civil", "Arquitetura e Urbanismo",
-    "Publicidade e Propaganda", "Outro"
+    "Publicidade e Propaganda", "Outros"
   ],
 
   // Onde ficam os dados:

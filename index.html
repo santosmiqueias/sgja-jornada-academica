@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>6ª Jornada Acadêmica · UNINASSAU Teresina</title>
+  <title>6ª Jornada Acadêmica da UNINASSAU Teresina</title>
   <meta name="description" content="Inscrição, check-in e certificados da 6ª Jornada Acadêmica da UNINASSAU Teresina — 09 e 10 de dezembro de 2026.">
-  <link rel="icon" href="assets/img/favicon.png?v=202611121041">
+  <link rel="icon" href="assets/img/favicon.png?v=202611140139">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611121041">
+  <link rel="stylesheet" href="css/style.css?v=202611140139">
 </head>
 <body>
   <div id="menu"></div>
@@ -21,11 +21,12 @@
     <div class="container">
       <div class="row align-items-center g-4">
         <div class="col-lg-7 text-center">
-          <img class="logo" src="assets/img/logo-jornada.jpg?v=202611121041" alt="Logo da 6ª Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI" width="1600" height="900">
+          <img class="logo" src="assets/img/logo-jornada.jpg?v=202611140139" alt="Logo da 6ª Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI" width="1600" height="900">
         </div>
         <div class="col-lg-5">
           <span class="badge rounded-pill text-bg-warning mb-2"><i class="bi bi-calendar-event me-1"></i>09 e 10 de dezembro de 2026</span>
-          <h1 class="fw-bold text-navy display-6">Conhecimento que conecta pessoas e transforma realidades</h1>
+          <h1 class="fw-bold text-navy display-6">6ª Jornada Acadêmica da UNINASSAU Teresina</h1>
+          <p class="fs-5 fw-semibold text-navy mb-2">Conhecimento que conecta pessoas e transforma realidades</p>
           <p class="lead">Dois dias de palestras, oficinas, mostra científica e hackathon. Faça sua inscrição em 1 minuto, receba seu ingresso com QR Code e baixe o certificado ao final.</p>
           <div class="d-flex flex-wrap gap-2">
             <a href="inscricao.html" class="btn btn-amarelo btn-lg"><i class="bi bi-person-plus me-1"></i>Quero me inscrever</a>
@@ -58,17 +59,27 @@
           <div class="card card-destaque h-100 p-4">
             <div class="icone-redondo mb-3"><i class="bi bi-2-circle"></i></div>
             <h3 class="h5 fw-bold">Faça check-in</h3>
-            <p class="mb-0">Em cada atividade, mostre o QR Code do seu ingresso ou informe o CPF. O professor confirma a presença em segundos.</p>
+            <p class="mb-0">Em cada atividade, mostre o QR Code do seu ingresso ou informe o CPF. A comissão organizadora confirma a presença em segundos.</p>
           </div>
         </div>
         <div class="col-md-4">
           <div class="card card-destaque h-100 p-4">
             <div class="icone-redondo mb-3"><i class="bi bi-3-circle"></i></div>
             <h3 class="h5 fw-bold">Receba o certificado</h3>
-            <p class="mb-0">Com check-in em <strong id="regra-minimo">pelo menos 3 atividades</strong>, o certificado em PDF é liberado para download e enviado ao seu e-mail, com código de autenticidade.</p>
+            <p class="mb-0">Participando de <strong id="regra-minimo">pelo menos 1 dia do evento</strong>, você recebe o certificado de <strong>20 horas</strong> em PDF, para baixar ou receber por e-mail, com código de autenticidade.</p>
           </div>
         </div>
       </div>
+      </div>
+    </section>
+
+    <section class="container pb-5" id="doacao">
+      <div class="doacao d-flex flex-column flex-md-row align-items-md-center gap-3 p-4">
+        <div class="doacao-icone" aria-hidden="true"><i class="bi bi-basket2"></i></div>
+        <div class="flex-grow-1">
+          <h2 class="h4 fw-bold text-navy mb-1">Doe 1 kg de alimento</h2>
+          <p class="mb-0">Leve <strong>1 kg de alimento não perecível</strong> no credenciamento. Tudo o que for arrecadado será doado a uma instituição beneficente.</p>
+        </div>
       </div>
     </section>
 
@@ -89,7 +100,7 @@
         </div>
         <div class="accordion-item">
           <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f2">Perdi meu ingresso. E agora?</button></h3>
-          <div id="f2" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Acesse <a href="certificado.html">Meu certificado</a>, informe seu CPF e o QR Code aparece de novo. No check-in, o professor também encontra você pelo CPF.</div></div>
+          <div id="f2" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Acesse <a href="certificado.html">Meu certificado</a>, informe seu CPF e o e-mail da inscrição, e o QR Code aparece de novo. No check-in, a comissão também encontra você pelo CPF.</div></div>
         </div>
         <div class="accordion-item">
           <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f3">Como sei se um certificado é verdadeiro?</button></h3>
@@ -97,7 +108,11 @@
         </div>
         <div class="accordion-item">
           <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f4">O que é feito com meus dados?</button></h3>
-          <div id="f4" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Seus dados são usados só para inscrição, presença e emissão do certificado (LGPD, Lei 13.709/2018). O CPF aparece mascarado nas telas do professor.</div></div>
+          <div id="f4" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Seus dados são usados só para inscrição, presença e emissão do certificado (LGPD, Lei 13.709/2018). O CPF aparece mascarado nas telas da comissão.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#f5">Preciso ir aos dois dias para ter o certificado?</button></h3>
+          <div id="f5" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Não. Participando de pelo menos um dia do evento (com check-in em alguma atividade), você recebe o certificado de 20 horas.</div></div>
         </div>
       </div>
     </section>
@@ -106,11 +121,11 @@
   <div id="rodape"></div>
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js?v=202611121041"></script>
-  <script src="js/core.js?v=202611121041"></script>
-  <script src="js/servico.js?v=202611121041"></script>
-  <script src="js/api.js?v=202611121041"></script>
-  <script src="js/ui.js?v=202611121041"></script>
-  <script src="js/pagina-inicio.js?v=202611121041"></script>
+  <script src="js/config.js?v=202611140139"></script>
+  <script src="js/core.js?v=202611140139"></script>
+  <script src="js/servico.js?v=202611140139"></script>
+  <script src="js/api.js?v=202611140139"></script>
+  <script src="js/ui.js?v=202611140139"></script>
+  <script src="js/pagina-inicio.js?v=202611140139"></script>
 </body>
 </html>

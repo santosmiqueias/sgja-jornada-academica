@@ -79,8 +79,7 @@
   /* ---------------- Inscritos ---------------- */
 
   function situacaoDe(aluno) {
-    const { horas, atividades } = C.calcularHoras(frequencias, CFG.eventos, aluno.id);
-    return C.situacaoAluno(atividades.length, CFG.eventos.length, CFG.evento.percentualMinimoAtividades, horas);
+    return API.situacaoDe(aluno.id, frequencias);
   }
 
   function desenharInscritos() {
@@ -89,8 +88,8 @@
       const s = situacaoDe(a);
       return `<tr><td class="fw-semibold">${esc(a.nome)}</td><td class="small">${esc(a.curso)}</td><td class="small">${C.mascararCPFParaExibicao(a.cpf)}</td>
         <td class="small">${esc(a.matricula)}</td>
-        <td class="small" title="${esc((a.atividades || []).join(", "))}">${(a.atividades || []).length} de ${CFG.eventos.length}</td><td class="small">${s.feitas} · ${s.horas}h</td>
-        <td><span class="badge ${s.aprovado ? "badge-ok" : "badge-pend"}">${s.aprovado ? "Apto" : `Falta(m) ${s.faltam} atividade(s)`}</span></td>
+        <td class="small" title="${esc((a.atividades || []).join(", "))}">${(a.atividades || []).length} de ${CFG.eventos.length}</td><td class="small">${s.feitas} · ${s.dias} dia(s)</td>
+        <td><span class="badge ${s.aprovado ? "badge-ok" : "badge-pend"}">${s.aprovado ? "Apto" : "Sem presença"}</span></td>
         <td>${a.aceitaWhatsApp ? '<i class="bi bi-check-lg text-success" aria-label="Autorizou"></i>' : '<span class="text-muted" aria-label="Não autorizou">—</span>'}</td></tr>`;
     }).join("") : `<tr><td colspan="8" class="text-center text-muted py-4">Nenhum inscrito.</td></tr>`;
   }
@@ -120,11 +119,11 @@
     $("st-aprovados").textContent = aptos.length;
     $("st-pendentes").textContent = alunos.length - aptos.length;
     $("st-enviados").textContent = enviados.size;
-    $("st-minimo").textContent = `${API.atividadesMinimas()} de ${CFG.eventos.length}`;
+    $("st-minimo").textContent = `${API.diasMinimos()} dia`;
     $("modo-email").textContent = API.backend === "servidor" ? "servidor (SMTP)" : ({ simulado: "simulado (demonstração)", emailjs: "EmailJS" }[CFG.email.modo] || CFG.email.modo);
 
     $("tb-aptos").innerHTML = aptos.length ? aptos.map((a) => `<tr>
-        <td class="fw-semibold small">${esc(a.nome)}</td><td class="small">${situacaoDe(a).feitas} de ${CFG.eventos.length} · ${situacaoDe(a).horas}h</td>
+        <td class="fw-semibold small">${esc(a.nome)}</td><td class="small">${situacaoDe(a).feitas} atividade(s) · ${situacaoDe(a).dias} dia(s)</td>
         <td>${enviados.has(a.id) ? '<span class="badge badge-ok">Enviado</span>' : '<span class="badge badge-pend">Pendente</span>'}</td>
         <td class="text-end"><button class="btn btn-sm btn-outline-primary btn-pdf" data-id="${esc(a.id)}" aria-label="Baixar certificado de ${esc(a.nome)}"><i class="bi bi-file-earmark-pdf"></i></button></td></tr>`).join("")
       : `<tr><td colspan="4" class="text-center text-muted py-4">Ninguém atingiu a carga mínima ainda.</td></tr>`;
@@ -251,7 +250,7 @@
     const itens = [
       ["Banco de dados", API.backend === "servidor" ? "Servidor (com login)" : "Navegador (demonstração)"],
       ["Atividades", `${CFG.eventos.length} atividades · ${total}h`],
-      ["Regra do certificado", `check-in em ${CFG.evento.percentualMinimoAtividades}% das atividades = ${API.atividadesMinimas()} de ${CFG.eventos.length}`],
+      ["Regra do certificado", `participar de pelo menos ${API.diasMinimos()} dia → certificado de ${CFG.evento.cargaHorariaTotal}h`],
       ["E-mail", CFG.email.modo],
       ["Sessão do painel", `${CFG.painel.sessaoMinutos} min`]
     ];
