@@ -23,7 +23,7 @@ function gerarHash(senha) {
 
 // Aceita o hash colado com o nome na frente, aspas ou espaços (erros comuns ao copiar para o Render).
 function normalizarHash(valor) {
-  return String(valor || "").trim().replace(/^PROFESSOR_SENHA_HASH\s*=\s*/, "").replace(/^["'\u2018\u2019\u201C\u201D]+|["'\u2018\u2019\u201C\u201D]+$/g, "").trim();
+  return String(valor || "").trim().replace(/^PROFESSOR_SENHA_HASH\s*=\s*/, "").replace(/["'\u2018\u2019\u201C\u201D]/g, "").replace(/\s+/g, "");
 }
 
 // Diagnóstico sem revelar o hash: diz só se o formato está certo e, se não, por quê.
