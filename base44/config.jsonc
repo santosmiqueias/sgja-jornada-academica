@@ -1,0 +1,14 @@
+// Projeto Base44 do S.G.J.A (Squad 3: Engenharia de Back-End & Base44).
+// O Base44 é o banco de dados. O site (GitHub Pages) fala só com o servidor (servicos/api-gateway),
+// e só o servidor fala com o Base44, usando BASE44_APP_ID e BASE44_API_KEY do .env.
+//
+// Comandos (na raiz do repositório):
+//   npm run base44:login    entra na sua conta Base44
+//   npm run base44:create   cria o app no Base44 (só na primeira vez; ou base44:link para um app existente)
+//   npm run base44:push     cria/atualiza as 7 entidades a partir de base44/entities/*.jsonc
+{
+  "name": "SGJA VI Jornada Academica",
+  "description": "Banco de dados do S.G.J.A: submissões, participantes, check-in, certificados e lembretes da VI Jornada Acadêmica UNINASSAU Teresina",
+  "visibility": "private",
+  "entitiesDir": "entities"
+}

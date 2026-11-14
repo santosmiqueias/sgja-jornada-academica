@@ -101,7 +101,7 @@
         await store.create(ENT.frequencia, {
           alunoId, eventoId, checkIn: true, timestamp: new Date().toISOString(),
           origem: ["lista", "qrcode", "cpf", "lote", "demo"].includes(origem) ? origem : "lista",
-          registradoPorId: membro ? membro.id : null, registradoPorNome: membro ? membro.nome : null
+          registradoPorId: membro ? membro.id : "", registradoPorNome: membro ? membro.nome : ""
         });
         return { novo: true, aluno: alunoChamada(aluno) };
       });
@@ -235,7 +235,7 @@
             if (!pessoa) {
               pessoa = await store.create(ENT.aluno, {
                 nome: pl.nome, email: pl.email, cpf: pl.cpf, telefone: pl.representante ? pl.telefone : "", matricula: pl.representante ? pl.matricula : "",
-                curso, periodo: "", consentimentoLGPD: true, aceitaWhatsApp: pl.representante && dados.aceitaWhatsApp === true, atividades: []
+                curso, periodo: "", consentimentoLGPD: true, aceitaWhatsApp: Boolean(pl.representante) && dados.aceitaWhatsApp === true, atividades: []
               });
               pessoa = await store.update(ENT.aluno, pessoa.id, { tokenIngresso: await C.gerarTokenIngresso(pessoa.id, pessoa.cpf, segredo) });
             }
@@ -246,7 +246,7 @@
           const t = await store.create(ENT.trabalho, {
             protocolo, titulo, vinculo: vinculo.id, vinculoNome: vinculo.nome, modalidade, curso, orientadores, resumo,
             arquivo: { nome: texto(arquivo.nome, 120), tipo: texto(arquivo.tipo, 100), tamanho: arquivo.tamanho, ref: arquivo.ref },
-            representanteId: representante.id, autoresIds: ids, status: "em_analise", parecer: "", sessao: null, horarioApresentacao: "", apresentado: false
+            representanteId: representante.id, autoresIds: ids, status: "em_analise", parecer: "", sessao: "", horarioApresentacao: "", apresentado: false
           });
           return { trabalho: trabalhoParticipante(t), representante: alunoDono(representante), participantes: ids.length };
         });
@@ -373,7 +373,7 @@
         if (dados.parecer !== undefined) patch.parecer = texto(dados.parecer, 1000);
         if (dados.sessao !== undefined) {
           if (dados.sessao && !CFG.eventos.some((e) => e.id === dados.sessao)) throw new ErroNegocio("Sessão inexistente.");
-          patch.sessao = dados.sessao || null;
+          patch.sessao = dados.sessao || "";
         }
         if (dados.horarioApresentacao !== undefined) patch.horarioApresentacao = texto(dados.horarioApresentacao, 20);
         if (dados.apresentado !== undefined) patch.apresentado = dados.apresentado === true;

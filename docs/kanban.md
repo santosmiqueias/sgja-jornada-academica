@@ -21,7 +21,7 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 | 5 | Formulário de inscrição com máscaras (CPF, telefone, matrícula) | 2 | letras não entram nos campos numéricos | inscricao.html, js/inscricao.js |
 | 6 | Validação de CPF (módulo 11) e e-mail | 2/3 | CPF inválido mostra erro | js/core.js |
 | 7 | Ingresso com QR Code após a inscrição | 2 | QR aparece e pode ser baixado | js/inscricao.js |
-| 8 | Criar tabelas no Base44 (Aluno, Evento, Frequencia, Certificado) | 3 | campos iguais a `base44/*.json` | base44/ |
+| 8 | Criar as 7 entidades no Base44 (`npm run base44:push`) | 3 | entidades criadas, só administrador lê/grava; `tests/base44.test.js` passa | base44/ |
 | 9 | API de inscrição com bloqueio de CPF/e-mail duplicado | 3 | 2º cadastro com o mesmo CPF é recusado | js/api.js |
 | 10 | API de frequência (check-in idempotente) | 3 | presença não duplica | js/api.js |
 | 11 | Microsserviço proxy (esconder chave do Base44) | 3 | `/health` responde e POST retorna 409 em duplicado | servicos/api-gateway |
@@ -54,4 +54,4 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 ## Desbloqueio
 
 Se o Front (Squad 2) depender do Banco (Squad 3) que não está pronto, use `backend: "local"` em `js/config.js`:
-o site inteiro funciona salvando no navegador, com a mesma API. Quando o Base44 ficar pronto, troque para `"base44"`.
+o site inteiro funciona salvando no navegador, com a mesma API. Quando o Base44 e o servidor ficarem prontos, troque para `"servidor"` (o servidor usa o Base44 pelo `.env`).

@@ -1,0 +1,70 @@
+// Entidade EmailEnviado do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "EmailEnviado",
+  "type": "object",
+  "description": "Registro de cada e-mail de certificado (enviado, simulado ou com falha).",
+  "properties": {
+    "para": {
+      "type": "string",
+      "format": "email"
+    },
+    "nome": {
+      "type": "string"
+    },
+    "assunto": {
+      "type": "string"
+    },
+    "mensagem": {
+      "type": "string"
+    },
+    "anexo": {
+      "type": "string",
+      "description": "Nome do PDF anexado"
+    },
+    "codigo": {
+      "type": "string",
+      "description": "Código do certificado"
+    },
+    "modo": {
+      "type": "string",
+      "description": "smtp, emailjs ou simulado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "simulado",
+        "enviado",
+        "falhou"
+      ]
+    }
+  },
+  "required": [
+    "para",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

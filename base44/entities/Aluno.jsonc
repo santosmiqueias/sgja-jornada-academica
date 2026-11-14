@@ -1,0 +1,105 @@
+// Entidade Aluno do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "Aluno",
+  "type": "object",
+  "description": "Participante da Jornada: representante ou coautor de um trabalho. CPF e e-mail são únicos (regra aplicada no servidor, js/servico.js).",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "Nome completo, como sai no certificado"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 120,
+      "description": "Minúsculo, sem espaços. Único na base"
+    },
+    "cpf": {
+      "type": "string",
+      "pattern": "^[0-9]{11}$",
+      "description": "11 dígitos, sem máscara. Único na base"
+    },
+    "telefone": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "Só dígitos, com DDD. Obrigatório para o representante; vazio para coautores"
+    },
+    "matricula": {
+      "type": "string",
+      "maxLength": 12,
+      "description": "6 a 12 dígitos. Vazio para coautores e externos"
+    },
+    "curso": {
+      "type": "string",
+      "maxLength": 80,
+      "description": "Um dos cursos de js/config.js"
+    },
+    "periodo": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "1º a 10º, Professor, Convidado ou vazio"
+    },
+    "consentimentoLGPD": {
+      "type": "boolean",
+      "default": false,
+      "description": "Aceitou o termo de uso de dados na submissão"
+    },
+    "aceitaWhatsApp": {
+      "type": "boolean",
+      "default": false,
+      "description": "Autorizou o lembrete por WhatsApp 30 minutos antes da apresentação"
+    },
+    "atividades": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EV01",
+          "EV02",
+          "EV03",
+          "EV04",
+          "EV05",
+          "EV06"
+        ]
+      },
+      "description": "Sessão em que o trabalho foi agendado (preenchida pela organização). Usada nos lembretes"
+    },
+    "tokenIngresso": {
+      "type": "string",
+      "description": "Conteúdo assinado (HMAC) do QR Code de ingresso"
+    }
+  },
+  "required": [
+    "nome",
+    "email",
+    "cpf",
+    "curso",
+    "consentimentoLGPD"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -2,7 +2,8 @@
  * Agendador de lembretes por WhatsApp.
  * A cada minuto: vê quais atividades começam dentro da antecedência configurada (30 min),
  * e manda o lembrete para quem se inscreveu naquela atividade e autorizou WhatsApp. Cada par aluno+atividade
- * é enviado uma única vez, mesmo se o servidor reiniciar (log em dados/lembretes-enviados.json).
+ * é enviado uma única vez, mesmo se o servidor reiniciar: o registro fica na entidade LembreteWhatsApp
+ * (no Base44 ou em dados/LembreteWhatsApp.json), e não no disco do servidor, que pode ser apagado a cada deploy.
  *
  * Uso direto pela linha de comando (bom para cron ou para testar):
  *   node lembretes.js --uma-vez
@@ -17,8 +18,6 @@ const C = require("../../js/core.js");
 const whatsapp = require("./whatsapp");
 
 const RAIZ = path.join(__dirname, "..", "..");
-const DADOS = process.env.DADOS_DIR || path.join(__dirname, "dados");
-const ARQ_LOG = path.join(DADOS, "lembretes-enviados.json");
 const MAX_TENTATIVAS = 3;
 
 // Mesma configuração do site (js/config.js): uma única fonte para eventos e horários.
@@ -28,22 +27,23 @@ function carregarConfig() {
   return ctx.window.SGJA_CONFIG;
 }
 
-function lerJSON(arq, padrao) {
-  try { return JSON.parse(fs.readFileSync(arq, "utf8")); } catch (_) { return padrao; }
-}
-function gravarJSON(arq, dados) {
-  fs.mkdirSync(path.dirname(arq), { recursive: true });
-  const tmp = `${arq}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(dados, null, 2));
-  fs.renameSync(tmp, arq); // troca atômica: o log nunca fica corrompido pela metade
-}
-
 // Inscritos: do mesmo armazenamento do servidor (arquivos em dados/ ou Base44).
 const { criarStore } = require("./store");
 let store = null;
-async function carregarInscritos() {
-  if (!store) store = criarStore();
-  return store.list("Aluno");
+function obterStore() { if (!store) store = criarStore(); return store; }
+async function carregarInscritos() { return obterStore().list("Aluno"); }
+
+// Registro dos envios: { "alunoId:eventoId": registro } a partir da entidade LembreteWhatsApp.
+async function carregarLog() {
+  const log = {};
+  for (const r of await obterStore().list("LembreteWhatsApp")) log[r.chave] = r;
+  return log;
+}
+// Cria ou atualiza o registro do par aluno+atividade (grava a cada envio: se cair no meio, não repete).
+async function registrar(log, chave, dados) {
+  const atual = log[chave];
+  const reg = { chave, ...dados };
+  log[chave] = atual ? await obterStore().update("LembreteWhatsApp", atual.id, reg) : await obterStore().create("LembreteWhatsApp", reg);
 }
 
 let rodando = false;
@@ -60,7 +60,7 @@ async function executar(agora = new Date()) {
     if (!devidos.length) return resumo;
 
     const inscritos = await carregarInscritos();
-    const log = lerJSON(ARQ_LOG, {});
+    const log = await carregarLog();
 
     for (const ev of devidos) {
       resumo.atividades.push(ev.id);
@@ -71,9 +71,8 @@ async function executar(agora = new Date()) {
         if (reg && (reg.status !== "falhou" || reg.tentativas >= MAX_TENTATIVAS)) continue;
         const telefone = C.telefoneE164(aluno.telefone);
         if (!telefone) {
-          log[chave] = { alunoId: aluno.id, eventoId: ev.id, status: "falhou", tentativas: MAX_TENTATIVAS, erro: "telefone inválido" };
+          await registrar(log, chave, { alunoId: aluno.id, eventoId: ev.id, telefone: "", status: "falhou", tentativas: MAX_TENTATIVAS, erro: "telefone inválido" });
           resumo.falhas++;
-          gravarJSON(ARQ_LOG, log);
           continue;
         }
 
@@ -84,14 +83,15 @@ async function executar(agora = new Date()) {
         };
         try {
           const r = await whatsapp.enviar(telefone, dados);
-          log[chave] = { alunoId: aluno.id, eventoId: ev.id, telefone, status: r.status, id: r.id, tentativas: (reg?.tentativas || 0) + 1, enviadoEm: new Date().toISOString() };
+          await registrar(log, chave, { alunoId: aluno.id, eventoId: ev.id, telefone, status: r.status, idProvedor: r.id || "", tentativas: (reg?.tentativas || 0) + 1, erro: "", enviadoEm: new Date().toISOString() });
           r.status === "simulado" ? resumo.simulados++ : resumo.enviados++;
         } catch (e) {
-          log[chave] = { alunoId: aluno.id, eventoId: ev.id, telefone, status: "falhou", erro: e.message, tentativas: (reg?.tentativas || 0) + 1 };
+          try {
+            await registrar(log, chave, { alunoId: aluno.id, eventoId: ev.id, telefone, status: "falhou", erro: String(e.message).slice(0, 300), tentativas: (reg?.tentativas || 0) + 1 });
+          } catch (e2) { console.error(`[lembretes] não registrou ${chave}: ${e2.message}`); }
           resumo.falhas++;
           console.error(`[lembretes] falha para ${chave}: ${e.message}`);
         }
-        gravarJSON(ARQ_LOG, log); // grava a cada envio: se cair no meio, não repete quem já recebeu
         await new Promise((ok) => setTimeout(ok, 150)); // respeita limite de envio do provedor
       }
     }
@@ -105,9 +105,8 @@ async function executar(agora = new Date()) {
 async function agenda() {
   const cfg = carregarConfig();
   const minutos = cfg.whatsapp.antecedenciaMinutos;
-  const log = lerJSON(ARQ_LOG, {});
-  let inscritos = [];
-  try { inscritos = await carregarInscritos(); } catch (_) {}
+  let inscritos = [], log = {};
+  try { inscritos = await carregarInscritos(); log = await carregarLog(); } catch (_) {}
   const comWhats = inscritos.filter((a) => a.aceitaWhatsApp === true).length;
   return {
     provedor: whatsapp.provedor(), antecedenciaMinutos: minutos, inscritos: inscritos.length, autorizaramWhatsApp: comWhats,

@@ -1,0 +1,101 @@
+// Entidade Certificado do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "Certificado",
+  "type": "object",
+  "description": "Certificado emitido (20h para quem participou de pelo menos 1 dia). Horas e atividades são calculadas no servidor.",
+  "properties": {
+    "alunoId": {
+      "type": "string",
+      "description": "id do Aluno"
+    },
+    "nome": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "curso": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "horas": {
+      "type": "number",
+      "minimum": 0
+    },
+    "atividades": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EV01",
+          "EV02",
+          "EV03",
+          "EV04",
+          "EV05",
+          "EV06"
+        ]
+      },
+      "description": "Atividades com presença, impressas no verso"
+    },
+    "trabalhos": {
+      "type": "array",
+      "description": "Trabalhos apresentados, impressos no verso",
+      "items": {
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "type": "string"
+          },
+          "modalidade": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "codigo": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
+      "description": "XXXX-XXXX-XXXX (HMAC), usado na validação pública"
+    },
+    "emitidoEm": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "enviadoPorEmail": {
+      "type": "boolean",
+      "default": false
+    },
+    "enviadoEm": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "alunoId",
+    "codigo",
+    "horas"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

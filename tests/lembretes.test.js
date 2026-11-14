@@ -75,7 +75,8 @@ test("Agendador: envia uma vez, respeita autorização e ignora telefone inváli
     const r2 = await L.executar(new Date("2026-12-09T08:10:00-03:00"));
     assert.equal(r2.simulados, 0); // não repete
 
-    const enviados = JSON.parse(fs.readFileSync(path.join(dir, "lembretes-enviados.json"), "utf8"));
+    // O registro dos envios fica na entidade LembreteWhatsApp (aqui, dados/LembreteWhatsApp.json).
+    const enviados = Object.fromEntries(JSON.parse(fs.readFileSync(path.join(dir, "LembreteWhatsApp.json"), "utf8")).map((r) => [r.chave, r]));
     assert.equal(enviados["A1:EV01"].status, "simulado");
     assert.equal(enviados["A1:EV01"].telefone, "5586999990001");
     assert.equal(enviados["A3:EV01"].erro, "telefone inválido");

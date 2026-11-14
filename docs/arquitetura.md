@@ -32,19 +32,23 @@
 
 | Tabela | Campos-chave | Regras |
 |---|---|---|
-| **Aluno** | id, nome, email, telefone, cpf, matricula, curso, periodo, atividades[] (ids dos eventos escolhidos), consentimentoLGPD, aceitaWhatsApp, tokenIngresso | `cpf`, `email` e `matricula` únicos |
-| **Evento** | codigo (EV01…EV06), titulo, data, turno, horario, sala, cargaHoraria | soma das cargas = 20h |
-| **Frequencia** | id, alunoId → Aluno, eventoId → Evento, checkIn, timestamp, origem, registradoPorId → MembroComissao | par (alunoId, eventoId) único |
-| **Certificado** | id, alunoId → Aluno, horas, codigo, emitidoEm, enviadoPorEmail | um por aluno; `codigo` único |
+| **Aluno** | id, nome, email, telefone, cpf, matricula, curso, periodo, atividades[] (sessão da apresentação, para o lembrete), consentimentoLGPD, aceitaWhatsApp, tokenIngresso | `cpf` e `email` únicos (o mesmo CPF é reaproveitado em vários trabalhos) |
+| **Frequencia** | id, alunoId → Aluno, eventoId (EV01…EV06), checkIn, timestamp, origem, registradoPorId → MembroComissao | par (alunoId, eventoId) único |
+| **Certificado** | id, alunoId → Aluno, nome, curso, horas, atividades[], trabalhos[] {titulo, modalidade}, codigo, emitidoEm, enviadoPorEmail, enviadoEm | um por aluno; `codigo` único |
 | **EmailEnviado** | para, assunto, anexo, codigo, status | log de auditoria dos envios |
-| **Trabalho** | protocolo, titulo, vinculo, modalidade, curso, resumo, arquivo {nome, tipo, tamanho, ref}, representanteId, autoresIds[], status, parecer, sessao, apresentado | APIExt I/III/V → banner; II/IV/VI → oral; título único por participante |
+| **Trabalho** | protocolo, titulo, vinculo, vinculoNome, modalidade, curso, orientadores[], resumo, arquivo {nome, tipo, tamanho, ref}, representanteId → Aluno, autoresIds[] → Aluno, status, parecer, sessao, horarioApresentacao, apresentado | APIExt I/III/V → banner; II/IV/VI → oral; título único por participante |
 | **MembroComissao** | nome, email, cpf, telefone, senhaHash, salt, status (pendente/ativo/bloqueado) | e-mail e CPF únicos; só `ativo` registra presença |
-| **LembreteWhatsApp** | chave (alunoId:eventoId), telefone, status, tentativas | chave única: um lembrete por aluno e atividade |
+| **LembreteWhatsApp** | chave (alunoId:eventoId), alunoId → Aluno, eventoId, telefone, status, tentativas, idProvedor, erro, enviadoEm | chave única: um lembrete por aluno e atividade |
 
-Relacionamentos: Aluno N—N Evento (inscrição, campo `atividades`); Aluno 1—N Frequencia N—1 Evento; Aluno 1—1 Certificado.
+Relacionamentos: Trabalho N—N Aluno (`autoresIds`, um deles é o `representanteId`); Aluno 1—N Frequencia; Aluno 1—1 Certificado;
+Aluno 1—N LembreteWhatsApp; MembroComissao 1—N Frequencia (`registradoPorId`).
 
-Os esquemas prontos para o Base44 estão em `base44/*.json`. No Base44, crie cada entidade com esses campos.
-O catálogo de eventos também está em `js/config.js` (fonte usada pelo site).
+A programação (EV01…EV06) não é uma tabela: fica em `js/config.js`, a mesma fonte para o site, o servidor e o certificado.
+Assim não há duas versões dos horários para manter iguais.
+
+O projeto do Base44 está em `base44/` (formato do CLI oficial): `base44/config.jsonc` e uma entidade por arquivo em
+`base44/entities/*.jsonc`. Para criar tudo no Base44, veja [`docs/base44.md`](base44.md). O teste `tests/base44.test.js`
+confere que cada registro que o sistema grava cabe exatamente nesses esquemas.
 
 ## 3. API (Squad 3)
 

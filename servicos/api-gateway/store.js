@@ -7,7 +7,8 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ENTIDADES = ["Aluno", "Frequencia", "Certificado", "EmailEnviado", "MembroComissao", "Trabalho"];
+// As mesmas entidades de base44/entities/*.jsonc (o esquema enviado ao Base44 com "npm run base44:push").
+const ENTIDADES = ["Aluno", "Frequencia", "Certificado", "EmailEnviado", "MembroComissao", "Trabalho", "LembreteWhatsApp"];
 
 class ArquivoStore {
   constructor(dir) {
@@ -62,6 +63,8 @@ class ArquivoStore {
   async limparTudo() { for (const e of ENTIDADES) await this._emFila(e, () => this._gravar(e, [])); }
 }
 
+const LIMITE_PAGINA = 500;
+
 class Base44Store {
   constructor(appId, apiKey) {
     this.url = `https://app.base44.com/api/apps/${encodeURIComponent(appId)}/entities`;
@@ -72,10 +75,20 @@ class Base44Store {
     if (!r.ok) { const e = new Error(`Base44 respondeu ${r.status}`); e.status = 502; throw e; }
     return r.status === 204 ? null : r.json();
   }
-  list(ent) { if (!ENTIDADES.includes(ent)) throw new Error("Entidade inválida"); return this._req("GET", ent); }
-  create(ent, obj) { return this._req("POST", ent, obj); }
-  update(ent, id, patch) { return this._req("PUT", `${ent}/${encodeURIComponent(id)}`, patch); }
-  remove(ent, id) { return this._req("DELETE", `${ent}/${encodeURIComponent(id)}`); }
+  _ent(ent) { if (!ENTIDADES.includes(ent)) throw new Error("Entidade inválida"); return ent; }
+  // A listagem do Base44 é paginada: busca em páginas até acabar (o evento tem poucos milhares de registros).
+  async list(ent) {
+    const todos = [];
+    for (let skip = 0; ; skip += LIMITE_PAGINA) {
+      const pagina = await this._req("GET", `${this._ent(ent)}?limit=${LIMITE_PAGINA}&skip=${skip}`);
+      const itens = Array.isArray(pagina) ? pagina : (pagina && pagina.items) || [];
+      todos.push(...itens);
+      if (itens.length < LIMITE_PAGINA) return todos;
+    }
+  }
+  create(ent, obj) { return this._req("POST", this._ent(ent), obj); }
+  update(ent, id, patch) { return this._req("PUT", `${this._ent(ent)}/${encodeURIComponent(id)}`, patch); }
+  remove(ent, id) { return this._req("DELETE", `${this._ent(ent)}/${encodeURIComponent(id)}`); }
   async limparTudo() { const e = new Error("Limpeza em massa desativada no Base44."); e.status = 403; throw e; }
 }
 

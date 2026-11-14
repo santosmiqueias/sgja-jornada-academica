@@ -1,0 +1,167 @@
+// Entidade Trabalho do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "Trabalho",
+  "type": "object",
+  "description": "Trabalho submetido (edital, itens 1 e 2). Autores apontam para Aluno.",
+  "properties": {
+    "protocolo": {
+      "type": "string",
+      "pattern": "^TR-[A-Z0-9]{6}$",
+      "description": "TR-XXXXXX, mostrado ao representante"
+    },
+    "titulo": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "vinculo": {
+      "type": "string",
+      "enum": [
+        "APIEXT1",
+        "APIEXT2",
+        "APIEXT3",
+        "APIEXT4",
+        "APIEXT5",
+        "APIEXT6",
+        "PIC",
+        "TCC",
+        "OUTRAS",
+        "EXTERNO"
+      ],
+      "description": "Vínculo do trabalho"
+    },
+    "vinculoNome": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "modalidade": {
+      "type": "string",
+      "enum": [
+        "banner",
+        "oral"
+      ],
+      "description": "APIExt I, III e V: banner; APIExt II, IV e VI: oral"
+    },
+    "curso": {
+      "type": "string",
+      "maxLength": 80
+    },
+    "orientadores": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "description": "Até 5 professores orientadores"
+    },
+    "resumo": {
+      "type": "string",
+      "maxLength": 1500,
+      "description": "Resumo simples, de 200 a 1.500 caracteres"
+    },
+    "arquivo": {
+      "type": "object",
+      "description": "Metadados do arquivo. O arquivo em si fica no servidor (nome aleatório), nunca público",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "tipo": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "tamanho": {
+          "type": "number"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Nome interno no servidor"
+        }
+      }
+    },
+    "representanteId": {
+      "type": "string",
+      "description": "id do Aluno representante"
+    },
+    "autoresIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ids de Aluno (até 10 participantes, incluindo o representante)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "em_analise",
+        "aprovado",
+        "reprovado"
+      ],
+      "default": "em_analise",
+      "description": "Resultado da banca"
+    },
+    "parecer": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Parecer da organização, visto pelo participante"
+    },
+    "sessao": {
+      "type": "string",
+      "enum": [
+        "",
+        "EV01",
+        "EV02",
+        "EV03",
+        "EV04",
+        "EV05",
+        "EV06"
+      ],
+      "description": "Sessão da apresentação (EV02 a EV05) ou vazio"
+    },
+    "horarioApresentacao": {
+      "type": "string",
+      "maxLength": 20,
+      "description": "Horário dentro da sessão, ex.: 09:20"
+    },
+    "apresentado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marcado no dia: sai no verso do certificado"
+    }
+  },
+  "required": [
+    "protocolo",
+    "titulo",
+    "vinculo",
+    "modalidade",
+    "resumo",
+    "representanteId",
+    "autoresIds",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

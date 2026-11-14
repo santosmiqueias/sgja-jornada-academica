@@ -1,0 +1,85 @@
+// Entidade LembreteWhatsApp do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "LembreteWhatsApp",
+  "type": "object",
+  "description": "Registro dos lembretes por WhatsApp: impede envio repetido mesmo se o servidor reiniciar.",
+  "properties": {
+    "chave": {
+      "type": "string",
+      "description": "alunoId:eventoId (única)"
+    },
+    "alunoId": {
+      "type": "string"
+    },
+    "eventoId": {
+      "type": "string",
+      "enum": [
+        "EV01",
+        "EV02",
+        "EV03",
+        "EV04",
+        "EV05",
+        "EV06"
+      ]
+    },
+    "telefone": {
+      "type": "string",
+      "description": "E.164, ex.: 5586999990000"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "enviado",
+        "simulado",
+        "falhou"
+      ]
+    },
+    "tentativas": {
+      "type": "number",
+      "minimum": 0
+    },
+    "idProvedor": {
+      "type": "string",
+      "description": "id da mensagem no provedor"
+    },
+    "erro": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "enviadoEm": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "chave",
+    "alunoId",
+    "eventoId",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

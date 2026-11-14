@@ -82,7 +82,7 @@ js/painel.js               painel do professor (inscritos, certificados, lembret
 js/certificado-pdf.js      gerador do PDF (jsPDF)
 js/certificado-base64.js   fundo do certificado embutido
 assets/img/                logo, modelo original e fundo limpo do certificado
-base44/                    esquemas das tabelas para criar no Base44
+base44/                    projeto do Base44 (config.jsonc + entities/*.jsonc), enviado com npm run base44:push
 servicos/api-gateway/      servidor Node: API com login por perfil, dados (arquivos ou Base44), e-mail e lembretes WhatsApp
 tests/                     testes unitários (node --test)
 docs/                      arquitetura, Kanban, plano de testes, roteiro do pitch
@@ -92,5 +92,6 @@ docs/                      arquitetura, Kanban, plano de testes, roteiro do pitc
 
 - Squad 1 (Tech Lead): [`docs/kanban.md`](docs/kanban.md)
 - Squads 2, 3 e 4 (Front, Back, PDF): [`docs/arquitetura.md`](docs/arquitetura.md)
+- Banco de dados no Base44 (Squad 3): [`docs/base44.md`](docs/base44.md)
 - Lembretes por WhatsApp: [`docs/whatsapp.md`](docs/whatsapp.md)
 - Squad 5 (QA, deploy e pitch): [`docs/testes-qa.md`](docs/testes-qa.md) e [`docs/pitch.md`](docs/pitch.md)

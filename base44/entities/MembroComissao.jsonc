@@ -1,0 +1,82 @@
+// Entidade MembroComissao do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "MembroComissao",
+  "type": "object",
+  "description": "Membro da comissão que faz check-in. Cria o próprio cadastro; só registra presença depois de liberado.",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 120,
+      "description": "Único. Usado para entrar no check-in"
+    },
+    "cpf": {
+      "type": "string",
+      "pattern": "^[0-9]{11}$",
+      "description": "11 dígitos. Único"
+    },
+    "telefone": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "senhaHash": {
+      "type": "string",
+      "description": "PBKDF2-SHA256. A senha nunca é guardada"
+    },
+    "salt": {
+      "type": "string",
+      "description": "16 bytes aleatórios em hexadecimal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "ativo",
+        "bloqueado"
+      ],
+      "default": "pendente",
+      "description": "Só 'ativo' registra check-in"
+    },
+    "liberadoEm": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "nome",
+    "email",
+    "cpf",
+    "senhaHash",
+    "salt",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

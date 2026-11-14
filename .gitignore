@@ -3,3 +3,5 @@ node_modules/
 *.log
 .DS_Store
 servicos/api-gateway/dados/
+# Base44: id do app ligado na sua máquina (cada pessoa liga o seu)
+base44/.app.jsonc

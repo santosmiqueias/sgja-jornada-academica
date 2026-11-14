@@ -1,0 +1,80 @@
+// Entidade Frequencia do S.G.J.A. Enviada ao Base44 com: npm run base44:push
+// Os campos são exatamente os que o servidor grava (js/servico.js e servicos/api-gateway).
+// rls: só administradores do app (o dono, e a chave de API do servidor) leem ou gravam.
+// O site nunca acessa o Base44 direto: tudo passa pelo servidor.
+{
+  "name": "Frequencia",
+  "type": "object",
+  "description": "Presença (check-in) de um Aluno em uma atividade. Um registro por par aluno+atividade.",
+  "properties": {
+    "alunoId": {
+      "type": "string",
+      "description": "id do Aluno"
+    },
+    "eventoId": {
+      "type": "string",
+      "enum": [
+        "EV01",
+        "EV02",
+        "EV03",
+        "EV04",
+        "EV05",
+        "EV06"
+      ],
+      "description": "Atividade da programação"
+    },
+    "checkIn": {
+      "type": "boolean",
+      "default": true
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "origem": {
+      "type": "string",
+      "enum": [
+        "lista",
+        "qrcode",
+        "cpf",
+        "lote",
+        "demo"
+      ]
+    },
+    "registradoPorId": {
+      "type": "string",
+      "description": "id do MembroComissao que confirmou (vazio se foi a organização)"
+    },
+    "registradoPorNome": {
+      "type": "string",
+      "maxLength": 100
+    }
+  },
+  "required": [
+    "alunoId",
+    "eventoId",
+    "timestamp"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
