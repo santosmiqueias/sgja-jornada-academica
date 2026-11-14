@@ -44,6 +44,19 @@ Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo 
 | 24 | Sem internet | Desligar o Wi-Fi e usar o site local | Funciona (bibliotecas em `vendor/`) | manual |
 | 25 | Lembrete WhatsApp | `node lembretes.js --uma-vez --agora 2026-12-09T07:31:00-03:00` | Mensagem só para quem se inscreveu na atividade e autorizou; rodar de novo não repete | ✅ |
 
+## Submissão de trabalhos
+
+| # | Cenário | Resultado esperado | Status |
+|---|---|---|---|
+| S1 | Enviar formulário vazio | Campos em vermelho, nada enviado | ✅ |
+| S2 | Vínculo APIExt II | Formato travado em comunicação oral | ✅ |
+| S3 | Resumo com mais de 1.500 caracteres | Recusado | ✅ |
+| S4 | Arquivo `.exe` ou `.exe` renomeado para `.pdf` | Recusado pelo conteúdo | ✅ |
+| S5 | Arquivo acima de 10 MB | Recusado | ✅ |
+| S6 | Mesmo trabalho enviado duas vezes | Recusado | ✅ |
+| S7 | Baixar arquivo sem login da organização | Recusado (401) | ✅ |
+| S8 | Coautor consulta com CPF + e-mail | Vê situação, parecer e horário | ✅ |
+
 ## Antes do pitch (checklist)
 
 - [ ] `npm test` passando

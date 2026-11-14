@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Painel do professor · 6ª Jornada Acadêmica</title>
+  <title>Organização · 6ª Jornada Acadêmica</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=202611140139">
+  <link rel="icon" href="assets/img/favicon.png?v=202611140207">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611140139">
+  <link rel="stylesheet" href="css/style.css?v=202611140207">
 </head>
 <body>
   <div id="menu"></div>
@@ -19,8 +19,8 @@
   <div class="cabecalho-pagina">
     <div class="container d-flex justify-content-between align-items-end flex-wrap gap-2">
       <div>
-        <h1 class="fw-bold mb-1">Painel do professor</h1>
-        <p class="mb-0 opacity-75">Inscritos, certificados, lembretes e comissão organizadora</p>
+        <h1 class="fw-bold mb-1">Organização</h1>
+        <p class="mb-0 opacity-75">Submissões, banca, participantes, certificados, lembretes e comissão</p>
       </div>
       <button class="btn btn-sm btn-outline-light d-none" id="btn-sair"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
     </div>
@@ -33,7 +33,7 @@
       <div class="col-md-6 col-lg-4">
         <div class="card p-4">
           <h2 class="h5 fw-bold text-navy"><i class="bi bi-shield-lock me-1"></i>Acesso restrito</h2>
-          <p class="small text-muted">Área exclusiva para professores e organização.</p>
+          <p class="small text-muted">Área exclusiva da organização e da banca avaliadora.</p>
           <form id="form-login" novalidate>
             <label for="pin" class="form-label">PIN de acesso</label>
             <input type="password" id="pin" class="form-control form-control-lg text-center" inputmode="numeric" maxlength="12" autocomplete="current-password" required>
@@ -49,7 +49,8 @@
     <div class="d-none" id="tela-painel">
       <div class="card p-3 mb-3">
         <ul class="nav nav-pills flex-wrap gap-1" role="tablist">
-          <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#aba-inscritos" type="button" role="tab"><i class="bi bi-people me-1"></i>Inscritos</button></li>
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#aba-submissoes" type="button" role="tab"><i class="bi bi-file-earmark-text me-1"></i>Submissões <span class="badge rounded-pill text-bg-warning d-none" id="badge-analise">0</span></button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-inscritos" type="button" role="tab"><i class="bi bi-people me-1"></i>Participantes</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-certificados" type="button" role="tab"><i class="bi bi-award me-1"></i>Certificados</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-lembretes" type="button" role="tab"><i class="bi bi-whatsapp me-1"></i>Lembretes</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#aba-comissao" type="button" role="tab"><i class="bi bi-person-badge me-1"></i>Comissão <span class="badge rounded-pill text-bg-warning d-none" id="badge-pendentes">0</span></button></li>
@@ -60,7 +61,31 @@
       <div class="tab-content">
 
         <!-- INSCRITOS -->
-        <section class="tab-pane fade show active" id="aba-inscritos" role="tabpanel">
+        <!-- SUBMISSÕES / BANCA -->
+        <section class="tab-pane fade show active" id="aba-submissoes" role="tabpanel">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-trab-total">0</div><div class="rotulo">Trabalhos</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-trab-analise">0</div><div class="rotulo">Em análise</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-trab-aprovados">0</div><div class="rotulo">Aprovados</div></div></div>
+            <div class="col-6 col-lg-3"><div class="stat"><div class="valor" id="st-trab-reprovados">0</div><div class="rotulo">Não aprovados</div></div></div>
+          </div>
+          <div class="card p-3">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <input type="search" id="busca-trabalhos" class="form-control" style="max-width: 360px" placeholder="Buscar por título, protocolo ou participante" aria-label="Buscar trabalho">
+              <select id="filtro-trabalhos" class="form-select" style="max-width: 200px" aria-label="Filtrar por situação">
+                <option value="">Todas as situações</option><option value="em_analise">Em análise</option><option value="aprovado">Aprovados</option><option value="reprovado">Não aprovados</option>
+              </select>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead><tr><th>Trabalho</th><th class="d-none d-md-table-cell">Vínculo · formato</th><th>Situação</th><th class="d-none d-lg-table-cell">Apresentação</th><th class="text-end">Ação</th></tr></thead>
+                <tbody id="tb-trabalhos"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-pane fade" id="aba-inscritos" role="tabpanel">
           <div class="card p-3">
             <div class="d-flex flex-wrap gap-2 mb-3">
               <input type="search" id="busca-inscritos" class="form-control" style="max-width: 360px" placeholder="Buscar inscrito" aria-label="Buscar inscrito">
@@ -193,6 +218,55 @@
 
       </div>
     </div>
+    <div class="modal fade" id="modal-trabalho" tabindex="-1" aria-labelledby="mt-titulo">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <div class="small text-muted" id="mt-protocolo"></div>
+              <h2 class="modal-title h5" id="mt-titulo"></h2>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <dl class="row small mb-2" id="mt-dados"></dl>
+            <h3 class="h6 fw-bold">Resumo</h3>
+            <p class="small resumo-trabalho" id="mt-resumo"></p>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="mt-arquivo"><i class="bi bi-download me-1" aria-hidden="true"></i>Baixar arquivo</button>
+            <hr>
+            <h3 class="h6 fw-bold">Avaliação da banca</h3>
+            <form id="form-avaliacao" class="row g-3" novalidate>
+              <div class="col-md-6">
+                <label for="mt-status" class="form-label">Situação</label>
+                <select id="mt-status" class="form-select"><option value="em_analise">Em análise</option><option value="aprovado">Aprovado</option><option value="reprovado">Não aprovado</option></select>
+              </div>
+              <div class="col-md-6">
+                <label for="mt-sessao" class="form-label">Sessão da apresentação</label>
+                <select id="mt-sessao" class="form-select"><option value="">A definir</option></select>
+              </div>
+              <div class="col-md-6">
+                <label for="mt-horario" class="form-label">Horário / ordem <span class="text-muted fw-normal">(opcional)</span></label>
+                <input id="mt-horario" class="form-control" maxlength="20" placeholder="Ex.: 09h20 · sala 3">
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="mt-apresentado">
+                  <label class="form-check-label" for="mt-apresentado">Apresentação realizada (entra no certificado)</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <label for="mt-parecer" class="form-label">Parecer <span class="text-muted fw-normal">(o participante vê este texto)</span></label>
+                <textarea id="mt-parecer" class="form-control" rows="3" maxlength="1000"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="mt-salvar">Salvar avaliação</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <div id="rodape"></div>
@@ -201,13 +275,13 @@
   <script src="vendor/qrcode.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/emailjs.min.js"></script>
-  <script src="js/config.js?v=202611140139"></script>
-  <script src="js/core.js?v=202611140139"></script>
-  <script src="js/servico.js?v=202611140139"></script>
-  <script src="js/api.js?v=202611140139"></script>
-  <script src="js/ui.js?v=202611140139"></script>
-  <script src="js/certificado-base64.js?v=202611140139"></script>
-  <script src="js/certificado-pdf.js?v=202611140139"></script>
-  <script src="js/painel.js?v=202611140139"></script>
+  <script src="js/config.js?v=202611140207"></script>
+  <script src="js/core.js?v=202611140207"></script>
+  <script src="js/servico.js?v=202611140207"></script>
+  <script src="js/api.js?v=202611140207"></script>
+  <script src="js/ui.js?v=202611140207"></script>
+  <script src="js/certificado-base64.js?v=202611140207"></script>
+  <script src="js/certificado-pdf.js?v=202611140207"></script>
+  <script src="js/painel.js?v=202611140207"></script>
 </body>
 </html>

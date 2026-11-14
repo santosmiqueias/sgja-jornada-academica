@@ -6,14 +6,14 @@ Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de pape
 
 | Módulo | Página | O que faz |
 |---|---|---|
-| Landing page | `index.html` | Identidade visual, programação, como funciona, perguntas frequentes |
-| Inscrição | `inscricao.html` | Formulário com máscaras, validação de CPF (módulo 11), escolha das atividades, bloqueio de duplicados, consentimento LGPD, ingresso com QR Code |
-| Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora: cada membro cria cadastro (e-mail e senha) e só entra depois que um professor libera. Chamada com caixas de seleção (mostra os inscritos na atividade), check-in por CPF (modo totem), leitor de QR Code pela câmera, presença em lote, contadores em tempo real, registro de quem confirmou cada presença |
-| Comissão | `painel.html` → aba Comissão | Professor libera, bloqueia ou reativa cada membro da comissão e vê quantos check-ins cada um fez |
-| Inscritos | `painel.html` → aba Inscritos | Lista com horas e situação, exportação CSV para Excel |
-| Certificados | `painel.html` → aba Certificados / `certificado.html` | Libera para quem participar de pelo menos 1 dia do evento (certificado de 20 horas), PDF no modelo oficial com as horas cumpridas e, no verso, a programação completa do evento (todas as atividades e a carga de cada uma, somando 20 horas, para registro no Currículo Lattes) com a presença do participante e o QR Code de validação, envio por e-mail individual ou em lote |
-| Lembrete WhatsApp | `painel.html` → aba Lembretes + `servicos/api-gateway` | Mensagem automática 30 min antes de cada atividade, só para quem se inscreveu nela e autorizou ([guia](docs/whatsapp.md)) |
-| Validação | `validar.html` | Qualquer pessoa confere se um certificado é verdadeiro (código ou QR Code impresso no PDF) |
+| Página inicial | `index.html` | Tema, sobre o evento (edital), como funciona, formatos de apresentação, doação de alimento, programação e cronograma oficiais, dúvidas |
+| Submissão | `submissao.html` (menu Submissão) | Representante envia o trabalho: título, vínculo/disciplina (APIExt I–VI, PIC, TCC, outras, externo), formato, resumo de até 1.500 caracteres, **arquivo (PDF/DOC/DOCX, até 10 MB)** e dados de todos os participantes. Edital para visualizar e baixar |
+| Meu certificado | `certificado.html` | Com CPF + e-mail: resultado da banca, parecer, dia e horário da apresentação, ingresso (QR Code) e certificado |
+| Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora (cadastro liberado pela organização): chamada, CPF, QR Code |
+| Organização | `painel.html` (link "Organização" no topo) | Submissões e banca (baixar arquivo, aprovar/recusar, parecer, sessão, "apresentado"), participantes, certificados, lembretes, comissão, dados |
+| Validação | `validar.html` | Confere a autenticidade do certificado, com os trabalhos apresentados |
+
+**Certificado:** 20 horas para quem participar de pelo menos 1 dia do evento (check-in). O verso traz a programação oficial, a presença e os trabalhos apresentados (confirmados pela organização).
 
 ## Como rodar
 
@@ -26,7 +26,7 @@ npm start
 
 Abra http://localhost:5500. No VS Code, a extensão **Live Server** também funciona.
 
-- **PIN do painel do professor (demonstração):** `2026`
+- **Organização (demonstração):** PIN `2026`
 - **Comissão de exemplo (check-in):** `comissao@exemplo.com`, senha `jornada2026` (criada pelo botão de dados de demonstração)
 - No painel, aba **Dados → Popular dados de demonstração** cria 10 alunos com presenças variadas.
 

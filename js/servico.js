@@ -14,7 +14,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  const ENT = { aluno: "Aluno", frequencia: "Frequencia", certificado: "Certificado", email: "EmailEnviado", membro: "MembroComissao" };
+  const ENT = { aluno: "Aluno", frequencia: "Frequencia", certificado: "Certificado", email: "EmailEnviado", membro: "MembroComissao", trabalho: "Trabalho" };
 
   class ErroNegocio extends Error {
     constructor(mensagem, campo, status) { super(mensagem); this.name = "ErroNegocio"; this.campo = campo; this.status = status || 400; }
@@ -48,8 +48,20 @@
       return resto;
     };
     const certPublico = (c) => c && ({
-      codigo: c.codigo, nome: c.nome, curso: c.curso, horas: c.horas, atividades: c.atividades || [], emitidoEm: c.emitidoEm
+      codigo: c.codigo, nome: c.nome, curso: c.curso, horas: c.horas, atividades: c.atividades || [], trabalhos: c.trabalhos || [], emitidoEm: c.emitidoEm
     });
+
+    const SUB = CFG.submissao;
+    const nomeModalidade = (m) => (SUB.modalidades && SUB.modalidades[m]) || m;
+    const trabalhoParticipante = (t) => t && ({
+      protocolo: t.protocolo, titulo: t.titulo, modalidade: t.modalidade, modalidadeNome: nomeModalidade(t.modalidade),
+      vinculo: t.vinculoNome, status: t.status, parecer: t.status !== "em_analise" ? (t.parecer || "") : "",
+      sessao: t.sessao || null, horarioApresentacao: t.horarioApresentacao || "", apresentado: !!t.apresentado
+    });
+    const normalizarTitulo = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    async function trabalhosDe(pessoaId) {
+      return (await store.list(ENT.trabalho)).filter((t) => (t.autoresIds || []).includes(pessoaId));
+    }
 
     async function buscarAluno(id) { return (await store.list(ENT.aluno)).find((a) => a.id === id) || null; }
     async function buscarAlunoPorCPF(cpf) { const d = C.soDigitos(cpf); return (await store.list(ENT.aluno)).find((a) => a.cpf === d) || null; }
@@ -141,9 +153,101 @@
         });
       },
 
+      /*
+       * Submissão de trabalho (edital, itens 1 e 2): um representante envia o trabalho com os dados
+       * de todos os participantes. arquivo = { nome, tipo, tamanho, ref } já gravado por quem chamou.
+       */
+      async submeterTrabalho(dados, arquivo) {
+        dados = dados || {};
+        return comTrava("submeterTrabalho", async () => {
+          if (SUB.bloquearForaDoPeriodo) {
+            const hoje = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10); // horário de Teresina
+            if (hoje < SUB.inicio || hoje > SUB.fim) throw new ErroNegocio("Fora do período de submissão de trabalhos (16 a 30/11/2026).", null, 403);
+          }
+          const titulo = texto(dados.titulo, 200).replace(/\s+/g, " ");
+          const vinculo = SUB.vinculos.find((v) => v.id === dados.vinculo);
+          const curso = texto(dados.curso, 80);
+          const orientador = C.normalizarNome(texto(dados.orientador, 100));
+          const resumo = String(dados.resumo == null ? "" : dados.resumo).replace(/\r\n/g, "\n").trim();
+          if (titulo.length < 5) throw new ErroNegocio("Informe o título do trabalho.", "titulo");
+          if (!vinculo) throw new ErroNegocio("Selecione o vínculo do trabalho.", "vinculo");
+          const modalidade = vinculo.modalidade || dados.modalidade;
+          if (!SUB.modalidades[modalidade]) throw new ErroNegocio("Escolha o formato de apresentação.", "modalidade");
+          if (!CFG.cursos.includes(curso)) throw new ErroNegocio("Selecione o curso.", "curso");
+          if (orientador && !C.validarNome(orientador)) throw new ErroNegocio("Nome do orientador inválido.", "orientador");
+          if (resumo.length < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres.`, "resumo");
+          if (resumo.length > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo} caracteres.`, "resumo");
+          if (!arquivo || !arquivo.ref) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
+          const ext = String(arquivo.nome || "").split(".").pop().toLowerCase();
+          if (!SUB.arquivo.extensoes.includes(ext)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+          if (!(arquivo.tamanho > 0) || arquivo.tamanho > SUB.arquivo.maxMB * 1048576) throw new ErroNegocio(`O arquivo pode ter no máximo ${SUB.arquivo.maxMB} MB.`, "arquivo");
+          if (dados.consentimentoLGPD !== true) throw new ErroNegocio("É preciso aceitar o termo de uso de dados.", "lgpd");
+
+          // Representante + demais participantes
+          const r = dados.representante || {};
+          const rep = {
+            nome: C.capitalizarNome(texto(r.nome, 100)), email: C.normalizarEmail(texto(r.email, 120)), telefone: C.soDigitos(texto(r.telefone, 20)),
+            cpf: C.soDigitos(texto(r.cpf, 20)), matricula: C.soDigitos(texto(r.matricula, 20))
+          };
+          if (!C.validarNome(rep.nome)) throw new ErroNegocio("Informe nome e sobrenome do representante.", "r-nome");
+          if (!C.validarEmail(rep.email)) throw new ErroNegocio("E-mail do representante inválido.", "r-email");
+          if (!C.validarTelefone(rep.telefone)) throw new ErroNegocio("Telefone do representante inválido.", "r-telefone");
+          if (!C.validarCPF(rep.cpf)) throw new ErroNegocio("CPF do representante inválido.", "r-cpf");
+          if (rep.matricula && !C.validarMatricula(rep.matricula)) throw new ErroNegocio("Matrícula deve ter de 6 a 12 dígitos.", "r-matricula");
+          const outros = (Array.isArray(dados.participantes) ? dados.participantes : []).slice(0, SUB.maxParticipantes).map((p, i) => ({
+            i, nome: C.capitalizarNome(texto(p && p.nome, 100)), email: C.normalizarEmail(texto(p && p.email, 120)), cpf: C.soDigitos(texto(p && p.cpf, 20))
+          }));
+          if (outros.length + 1 > SUB.maxParticipantes) throw new ErroNegocio(`No máximo ${SUB.maxParticipantes} participantes por trabalho.`, "participantes");
+          for (const p of outros) {
+            if (!C.validarNome(p.nome)) throw new ErroNegocio(`Participante ${p.i + 2}: informe nome e sobrenome.`, `p-nome-${p.i}`);
+            if (!C.validarCPF(p.cpf)) throw new ErroNegocio(`Participante ${p.i + 2}: CPF inválido.`, `p-cpf-${p.i}`);
+            if (!C.validarEmail(p.email)) throw new ErroNegocio(`Participante ${p.i + 2}: e-mail inválido.`, `p-email-${p.i}`);
+          }
+          const cpfs = [rep.cpf, ...outros.map((p) => p.cpf)];
+          if (new Set(cpfs).size !== cpfs.length) throw new ErroNegocio("O mesmo CPF aparece mais de uma vez entre os participantes.", "participantes");
+          const emails = [rep.email, ...outros.map((p) => p.email)];
+          if (new Set(emails).size !== emails.length) throw new ErroNegocio("O mesmo e-mail aparece mais de uma vez entre os participantes.", "participantes");
+
+          // Cada participante é um cadastro próprio (para consultar e baixar o próprio certificado).
+          // Quem já está cadastrado é reaproveitado sem alterar seus dados.
+          const pessoas = await store.list(ENT.aluno);
+          const planos = [{ ...rep, campo: "r", representante: true }, ...outros.map((p) => ({ ...p, campo: `p-email-${p.i}` }))];
+          for (const pl of planos) {
+            pl.existente = pessoas.find((a) => a.cpf === pl.cpf) || null;
+            if (!pl.existente && pessoas.some((a) => a.email === pl.email)) {
+              throw new ErroNegocio(`O e-mail ${pl.email} já está cadastrado com outro CPF.`, pl.representante ? "r-email" : pl.campo, 409);
+            }
+          }
+          const titulos = new Set((await store.list(ENT.trabalho)).filter((t) => planos.some((pl) => pl.existente && (t.autoresIds || []).includes(pl.existente.id))).map((t) => normalizarTitulo(t.titulo)));
+          if (titulos.has(normalizarTitulo(titulo))) throw new ErroNegocio("Este trabalho já foi submetido por um dos participantes.", "titulo", 409);
+
+          const ids = [];
+          let representante = null;
+          for (const pl of planos) {
+            let pessoa = pl.existente;
+            if (!pessoa) {
+              pessoa = await store.create(ENT.aluno, {
+                nome: pl.nome, email: pl.email, cpf: pl.cpf, telefone: pl.representante ? pl.telefone : "", matricula: pl.representante ? pl.matricula : "",
+                curso, periodo: "", consentimentoLGPD: true, aceitaWhatsApp: pl.representante && dados.aceitaWhatsApp === true, atividades: []
+              });
+              pessoa = await store.update(ENT.aluno, pessoa.id, { tokenIngresso: await C.gerarTokenIngresso(pessoa.id, pessoa.cpf, segredo) });
+            }
+            ids.push(pessoa.id);
+            if (pl.representante) representante = pessoa;
+          }
+          const protocolo = `TR-${C.gerarId("").slice(-6)}`;
+          const t = await store.create(ENT.trabalho, {
+            protocolo, titulo, vinculo: vinculo.id, vinculoNome: vinculo.nome, modalidade, curso, orientador, resumo,
+            arquivo: { nome: texto(arquivo.nome, 120), tipo: texto(arquivo.tipo, 100), tamanho: arquivo.tamanho, ref: arquivo.ref },
+            representanteId: representante.id, autoresIds: ids, status: "em_analise", parecer: "", sessao: null, horarioApresentacao: "", apresentado: false
+          });
+          return { trabalho: trabalhoParticipante(t), representante: alunoDono(representante), participantes: ids.length };
+        });
+      },
+
       async consultarParticipante(cpf, email) {
         const a = await identificarParticipante(cpf, email);
-        return { aluno: alunoDono(a), situacao: await situacaoDe(a.id) };
+        return { aluno: alunoDono(a), situacao: await situacaoDe(a.id), trabalhos: (await trabalhosDe(a.id)).map(trabalhoParticipante) };
       },
 
       async emitirCertificadoParticipante(cpf, email) {
@@ -236,16 +340,55 @@
 
       /* ---------- Professor ---------- */
       async dadosPainel() {
-        const [alunos, frequencias, certificados, membros, emails] = await Promise.all([
-          store.list(ENT.aluno), store.list(ENT.frequencia), store.list(ENT.certificado), store.list(ENT.membro), store.list(ENT.email)
+        const [alunos, frequencias, certificados, membros, emails, trabalhos] = await Promise.all([
+          store.list(ENT.aluno), store.list(ENT.frequencia), store.list(ENT.certificado), store.list(ENT.membro), store.list(ENT.email), store.list(ENT.trabalho)
         ]);
         return {
           alunos: alunos.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
           frequencias,
           certificados,
           membros: membros.map(membroPublico).sort((a, b) => (a.status === "pendente" ? -1 : 0) - (b.status === "pendente" ? -1 : 0) || a.nome.localeCompare(b.nome, "pt-BR")),
-          emails: emails.slice().sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)))
+          emails: emails.slice().sort((a, b) => String(b.created_date).localeCompare(String(a.created_date))),
+          trabalhos: trabalhos.slice().sort((a, b) => String(b.created_date).localeCompare(String(a.created_date)))
         };
+      },
+
+      // Banca/organização: parecer, sessão e horário da apresentação, confirmação de que apresentou.
+      async avaliarTrabalho(id, dados) {
+        dados = dados || {};
+        const t = (await store.list(ENT.trabalho)).find((x) => x.id === String(id));
+        if (!t) throw new ErroNegocio("Trabalho não encontrado.", null, 404);
+        const patch = {};
+        if (dados.status !== undefined) {
+          if (!["em_analise", "aprovado", "reprovado"].includes(dados.status)) throw new ErroNegocio("Situação inválida.");
+          patch.status = dados.status;
+        }
+        if (dados.parecer !== undefined) patch.parecer = texto(dados.parecer, 1000);
+        if (dados.sessao !== undefined) {
+          if (dados.sessao && !CFG.eventos.some((e) => e.id === dados.sessao)) throw new ErroNegocio("Sessão inexistente.");
+          patch.sessao = dados.sessao || null;
+        }
+        if (dados.horarioApresentacao !== undefined) patch.horarioApresentacao = texto(dados.horarioApresentacao, 20);
+        if (dados.apresentado !== undefined) patch.apresentado = dados.apresentado === true;
+        const novo = await store.update(ENT.trabalho, t.id, patch);
+        // Lembrete de WhatsApp: a sessão da apresentação entra nas atividades dos participantes
+        // (só enquanto o trabalho estiver aprovado).
+        if (novo.sessao !== t.sessao || novo.status !== t.status) {
+          for (const pid of t.autoresIds || []) {
+            const p = await buscarAluno(pid);
+            if (!p) continue;
+            const atividades = (p.atividades || []).filter((e) => e !== t.sessao && e !== novo.sessao);
+            if (novo.sessao && novo.status === "aprovado") atividades.push(novo.sessao);
+            await store.update(ENT.aluno, p.id, { atividades: CFG.eventos.map((e) => e.id).filter((e) => atividades.includes(e)) });
+          }
+        }
+        return novo;
+      },
+
+      async arquivoDoTrabalho(id) {
+        const t = (await store.list(ENT.trabalho)).find((x) => x.id === String(id));
+        if (!t || !t.arquivo) throw new ErroNegocio("Arquivo não encontrado.", null, 404);
+        return t.arquivo;
       },
 
       async definirStatusMembro(id, status) {
@@ -264,7 +407,8 @@
         // O certificado é da carga total do evento (20h), conforme a coordenação.
         const codigo = await C.gerarCodigoCertificado(a.id, a.cpf, sit.horasCertificado, segredo);
         const existente = (await store.list(ENT.certificado)).find((c) => c.alunoId === a.id);
-        const dados = { alunoId: a.id, nome: a.nome, curso: a.curso, horas: sit.horasCertificado, atividades: sit.atividades, codigo };
+        const trabalhos = (await trabalhosDe(a.id)).filter((t) => t.apresentado).map((t) => ({ titulo: t.titulo, modalidade: nomeModalidade(t.modalidade) }));
+        const dados = { alunoId: a.id, nome: a.nome, curso: a.curso, horas: sit.horasCertificado, atividades: sit.atividades, trabalhos, codigo };
         if (existente) return store.update(ENT.certificado, existente.id, dados);
         return store.create(ENT.certificado, { ...dados, emitidoEm: new Date().toISOString(), enviadoPorEmail: false });
       },
@@ -286,29 +430,42 @@
       // Dados fictícios para demonstração do pitch (CPFs válidos gerados pelo algoritmo).
       async popularDemo() {
         const nomes = [
-          ["Ana Beatriz Sousa", "Análise e Desenvolvimento de Sistemas"], ["Carlos Eduardo Lima", "Ciência da Computação"],
-          ["Fernanda Rocha Alves", "Direito"], ["João Pedro Carvalho", "Análise e Desenvolvimento de Sistemas"],
-          ["Mariana Costa Ribeiro", "Enfermagem"], ["Rafael Nunes Barbosa", "Engenharia Civil"],
-          ["Larissa Mendes Prado", "Psicologia"], ["Thiago Oliveira Santos", "Sistemas de Informação"],
-          ["Juliana Freitas Moura", "Administração"], ["Lucas Almeida Teixeira", "Análise e Desenvolvimento de Sistemas"]
+          "Ana Beatriz Sousa", "Carlos Eduardo Lima", "Fernanda Rocha Alves", "João Pedro Carvalho", "Mariana Costa Ribeiro",
+          "Rafael Nunes Barbosa", "Larissa Mendes Prado", "Thiago Oliveira Santos", "Juliana Freitas Moura", "Lucas Almeida Teixeira"
         ];
-        const presencas = [6, 6, 5, 4, 6, 3, 5, 2, 6, 4];
         const gerarCPF = (semente) => {
           const base = String(100000000 + semente * 7919).slice(0, 9).split("").map(Number);
           const dv = (arr) => { const s = arr.reduce((acc, n, i) => acc + n * (arr.length + 1 - i), 0); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
           base.push(dv(base)); base.push(dv(base));
           return base.join("");
         };
-        for (let i = 0; i < nomes.length; i++) {
-          const [nome, curso] = nomes[i];
+        const pessoa = (i) => ({ nome: nomes[i], cpf: gerarCPF(i + 11), email: `${nomes[i].split(" ")[0].toLowerCase()}.demo${i}@exemplo.com`, telefone: `8699${String(1000000 + i * 1371).slice(0, 7)}`, matricula: String(20260000 + i * 37) });
+        const resumo = (tema) => `Introdução: ${tema} é um desafio presente no dia a dia da comunidade atendida pelo projeto. Objetivos: levar orientação prática ao público e medir o impacto da ação. ` +
+          `Método: oficinas e encontros presenciais, com questionário antes e depois das atividades. Principais resultados: aumento do conhecimento dos participantes e boa adesão às atividades. ` +
+          `Considerações finais: a ação aproximou a universidade da comunidade e pode ser ampliada no próximo semestre.`;
+        const trabalhos = [
+          { titulo: "Educação financeira para jovens da comunidade", vinculo: "APIEXT1", curso: "Administração", autores: [0, 8], status: "aprovado", sessao: "EV02", apresentado: true },
+          { titulo: "Primeiros socorros nas escolas públicas de Teresina", vinculo: "APIEXT2", curso: "Enfermagem", autores: [4, 6], status: "aprovado", sessao: "EV03" },
+          { titulo: "Aplicativo de agendamento para a clínica-escola", vinculo: "TCC", modalidade: "oral", curso: "Análise e Desenvolvimento de Sistemas", autores: [1, 9, 3], status: "em_analise" },
+          { titulo: "Direitos do consumidor no comércio digital", vinculo: "APIEXT3", curso: "Direito", autores: [2], status: "reprovado", parecer: "O resumo não apresenta método e resultados. Reenvie no próximo edital." },
+          { titulo: "Reaproveitamento de resíduos da construção civil", vinculo: "PIC", modalidade: "banner", curso: "Engenharia Civil", autores: [5, 7], status: "aprovado", sessao: "EV04", apresentado: true }
+        ];
+        const presencas = { 0: ["EV01", "EV02"], 8: ["EV02"], 4: ["EV03"], 6: ["EV03"], 1: ["EV01"], 5: ["EV04", "EV05"], 7: ["EV04"], 3: ["EV02"], 9: ["EV05"] };
+        for (const t of trabalhos) {
           try {
-            const aluno = await S.criarAluno({
-              nome, curso, email: `${nome.split(" ")[0].toLowerCase()}.demo${i}@exemplo.com`, telefone: `8699${String(1000000 + i * 1371).slice(0, 7)}`,
-              cpf: gerarCPF(i + 11), matricula: String(20260000 + i * 37), periodo: `${(i % 8) + 1}º`, consentimentoLGPD: true, aceitaWhatsApp: i % 4 !== 3,
-              atividades: CFG.eventos.slice(0, Math.min(CFG.eventos.length, presencas[i] + (i % 2))).map((e) => e.id)
-            });
-            for (let k = 0; k < presencas[i]; k++) await registrarCheckin(aluno.id, CFG.eventos[k].id, "demo", null);
+            const [rep, ...outros] = t.autores.map(pessoa);
+            const r = await S.submeterTrabalho({
+              titulo: t.titulo, vinculo: t.vinculo, modalidade: t.modalidade, curso: t.curso, resumo: resumo(t.titulo.toLowerCase()),
+              representante: rep, participantes: outros, consentimentoLGPD: true, aceitaWhatsApp: true
+            }, { nome: "trabalho-exemplo.pdf", tipo: "application/pdf", tamanho: 2048, ref: "exemplo" });
+            const salvo = (await store.list(ENT.trabalho)).find((x) => x.protocolo === r.trabalho.protocolo);
+            await S.avaliarTrabalho(salvo.id, { status: t.status, parecer: t.parecer || (t.status === "aprovado" ? "Trabalho aprovado pela banca." : ""), sessao: t.sessao, horarioApresentacao: t.sessao ? "Ordem definida no dia" : "", apresentado: !!t.apresentado });
           } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
+        }
+        const todos = await store.list(ENT.aluno);
+        for (const [i, sessoes] of Object.entries(presencas)) {
+          const a = todos.find((x) => x.cpf === gerarCPF(Number(i) + 11));
+          if (a) for (const ev of sessoes) await registrarCheckin(a.id, ev, "demo", null);
         }
         const membros = [
           { nome: "Paula Martins Lima", email: "comissao@exemplo.com", cpf: "39053344705", telefone: "86999991111", senha: "jornada2026", status: "ativo" },

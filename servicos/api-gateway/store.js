@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ENTIDADES = ["Aluno", "Frequencia", "Certificado", "EmailEnviado", "MembroComissao"];
+const ENTIDADES = ["Aluno", "Frequencia", "Certificado", "EmailEnviado", "MembroComissao", "Trabalho"];
 
 class ArquivoStore {
   constructor(dir) {

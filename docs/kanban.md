@@ -16,6 +16,8 @@ Regra: nenhum cartão vai para Done sem passar pelo Squad 5 (QA).
 | 2 | Definir padrão de branch (`feat/nome-da-tarefa`) e Pull Request | 1 | regra escrita no README | README.md |
 | 3 | Recortar logo e aplicar paleta azul/amarelo | 2 | logo na landing, cores em variáveis CSS | css/style.css |
 | 4 | Landing page com programação e perguntas frequentes | 2 | responsiva, sem rolagem lateral no celular | index.html |
+| 5b | Submissão de trabalho com arquivo, vínculo (APIExt I–VI…), formato e participantes | 2/3 | APIExt II trava comunicação oral; arquivo conferido pelo conteúdo | submissao.html, js/submissao.js |
+| 5c | Banca na Organização: baixar arquivo, aprovar, sessão, apresentado | 3 | participante vê resultado; certificado lista o trabalho | js/painel.js |
 | 5 | Formulário de inscrição com máscaras (CPF, telefone, matrícula) | 2 | letras não entram nos campos numéricos | inscricao.html, js/inscricao.js |
 | 6 | Validação de CPF (módulo 11) e e-mail | 2/3 | CPF inválido mostra erro | js/core.js |
 | 7 | Ingresso com QR Code após a inscrição | 2 | QR aparece e pode ser baixado | js/inscricao.js |

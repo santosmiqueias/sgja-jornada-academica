@@ -20,24 +20,41 @@
     try {
       const r = await API.consultarParticipante(cpf, email);
       atual = { cpf, email, aluno: r.aluno, sit: r.situacao };
-      desenhar(r.aluno, r.situacao);
+      desenhar(r.aluno, r.situacao, r.trabalhos || []);
     } catch (err) {
       atual = null;
       if (err instanceof API.ErroNegocio && err.status !== 0) {
-        res.innerHTML = `<div class="alert alert-warning">${esc(err.message)} Confira os dados ou <a href="inscricao.html" class="alert-link">faça sua inscrição</a>.</div>`;
+        res.innerHTML = `<div class="alert alert-warning">${esc(err.message)} Confira os dados ou <a href="submissao.html" class="alert-link">submeta um trabalho</a>.</div>`;
       } else { UI.aviso(err.message || "Erro ao consultar. Tente novamente.", "erro"); }
     } finally { UI.carregando($("btn-consultar"), false); }
   });
 
-  function desenhar(aluno, sit) {
+  const STATUS = { em_analise: ["Em análise pela banca", "badge-pend"], aprovado: ["Aprovado", "badge-ok"], reprovado: ["Não aprovado", "text-bg-danger"] };
+  function blocoTrabalhos(trabalhos) {
+    if (!trabalhos.length) return "";
+    const itens = trabalhos.map((t) => {
+      const [rotulo, cor] = STATUS[t.status] || [t.status, "text-bg-light"];
+      const ev = t.sessao && API.eventos().find((e) => e.id === t.sessao);
+      const quando = ev ? `${UI.formatarData(ev.data)} · ${esc(ev.turno)} · ${esc(ev.horario)}${t.horarioApresentacao ? ` · ${esc(t.horarioApresentacao)}` : ""}` : "";
+      return `<li class="list-group-item px-0">
+        <div class="d-flex justify-content-between gap-2 flex-wrap"><strong>${esc(t.titulo)}</strong><span class="badge ${cor}">${rotulo}${t.apresentado ? " · apresentado" : ""}</span></div>
+        <div class="small text-muted">Protocolo ${esc(t.protocolo)} · ${esc(t.modalidadeNome)} · ${esc(t.vinculo)}</div>
+        ${quando ? `<div class="small mt-1"><i class="bi bi-calendar-check me-1" aria-hidden="true"></i>Apresentação: ${quando}</div>` : ""}
+        ${t.parecer ? `<div class="small mt-1"><i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>Parecer da banca: ${esc(t.parecer)}</div>` : ""}
+      </li>`;
+    }).join("");
+    return `<h3 class="h6 fw-bold mt-4">Seus trabalhos</h3><ul class="list-group list-group-flush">${itens}</ul>`;
+  }
+
+  function desenhar(aluno, sit, trabalhos) {
     const pct = Math.min(100, Math.round((sit.dias / sit.minimo) * 100));
     const linhas = API.eventos().map((ev) => {
       const foi = sit.atividades.includes(ev.id);
       const inscrito = (aluno.atividades || []).includes(ev.id);
       return `<li class="list-group-item d-flex justify-content-between align-items-center">
         <span><i class="bi ${foi ? "bi-check-circle-fill text-success" : "bi-circle text-secondary"} me-2" aria-hidden="true"></i>${esc(ev.titulo)}
-        <span class="small text-muted d-block ms-4">${UI.formatarData(ev.data)} · ${esc(ev.turno)}${inscrito ? ' · <i class="bi bi-bookmark-check"></i> inscrito' : ""}</span></span>
-        <span class="badge ${foi ? "badge-ok" : "badge-pend"}">${foi ? "Presente" : "Sem registro"} · ${ev.cargaHoraria}h</span></li>`;
+        <span class="small text-muted d-block ms-4">${UI.formatarData(ev.data)} · ${esc(ev.horario)}${inscrito ? ' · <i class="bi bi-bookmark-check"></i> sua apresentação' : ""}</span></span>
+        <span class="badge ${foi ? "badge-ok" : "badge-pend"}">${foi ? "Presente" : "Sem registro"}</span></li>`;
     }).join("");
 
     const blocoCert = sit.aprovado
@@ -60,12 +77,13 @@
           </div>
           <div class="ingresso p-3 text-center">
             <img id="qr" alt="QR Code do seu ingresso" width="150" height="150" style="width:150px;height:150px">
-            <div class="small fw-semibold mt-1">Seu ingresso</div>
+            <div class="small fw-semibold mt-1">Seu ingresso (credenciamento)</div>
           </div>
         </div>
         <hr class="my-4">
         ${blocoCert}
-        <h3 class="h6 fw-bold mt-4">Sua presença por atividade</h3>
+        ${blocoTrabalhos(trabalhos)}
+        <h3 class="h6 fw-bold mt-4">Sua presença na programação</h3>
         <ul class="list-group list-group-flush">${linhas}</ul>
       </div>`;
     if (aluno.tokenIngresso) $("qr").src = UI.qrDataURL(aluno.tokenIngresso, 300);

@@ -1,4 +1,4 @@
-/* Painel do professor: login por PIN, inscritos, certificados, lembretes, comissão organizadora e dados.
+/* Organização: login, submissões e banca, participantes, certificados, lembretes, comissão e dados.
    O check-in fica em checkin.html, com acesso individual da comissão. */
 (function () {
   "use strict";
@@ -42,14 +42,15 @@
   $("btn-sair").addEventListener("click", () => { API.sairProfessor(); location.reload(); });
 
   /* ---------------- Estado ---------------- */
-  let alunos = [], frequencias = [], certificados = [], membros = [];
+  let alunos = [], frequencias = [], certificados = [], membros = [], trabalhos = [];
 
   let emails = [];
   async function recarregar() {
     try {
       const d = await API.dadosPainel();
       ({ alunos, frequencias, certificados, membros, emails } = d);
-      desenharInscritos(); desenharLembretes(); desenharComissao(); desenharCertificados();
+      trabalhos = d.trabalhos || [];
+      desenharTrabalhos(); desenharInscritos(); desenharLembretes(); desenharComissao(); desenharCertificados();
     } catch (err) {
       if (err.status === 401) { API.sairProfessor(); location.reload(); return; }
       UI.aviso(err.message || "Não foi possível carregar os dados.", "erro");
@@ -206,6 +207,88 @@
     $("previa-whats").textContent = C.mensagemLembrete(exemplo, API.eventos()[0], CFG.evento.nome, WA.antecedenciaMinutos);
   }
 
+
+  /* ---------------- Submissões e banca ---------------- */
+  const SUB = CFG.submissao;
+  const STATUS = { em_analise: ["Em análise", "badge-pend"], aprovado: ["Aprovado", "badge-ok"], reprovado: ["Não aprovado", "text-bg-danger"] };
+  const nomePessoa = (id) => { const a = alunos.find((x) => x.id === id); return a ? a.nome : "—"; };
+  const sessaoTexto = (t) => {
+    const ev = t.sessao && CFG.eventos.find((e) => e.id === t.sessao);
+    return ev ? `${UI.formatarData(ev.data).slice(0, 5)} · ${ev.turno}${t.horarioApresentacao ? ` · ${t.horarioApresentacao}` : ""}` : "";
+  };
+  const modalTrab = new bootstrap.Modal($("modal-trabalho"));
+  let emEdicao = null;
+  CFG.eventos.filter((e) => /Apresenta/i.test(e.titulo)).forEach((e) =>
+    $("mt-sessao").add(new Option(`${UI.formatarData(e.data)} · ${e.turno} · ${e.horario}`, e.id)));
+
+  function desenharTrabalhos() {
+    const conta = (st) => trabalhos.filter((t) => t.status === st).length;
+    $("st-trab-total").textContent = trabalhos.length;
+    $("st-trab-analise").textContent = conta("em_analise");
+    $("st-trab-aprovados").textContent = conta("aprovado");
+    $("st-trab-reprovados").textContent = conta("reprovado");
+    $("badge-analise").textContent = conta("em_analise");
+    $("badge-analise").classList.toggle("d-none", !conta("em_analise"));
+    const filtro = $("filtro-trabalhos").value, termo = $("busca-trabalhos").value.trim().toLowerCase();
+    const lista = trabalhos.filter((t) => (!filtro || t.status === filtro) &&
+      (!termo || t.titulo.toLowerCase().includes(termo) || t.protocolo.toLowerCase().includes(termo) || (t.autoresIds || []).some((id) => nomePessoa(id).toLowerCase().includes(termo))));
+    $("tb-trabalhos").innerHTML = lista.length ? lista.map((t) => {
+      const [rotulo, cor] = STATUS[t.status] || [t.status, "text-bg-light"];
+      return `<tr>
+        <td><div class="fw-semibold small">${esc(t.titulo)}</div><div class="small text-muted">${esc(t.protocolo)} · ${esc(nomePessoa(t.representanteId))}${t.autoresIds.length > 1 ? ` + ${t.autoresIds.length - 1}` : ""}</div></td>
+        <td class="small d-none d-md-table-cell">${esc(t.vinculoNome)}<br><span class="text-muted">${esc(SUB.modalidades[t.modalidade] || t.modalidade)}</span></td>
+        <td><span class="badge ${cor}">${rotulo}</span>${t.apresentado ? '<br><span class="badge badge-ok mt-1">apresentado</span>' : ""}</td>
+        <td class="small d-none d-lg-table-cell">${esc(sessaoTexto(t)) || '<span class="text-muted">—</span>'}</td>
+        <td class="text-end"><button class="btn btn-sm btn-primary btn-avaliar" data-id="${esc(t.id)}">Avaliar</button></td></tr>`;
+    }).join("") : `<tr><td colspan="5" class="text-center text-muted py-4">${trabalhos.length ? "Nenhum trabalho com esse filtro." : "Nenhum trabalho submetido ainda."}</td></tr>`;
+  }
+  $("busca-trabalhos").addEventListener("input", desenharTrabalhos);
+  $("filtro-trabalhos").addEventListener("change", desenharTrabalhos);
+
+  $("tb-trabalhos").addEventListener("click", (e) => {
+    const b = e.target.closest(".btn-avaliar");
+    if (!b) return;
+    const t = trabalhos.find((x) => x.id === b.dataset.id);
+    emEdicao = t;
+    $("mt-protocolo").textContent = `${t.protocolo} · enviado em ${UI.formatarDataHora(t.created_date)}`;
+    $("mt-titulo").textContent = t.titulo;
+    const linha = (k, v) => `<dt class="col-sm-4">${esc(k)}</dt><dd class="col-sm-8">${v}</dd>`;
+    $("mt-dados").innerHTML =
+      linha("Vínculo", esc(t.vinculoNome)) + linha("Formato", esc(SUB.modalidades[t.modalidade] || t.modalidade)) + linha("Curso", esc(t.curso)) +
+      (t.orientador ? linha("Orientador", esc(t.orientador)) : "") +
+      linha("Participantes", (t.autoresIds || []).map((id) => { const a = alunos.find((x) => x.id === id); return a ? `${esc(a.nome)} <span class="text-muted">· ${esc(a.email)}</span>${id === t.representanteId ? " <span class=\"badge text-bg-light\">representante</span>" : ""}` : "—"; }).join("<br>")) +
+      linha("Arquivo", t.arquivo ? `${esc(t.arquivo.nome)} <span class="text-muted">· ${Math.max(1, Math.round(t.arquivo.tamanho / 1024))} KB</span>` : "—");
+    $("mt-resumo").textContent = t.resumo;
+    $("mt-status").value = t.status;
+    $("mt-sessao").value = t.sessao || "";
+    $("mt-horario").value = t.horarioApresentacao || "";
+    $("mt-apresentado").checked = !!t.apresentado;
+    $("mt-parecer").value = t.parecer || "";
+    modalTrab.show();
+  });
+
+  $("mt-arquivo").addEventListener("click", async (e) => {
+    const b = e.currentTarget;
+    UI.carregando(b, true, "Baixando...");
+    try { await API.baixarArquivoTrabalho(emEdicao); }
+    catch (err) { UI.aviso(err.message, err.status === 404 ? "info" : "erro"); }
+    finally { UI.carregando(b, false); }
+  });
+
+  $("mt-salvar").addEventListener("click", async (e) => {
+    const b = e.currentTarget;
+    const status = $("mt-status").value;
+    if ($("mt-sessao").value && status !== "aprovado") { UI.aviso("Só trabalhos aprovados recebem sessão de apresentação.", "alerta"); return; }
+    if ($("mt-apresentado").checked && status !== "aprovado") { UI.aviso("Só trabalhos aprovados podem ser marcados como apresentados.", "alerta"); return; }
+    UI.carregando(b, true, "Salvando...");
+    try {
+      await API.avaliarTrabalho(emEdicao.id, { status, parecer: $("mt-parecer").value, sessao: $("mt-sessao").value || null, horarioApresentacao: $("mt-horario").value, apresentado: $("mt-apresentado").checked });
+      modalTrab.hide();
+      await recarregar();
+      UI.aviso("Avaliação salva.", "sucesso");
+    } catch (err) { UI.aviso(err.message, "erro"); }
+    finally { UI.carregando(b, false); }
+  });
 
   /* ---------------- Comissão organizadora ---------------- */
   const ROTULO_STATUS = { pendente: ["Aguardando liberação", "badge-pend"], ativo: ["Com acesso", "badge-ok"], bloqueado: ["Bloqueado", "text-bg-danger"] };

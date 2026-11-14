@@ -3,8 +3,7 @@
  *
  * Público (sem login, com limite de tentativas)
  *   GET  /api/v1/publico/resumo                  total de inscritos
- *   POST /api/v1/publico/inscricoes              nova inscrição
- *   POST /api/v1/publico/cpf-inscrito            { cpf } -> { inscrito }
+ *   POST /api/v1/publico/submissoes              submissão de trabalho (com arquivo PDF/DOC/DOCX)
  *   POST /api/v1/publico/participante            { cpf, email } -> dados do próprio participante
  *   POST /api/v1/publico/certificado             { cpf, email } -> emite o certificado (se apto)
  *   POST /api/v1/publico/certificado/email       { cpf, email, pdfBase64 } -> envia ao e-mail da inscrição
@@ -18,6 +17,8 @@
  *   POST /api/v1/professor/login                 { senha }
  *   GET  /api/v1/professor/dados
  *   PUT  /api/v1/professor/membros/:id           { status }
+ *   PUT  /api/v1/professor/trabalhos/:id         { status, parecer, sessao, horarioApresentacao, apresentado }
+ *   GET  /api/v1/professor/trabalhos/:id/arquivo download do arquivo submetido
  *   POST /api/v1/professor/certificados/:alunoId
  *   POST /api/v1/professor/certificados/:alunoId/email  { pdfBase64 }
  *   GET  /api/v1/professor/lembretes/agenda
@@ -90,12 +91,45 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 /* ---------- Público ---------- */
 app.get("/api/v1/publico/resumo", rota(async (_req, res) => res.json({ inscritos: await servico.contarInscritos() })));
 
-app.post("/api/v1/publico/inscricoes", auth.limitador(10, 60000, "inscricao"), jsonPequeno, rota(async (req, res) => {
-  res.status(201).json({ aluno: await servico.criarAluno(req.body) });
-}));
+/* ---------- Arquivos dos trabalhos ---------- */
+const DIR_ARQ = path.join(process.env.DADOS_DIR || path.join(__dirname, "dados"), "arquivos");
+fs.mkdirSync(DIR_ARQ, { recursive: true, mode: 0o700 });
+const TIPOS = {
+  pdf: { mime: "application/pdf", confere: (b) => b.subarray(0, 5).toString("latin1") === "%PDF-" },
+  docx: { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", confere: (b) => b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04 },
+  doc: { mime: "application/msword", confere: (b) => b.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) }
+};
+const MAX_ARQ = CFG.submissao.arquivo.maxMB * 1048576;
 
-app.post("/api/v1/publico/cpf-inscrito", auth.limitador(20, 60000, "cpf"), jsonPequeno, rota(async (req, res) => {
-  res.json({ inscrito: await servico.cpfJaInscrito(campo(req.body && req.body.cpf, 20)) });
+// Confere extensão, tamanho e o conteúdo real do arquivo (assinatura), e grava com nome aleatório.
+function salvarArquivo(arq) {
+  const nome = String((arq && arq.nome) || "").slice(0, 120);
+  const ext = nome.split(".").pop().toLowerCase();
+  const tipo = TIPOS[ext];
+  if (!tipo || !CFG.submissao.arquivo.extensoes.includes(ext)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+  const b64 = String((arq && arq.base64) || "");
+  if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) throw new ErroNegocio("Arquivo ausente ou corrompido.", "arquivo");
+  const buf = Buffer.from(b64, "base64");
+  if (!buf.length || buf.length > MAX_ARQ) throw new ErroNegocio(`O arquivo pode ter no máximo ${CFG.submissao.arquivo.maxMB} MB.`, "arquivo");
+  if (!tipo.confere(buf)) throw new ErroNegocio("O conteúdo do arquivo não corresponde a um PDF, DOC ou DOCX.", "arquivo");
+  const ref = `${require("crypto").randomBytes(24).toString("hex")}.${ext}`;
+  fs.writeFileSync(path.join(DIR_ARQ, ref), buf, { mode: 0o600 });
+  return { nome: nome.replace(/[^\w.\- À-ÿ]/g, "_"), tipo: tipo.mime, tamanho: buf.length, ref };
+}
+const caminhoArquivo = (ref) => {
+  if (!/^[a-f0-9]{48}\.(pdf|docx?)$/.test(String(ref))) throw new ErroNegocio("Arquivo não encontrado.", null, 404);
+  return path.join(DIR_ARQ, ref);
+};
+
+app.post("/api/v1/publico/submissoes", auth.limitador(Number(process.env.LIMITE_SUBMISSOES || 5), 60000, "submissao"), express.json({ limit: "15mb" }), rota(async (req, res) => {
+  const meta = salvarArquivo(req.body && req.body.arquivo);
+  try {
+    const { arquivo, ...dados } = req.body || {};
+    res.status(201).json(await servico.submeterTrabalho(dados, meta));
+  } catch (e) {
+    fs.rmSync(path.join(DIR_ARQ, meta.ref), { force: true }); // não guarda arquivo de submissão recusada
+    throw e;
+  }
 }));
 
 // Consulta do próprio participante: CPF + e-mail, com bloqueio após 5 erros para o mesmo CPF.
@@ -183,6 +217,20 @@ app.put("/api/v1/professor/membros/:id", professor, jsonPequeno, rota(async (req
   res.json({ membro: await servico.definirStatusMembro(campo(req.params.id, 40), campo(req.body && req.body.status, 20)) });
 }));
 
+app.put("/api/v1/professor/trabalhos/:id", professor, jsonPequeno, rota(async (req, res) => {
+  res.json({ trabalho: await servico.avaliarTrabalho(campo(req.params.id, 40), req.body) });
+}));
+
+app.get("/api/v1/professor/trabalhos/:id/arquivo", professor, rota(async (req, res) => {
+  const arq = await servico.arquivoDoTrabalho(campo(req.params.id, 40));
+  const caminho = caminhoArquivo(arq.ref);
+  if (!fs.existsSync(caminho)) throw new ErroNegocio("Arquivo não encontrado.", null, 404);
+  const ext = arq.ref.split(".").pop();
+  res.setHeader("Content-Type", TIPOS[ext].mime);
+  res.setHeader("Content-Disposition", `attachment; filename="trabalho.${ext}"; filename*=UTF-8''${encodeURIComponent(arq.nome)}`);
+  fs.createReadStream(caminho).pipe(res);
+}));
+
 app.post("/api/v1/professor/certificados/:alunoId", professor, rota(async (req, res) => {
   res.json({ certificado: await servico.emitirCertificado(campo(req.params.alunoId, 40)) });
 }));
@@ -234,7 +282,7 @@ async function enviarCertificado(aluno, pdfBase64) {
   return { status, para: `${u.slice(0, 2)}***@${d}` };
 }
 
-const publicoCert = (c) => ({ codigo: c.codigo, nome: c.nome, curso: c.curso, horas: c.horas, atividades: c.atividades, emitidoEm: c.emitidoEm, enviadoPorEmail: !!c.enviadoPorEmail });
+const publicoCert = (c) => ({ codigo: c.codigo, nome: c.nome, curso: c.curso, horas: c.horas, atividades: c.atividades, trabalhos: c.trabalhos || [], emitidoEm: c.emitidoEm, enviadoPorEmail: !!c.enviadoPorEmail });
 const publicoMembro = (m) => ({ id: m.id, nome: m.nome, status: m.status });
 
 /* ---------- Erros ---------- */

@@ -8,18 +8,17 @@ Duas pessoas: **Apresentador** (fala) e **Operador** (mexe no sistema). Ensaiem 
 > Resultado: inscrição duplicada, CPF digitado errado, lista extraviada e semanas para entregar certificado.
 > Nós construímos o **S.G.J.A**: um sistema só, do primeiro clique ao certificado na caixa de entrada."
 
-## 0:40 – 1:40 · Inscrição blindada (Operador no celular ou notebook)
+## 0:40 – 1:40 · Submissão do trabalho (Operador)
 
-1. Abrir a landing: "identidade oficial da Jornada, programação com as 20 horas".
-2. Clicar em **Quero me inscrever** e tentar enviar vazio → campos vermelhos.
-3. Digitar letras no CPF → "não entram".
-4. Inscrever de verdade → **ingresso com QR Code**.
-5. Tentar o mesmo CPF de novo → **bloqueado**.
+1. Página inicial: tema, edital para baixar, programação e cronograma oficiais.
+2. **Submissão**: escolher APIExt II e mostrar o formato travado em comunicação oral; resumo com contador; anexar o PDF; adicionar um participante.
+3. Enviar → protocolo e ingresso com QR Code.
 
-> "Nenhum dado errado ou duplicado entra na base."
+> "Um envio por trabalho, com todos os participantes, arquivo conferido e regras do edital aplicadas automaticamente."
 
 ## 1:40 – 2:50 · Check-in em segundos
 
+0. **Organização** (link no topo): a banca abre o trabalho, baixa o arquivo, aprova e marca a sessão. O participante já vê o resultado em Meu certificado.
 1. Página **Check-in** do menu: o membro da comissão entra com o próprio e-mail e senha (o professor liberou o acesso no painel).
 2. Ler o QR do celular com a câmera → bipe, "Presença confirmada", contador sobe.
 3. Mostrar o check-in por CPF (modo totem) e a lista com caixas de seleção.

@@ -37,6 +37,7 @@
 | **Frequencia** | id, alunoId → Aluno, eventoId → Evento, checkIn, timestamp, origem, registradoPorId → MembroComissao | par (alunoId, eventoId) único |
 | **Certificado** | id, alunoId → Aluno, horas, codigo, emitidoEm, enviadoPorEmail | um por aluno; `codigo` único |
 | **EmailEnviado** | para, assunto, anexo, codigo, status | log de auditoria dos envios |
+| **Trabalho** | protocolo, titulo, vinculo, modalidade, curso, resumo, arquivo {nome, tipo, tamanho, ref}, representanteId, autoresIds[], status, parecer, sessao, apresentado | APIExt I/III/V → banner; II/IV/VI → oral; título único por participante |
 | **MembroComissao** | nome, email, cpf, telefone, senhaHash, salt, status (pendente/ativo/bloqueado) | e-mail e CPF únicos; só `ativo` registra presença |
 | **LembreteWhatsApp** | chave (alunoId:eventoId), telefone, status, tentativas | chave única: um lembrete por aluno e atividade |
 
@@ -54,10 +55,10 @@ As regras de negócio ficam em `js/servico.js` e são as mesmas nos dois modos:
 
 | Perfil | Rotas (prefixo `/api/v1`) | O que devolve |
 |---|---|---|
-| Público | `GET /publico/resumo`, `POST /publico/inscricoes`, `POST /publico/cpf-inscrito`, `GET /publico/certificados/:codigo` | total de inscritos, ingresso do novo inscrito, "sim/não", dados públicos do certificado |
+| Público | `GET /publico/resumo`, `POST /publico/submissoes`, `GET /publico/certificados/:codigo` | total de participantes, protocolo e ingresso do representante, dados públicos do certificado |
 | Participante (CPF + e-mail) | `POST /publico/participante`, `POST /publico/certificado`, `POST /publico/certificado/email` | só os próprios dados e certificado |
 | Comissão (login) | `POST /comissao/cadastro`, `POST /comissao/login`, `GET /comissao/chamada`, `POST /comissao/checkin`, `POST /comissao/checkin/remover` | lista da chamada com CPF mascarado |
-| Professor (login) | `POST /professor/login`, `GET /professor/dados`, `PUT /professor/membros/:id`, `POST /professor/certificados/:alunoId[/email]`, `GET /professor/lembretes/agenda` | tudo |
+| Organização (login) | `POST /professor/login`, `GET /professor/dados`, `PUT /professor/trabalhos/:id`, `GET /professor/trabalhos/:id/arquivo`, `PUT /professor/membros/:id`, `POST /professor/certificados/:alunoId[/email]`, `GET /professor/lembretes/agenda` | tudo |
 
 Detalhes de autenticação, limites e cabeçalhos em [`seguranca.md`](seguranca.md).
 

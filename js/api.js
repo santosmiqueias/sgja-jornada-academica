@@ -21,13 +21,25 @@
   };
   const valida = (s) => s && s.expira > Date.now() ? s : null;
   const pdfBase64 = (doc) => doc.output("datauristring").split(",")[1];
+  const lerBase64 = (arquivo) => new Promise((ok, erro) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1] || "");
+    r.onerror = () => erro(new ErroNegocio("Não foi possível ler o arquivo.", "arquivo"));
+    r.readAsDataURL(arquivo);
+  });
+  function salvarBlob(blob, nome) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = nome || "trabalho";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
 
   const comum = {
     ErroNegocio,
     backend: MODO,
     eventos() { return CFG.eventos.slice(); },
     diasMinimos() { return Math.max(1, Number(CFG.evento.diasMinimosCertificado) || 1); },
-    cargaTotal() { return CFG.eventos.reduce((s, e) => s + e.cargaHoraria, 0); },
+    cargaTotal() { return CFG.evento.cargaHorariaTotal; },
     situacaoDe(alunoId, frequencias) {
       return C.avaliarCertificado(frequencias, CFG.eventos, alunoId, CFG.evento.diasMinimosCertificado, CFG.evento.cargaHorariaTotal);
     },
@@ -66,8 +78,9 @@
     return {
       ...comum,
       async contarInscritos() { return (await req("GET", "/publico/resumo")).inscritos; },
-      async criarAluno(d) { return (await req("POST", "/publico/inscricoes", d)).aluno; },
-      async cpfJaInscrito(cpf) { return (await req("POST", "/publico/cpf-inscrito", { cpf })).inscrito; },
+      async submeterTrabalho(dados, arquivo) {
+        return req("POST", "/publico/submissoes", { ...dados, arquivo: { nome: arquivo.name, base64: await lerBase64(arquivo) } });
+      },
       async consultarParticipante(cpf, email) { return req("POST", "/publico/participante", { cpf, email }); },
       async emitirCertificadoParticipante(cpf, email) { return (await req("POST", "/publico/certificado", { cpf, email })).certificado; },
       async enviarCertificadoParticipante(cpf, email, _aluno, _cert, doc) {
@@ -94,6 +107,14 @@
       },
       async dadosPainel() { return req("GET", "/professor/dados", null, "professor"); },
       async definirStatusMembro(id, status) { return (await req("PUT", `/professor/membros/${encodeURIComponent(id)}`, { status }, "professor")).membro; },
+      async avaliarTrabalho(id, dados) { return (await req("PUT", `/professor/trabalhos/${encodeURIComponent(id)}`, dados, "professor")).trabalho; },
+      async baixarArquivoTrabalho(trabalho) {
+        const s = valida(sessao.ler("sgja_sessao_professor"));
+        if (!s) throw new ErroNegocio("Sua sessão terminou. Entre de novo.", null, 401);
+        const r = await fetch(`${BASE}/api/v1/professor/trabalhos/${encodeURIComponent(trabalho.id)}/arquivo`, { headers: { Authorization: `Bearer ${s.token}` }, credentials: "omit", cache: "no-store" });
+        if (!r.ok) throw new ErroNegocio("Não foi possível baixar o arquivo.", null, r.status);
+        salvarBlob(await r.blob(), trabalho.arquivo && trabalho.arquivo.nome);
+      },
       async emitirCertificadoProfessor(alunoId) { return (await req("POST", `/professor/certificados/${encodeURIComponent(alunoId)}`, null, "professor")).certificado; },
       async enviarCertificadoProfessor(aluno, _cert, doc) {
         return req("POST", `/professor/certificados/${encodeURIComponent(aluno.id)}/email`, { pdfBase64: pdfBase64(doc) }, "professor");
@@ -123,6 +144,28 @@
     }
     const S = criarServico({ store: new LocalStore("sgja_v1_"), config: CFG, core: C, segredo: CFG.segredoAssinatura });
 
+    // Arquivos dos trabalhos na demonstração: IndexedDB deste navegador (localStorage é pequeno demais).
+    const ARQ = {
+      abrir() {
+        return new Promise((ok, erro) => {
+          const r = indexedDB.open("sgja_arquivos", 1);
+          r.onupgradeneeded = () => r.result.createObjectStore("arquivos");
+          r.onsuccess = () => ok(r.result);
+          r.onerror = () => erro(new ErroNegocio("Este navegador não permite guardar o arquivo.", "arquivo"));
+        });
+      },
+      async guardar(ref, blob) {
+        const db = await ARQ.abrir();
+        await new Promise((ok, erro) => { const t = db.transaction("arquivos", "readwrite"); t.objectStore("arquivos").put(blob, ref); t.oncomplete = ok; t.onerror = erro; });
+      },
+      async ler(ref) {
+        const db = await ARQ.abrir();
+        return new Promise((ok) => { const g = db.transaction("arquivos").objectStore("arquivos").get(ref); g.onsuccess = () => ok(g.result || null); g.onerror = () => ok(null); });
+      },
+      async apagar(ref) { try { const db = await ARQ.abrir(); db.transaction("arquivos", "readwrite").objectStore("arquivos").delete(ref); } catch (_) {} }
+    };
+    const extensaoOk = (nome) => CFG.submissao.arquivo.extensoes.includes(String(nome || "").split(".").pop().toLowerCase());
+
     const membroSessao = () => {
       const s = comum.sessaoComissao();
       if (!s) throw new ErroNegocio("Sua sessão terminou. Entre de novo.", null, 401);
@@ -151,8 +194,15 @@
     return {
       ...comum,
       contarInscritos: () => S.contarInscritos(),
-      criarAluno: (d) => S.criarAluno(d),
-      cpfJaInscrito: (cpf) => S.cpfJaInscrito(cpf),
+      async submeterTrabalho(dados, arquivo) {
+        if (!arquivo) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
+        if (!extensaoOk(arquivo.name)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+        if (arquivo.size > CFG.submissao.arquivo.maxMB * 1048576) throw new ErroNegocio(`O arquivo pode ter no máximo ${CFG.submissao.arquivo.maxMB} MB.`, "arquivo");
+        const ref = C.gerarId("ARQ");
+        await ARQ.guardar(ref, arquivo);
+        try { return await S.submeterTrabalho(dados, { nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size, ref }); }
+        catch (e) { await ARQ.apagar(ref); throw e; }
+      },
       consultarParticipante: (cpf, email) => S.consultarParticipante(cpf, email),
       emitirCertificadoParticipante: (cpf, email) => S.emitirCertificadoParticipante(cpf, email),
       async enviarCertificadoParticipante(cpf, email, _aluno, _cert, doc) {
@@ -183,6 +233,13 @@
       },
       async dadosPainel() { exigirProfessor(); return S.dadosPainel(); },
       async definirStatusMembro(id, status) { exigirProfessor(); return S.definirStatusMembro(id, status); },
+      async avaliarTrabalho(id, dados) { exigirProfessor(); return S.avaliarTrabalho(id, dados); },
+      async baixarArquivoTrabalho(trabalho) {
+        exigirProfessor();
+        const blob = trabalho.arquivo && await ARQ.ler(trabalho.arquivo.ref);
+        if (!blob) throw new ErroNegocio("Arquivo de exemplo: não há arquivo real para baixar nesta demonstração.", null, 404);
+        salvarBlob(blob, trabalho.arquivo.nome);
+      },
       async emitirCertificadoProfessor(alunoId) { exigirProfessor(); return S.emitirCertificado(alunoId); },
       async enviarCertificadoProfessor(aluno, cert, doc) { exigirProfessor(); return enviarEmail(aluno, cert, doc); },
       async agendaLembretes() { return null; },

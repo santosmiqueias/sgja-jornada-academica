@@ -63,16 +63,16 @@ test("Agendador: envia uma vez, respeita autorização e ignora telefone inváli
   const log = console.log; console.log = () => {};
   const L = require("../servicos/api-gateway/lembretes.js");
   try {
-    const cedo = await L.executar(new Date("2026-12-09T07:00:00-03:00"));
+    const cedo = await L.executar(new Date("2026-12-09T07:30:00-03:00"));
     assert.equal(cedo.simulados, 0);
 
-    const r1 = await L.executar(new Date("2026-12-09T07:31:00-03:00"));
+    const r1 = await L.executar(new Date("2026-12-09T08:01:00-03:00"));
     assert.deepEqual(r1.atividades, ["EV01"]);
     // só Ana: Bruno não autorizou, Carla tem telefone inválido,
     // Diego só se inscreveu na EV02 e Elisa não escolheu atividades
     assert.equal(r1.simulados, 1);
 
-    const r2 = await L.executar(new Date("2026-12-09T07:40:00-03:00"));
+    const r2 = await L.executar(new Date("2026-12-09T08:10:00-03:00"));
     assert.equal(r2.simulados, 0); // não repete
 
     const enviados = JSON.parse(fs.readFileSync(path.join(dir, "lembretes-enviados.json"), "utf8"));
@@ -83,15 +83,15 @@ test("Agendador: envia uma vez, respeita autorização e ignora telefone inváli
     assert.equal(enviados["A4:EV01"], undefined);
     assert.equal(enviados["A5:EV01"], undefined);
 
-    // À tarde, a EV02 vai para Ana e Diego (os inscritos nela)
-    const tarde = await L.executar(new Date("2026-12-09T13:35:00-03:00"));
+    // Às 08:35, a EV02 (09:00) vai para Ana e Diego (os inscritos nela)
+    const tarde = await L.executar(new Date("2026-12-09T08:35:00-03:00"));
     assert.deepEqual(tarde.atividades, ["EV02"]);
     assert.equal(tarde.simulados, 2);
 
     const ag = await L.agenda();
     assert.equal(ag.autorizaramWhatsApp, 4);
     const ev1 = ag.atividades.find((a) => a.id === "EV01");
-    assert.equal(ev1.envioEm, "2026-12-09T10:30:00.000Z");
+    assert.equal(ev1.envioEm, "2026-12-09T11:00:00.000Z");
     assert.equal(ev1.destinatarios, 2); // Ana e Carla (Carla falha pelo telefone)
     assert.equal(ag.atividades.find((a) => a.id === "EV03").destinatarios, 0);
   } finally { console.log = log; }
@@ -109,11 +109,11 @@ test("Agendador: falha do provedor é tentada de novo no minuto seguinte", async
   const err = console.error; console.error = () => {};
   try {
     const L = require("../servicos/api-gateway/lembretes.js");
-    const r1 = await L.executar(new Date("2026-12-09T07:31:00-03:00"));
+    const r1 = await L.executar(new Date("2026-12-09T08:01:00-03:00"));
     assert.equal(r1.falhas, 1);
-    const r2 = await L.executar(new Date("2026-12-09T07:32:00-03:00"));
+    const r2 = await L.executar(new Date("2026-12-09T08:02:00-03:00"));
     assert.equal(r2.enviados, 1);
-    const r3 = await L.executar(new Date("2026-12-09T07:33:00-03:00"));
+    const r3 = await L.executar(new Date("2026-12-09T08:03:00-03:00"));
     assert.equal(r3.enviados, 0);
   } finally { wa.enviar = original; console.error = err; }
 });

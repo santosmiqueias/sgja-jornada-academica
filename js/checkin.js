@@ -115,7 +115,7 @@
     const agora = new Date();
     let sugerida = API.eventos()[0].id;
     API.eventos().forEach((ev) => {
-      sel.add(new Option(`${UI.formatarData(ev.data)} · ${ev.turno} — ${ev.titulo} (${ev.cargaHoraria}h)`, ev.id));
+      sel.add(new Option(`${UI.formatarData(ev.data)} · ${ev.horario} — ${ev.titulo}`, ev.id));
       if (C.inicioEvento(ev, CFG.evento.fusoHorario) <= agora) sugerida = ev.id; // última atividade já iniciada
     });
     sel.value = sugerida;
@@ -149,7 +149,7 @@
 
     $("tb-chamada").innerHTML = lista.length ? lista.map((a) => {
       const f = presentes.get(a.id);
-      const extra = inscritoEm(a, atividade) ? "" : ' <span class="badge text-bg-light" title="Não se inscreveu nesta atividade">não inscrito</span>';
+      const extra = inscritoEm(a, atividade) ? ' <span class="badge badge-ok" title="Apresenta trabalho nesta sessão">apresenta</span>' : "";
       const por = f ? esc(f.registradoPorNome || "—") : "";
       return `<tr class="${f ? "presente" : ""}">
         <td><input class="form-check-input chk-presenca" type="checkbox" data-id="${esc(a.id)}" ${f ? "checked" : ""} aria-label="Presença de ${esc(a.nome)}"></td>
@@ -203,8 +203,7 @@
   async function confirmar(dados) {
     const r = await API.checkin({ ...dados, eventoId: atividade });
     registrarUltimo(r.aluno, r.novo);
-    if (r.novo && !inscritoEm(r.aluno, atividade)) UI.aviso(`${r.aluno.nome} não se inscreveu nesta atividade. Presença registrada mesmo assim.`, "alerta");
-    else UI.aviso(r.novo ? `Presença confirmada: ${r.aluno.nome}` : `${r.aluno.nome} já estava presente.`, r.novo ? "sucesso" : "info");
+    UI.aviso(r.novo ? `Presença confirmada: ${r.aluno.nome}` : `${r.aluno.nome} já estava presente.`, r.novo ? "sucesso" : "info");
     bipe(r.novo);
     await recarregar();
   }

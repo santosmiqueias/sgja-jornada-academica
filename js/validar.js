@@ -19,7 +19,8 @@
         <dt class="col-4">Participante</dt><dd class="col-8">${C.escaparHTML(cert.nome)}</dd>
         <dt class="col-4">Curso</dt><dd class="col-8">${C.escaparHTML(cert.curso)}</dd>
         <dt class="col-4">Carga horária</dt><dd class="col-8">${cert.horas} horas</dd>
-        ${Array.isArray(cert.atividades) && cert.atividades.length ? `<dt class="col-4">Atividades</dt><dd class="col-8"><ul class="mb-0 ps-3">${CFG.eventos.filter((e) => cert.atividades.includes(e.id)).map((e) => `<li>${C.escaparHTML(e.titulo)} · ${e.cargaHoraria}h</li>`).join("")}</ul></dd>` : ""}
+        ${Array.isArray(cert.atividades) && cert.atividades.length ? `<dt class="col-4">Atividades</dt><dd class="col-8"><ul class="mb-0 ps-3">${CFG.eventos.filter((e) => cert.atividades.includes(e.id)).map((e) => `<li>${C.escaparHTML(e.titulo)} · ${UI.formatarData(e.data).slice(0, 5)} ${C.escaparHTML(e.horario)}</li>`).join("")}</ul></dd>` : ""}
+        ${Array.isArray(cert.trabalhos) && cert.trabalhos.length ? `<dt class="col-4">Trabalho apresentado</dt><dd class="col-8">${cert.trabalhos.map((t) => `“${C.escaparHTML(t.titulo)}” · ${C.escaparHTML(t.modalidade)}`).join("<br>")}</dd>` : ""}
         <dt class="col-4">Evento</dt><dd class="col-8">${C.escaparHTML(CFG.evento.nomeCertificado)} · ${C.escaparHTML(CFG.evento.datasTexto)}</dd>
         <dt class="col-4">Emitido em</dt><dd class="col-8">${UI.formatarDataHora(cert.emitidoEm)}</dd>
       </dl></div>`;

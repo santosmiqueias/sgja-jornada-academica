@@ -21,6 +21,8 @@ body > main { flex: 1 0 auto; }
 #rodape footer { margin-top: 3rem; }
 /* O menu acompanha a rolagem em todas as páginas. */
 #menu { position: sticky; top: 0; z-index: 1030; }
+/* Ao rolar até um campo (erro, link interno), ele não fica escondido atrás do menu fixo. */
+html { scroll-padding-top: 120px; }
 .bg-navy { background: var(--navy) !important; }
 .text-navy { color: var(--navy) !important; }
 .text-amarelo { color: var(--amarelo) !important; }
@@ -30,6 +32,10 @@ body > main { flex: 1 0 auto; }
   background: var(--amarelo); color: var(--navy); font-weight: 800; font-size: .9rem;
 }
 .navbar .nav-link { font-weight: 500; white-space: nowrap; }
+/* Barra fina no topo com o acesso da organização */
+.barra-topo { background: var(--navy-escuro); font-size: .8rem; padding-block: .3rem; }
+.link-topo { color: rgba(255, 255, 255, .8); text-decoration: none; font-weight: 600; letter-spacing: .02em; }
+.link-topo:hover, .link-topo:focus, .link-topo.ativo { color: var(--amarelo); text-decoration: underline; }
 @media (min-width: 1200px) { .navbar .nav-link { padding-inline: .55rem !important; font-size: .95rem; } }
 .navbar .nav-link.active { color: var(--amarelo) !important; }
 
@@ -59,6 +65,8 @@ body > main { flex: 1 0 auto; }
 
 /* Formulários */
 .form-label { font-weight: 600; }
+/* O legend do Bootstrap flutua e cobre a primeira opção do grupo; aqui ele fica no fluxo normal. */
+fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bottom: .5rem; }
 .form-control:focus, .form-select:focus { border-color: var(--azul); box-shadow: 0 0 0 .2rem rgba(23, 71, 181, .2); }
 .form-check-input:checked { background-color: var(--navy); border-color: var(--navy); }
 .form-check-input:focus { box-shadow: 0 0 0 .2rem rgba(23, 71, 181, .25); }
@@ -66,6 +74,22 @@ body > main { flex: 1 0 auto; }
 .etapas { counter-reset: etapa; }
 .cabecalho-pagina { background: linear-gradient(120deg, var(--navy) 0%, var(--azul) 100%); color: #fff; padding: 2.2rem 0 4.5rem; }
 .cabecalho-pagina + .container { margin-top: -3rem; }
+
+/* Resumo do trabalho (organização) */
+.resumo-trabalho { white-space: pre-line; background: var(--fundo); border-radius: 8px; padding: .75rem; }
+
+/* Programação */
+.atividade .hora { font-weight: 700; color: var(--navy); min-width: 7.2rem; font-variant-numeric: tabular-nums; }
+
+/* Tema, passos e cronograma */
+.tema { font-size: 1.1rem; font-weight: 600; color: var(--navy); }
+.tema-rotulo { display: inline-block; background: var(--navy); color: #fff; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .5rem; border-radius: 4px; margin-right: .35rem; vertical-align: middle; }
+.passo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); font-weight: 800; font-size: 1.2rem; }
+.cronograma { list-style: none; padding: 0; margin: 0; border-left: 4px solid var(--amarelo); }
+.cronograma li { position: relative; padding: .2rem 0 1.1rem 1.4rem; }
+.cronograma li::before { content: ""; position: absolute; left: -10px; top: .45rem; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 4px solid var(--navy); }
+.cronograma .quando { font-weight: 700; color: var(--navy); display: block; }
+.cronograma li.destaque .quando { color: var(--vermelho); }
 
 /* Doação de alimento */
 .doacao { background: #fff6cc; border: 1px solid #f0dc8a; border-radius: 14px; }

@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-seg-"));
 Object.assign(process.env, {
   DADOS_DIR: dir, TOKEN_SEGREDO: crypto.randomBytes(32).toString("hex"), ASSINATURA_SEGREDO: crypto.randomBytes(32).toString("hex"),
-  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false"
+  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20"
 });
 delete process.env.BASE44_APP_ID; delete process.env.SMTP_USER;
 const auth = require("../auth");
@@ -31,14 +31,22 @@ async function chamar(metodo, caminho, corpo, token, extra = {}) {
 
 const alunoBase = (n) => ({
   nome: `Aluno Teste ${"ABCDEFGHIJ"[n]}`, email: `aluno${n}@exemplo.com`, telefone: "86999990000".slice(0, 9) + String(10 + n),
-  cpf: ["52998224725", "11144477735", "39053344705", "15350946056"][n], matricula: String(20269000 + n), curso: "Direito",
-  atividades: ["EV01", "EV02", "EV03"], consentimentoLGPD: true, aceitaWhatsApp: true
+  cpf: ["52998224725", "11144477735", "39053344705", "15350946056"][n], matricula: String(20269000 + n)
 });
+const pdfFalso = { nome: "trabalho.pdf", base64: Buffer.from("%PDF-1.4\nconteudo de teste").toString("base64") };
+const submissao = (extra = {}) => ({
+  titulo: "Horta comunitária na escola", vinculo: "APIEXT1", curso: "Direito",
+  resumo: "Introdução: projeto de horta. Objetivos: educar. Método: oficinas semanais com a comunidade escolar. Resultados: maior consumo de verduras e participação das famílias. Considerações finais: a ação deve continuar no próximo semestre.",
+  representante: alunoBase(0), participantes: [{ nome: alunoBase(1).nome, cpf: alunoBase(1).cpf, email: alunoBase(1).email }],
+  consentimentoLGPD: true, aceitaWhatsApp: true, arquivo: pdfFalso, ...extra
+});
+const arquivosNoDisco = () => fs.readdirSync(path.join(dir, "arquivos")).length;
 
 let tokenProf, ana, tokenCom;
 
 test("rotas antigas sem login não existem mais (vazamento em massa)", async () => {
-  for (const ent of ["Aluno", "MembroComissao", "Frequencia"]) assert.equal((await chamar("GET", `/entidades/${ent}`)).status, 404);
+  for (const ent of ["Aluno", "MembroComissao", "Frequencia", "Trabalho"]) assert.equal((await chamar("GET", `/entidades/${ent}`)).status, 404);
+  assert.equal((await chamar("POST", "/publico/inscricoes", alunoBase(0))).status, 404);
   assert.equal((await chamar("POST", "/certificados/enviar", { para: "vitima@exemplo.com", pdfBase64: "JVBERi0=" })).status, 404);
 });
 
@@ -69,21 +77,61 @@ test("login do professor: senha errada recusada, certa entra", async () => {
   assert.equal((await chamar("GET", "/professor/dados", undefined, tokenProf)).status, 200);
 });
 
-test("inscrição: valida no servidor e bloqueia duplicados e entradas maliciosas", async () => {
-  const r = await chamar("POST", "/publico/inscricoes", alunoBase(0));
+test("submissão: valida no servidor, guarda o arquivo e bloqueia duplicados e entradas maliciosas", async () => {
+  const r = await chamar("POST", "/publico/submissoes", submissao());
   assert.equal(r.status, 201);
-  ana = r.dados.aluno;
+  ana = r.dados.representante;
   assert.ok(ana.tokenIngresso && !("telefone" in ana));
-  assert.equal((await chamar("POST", "/publico/inscricoes", alunoBase(0))).status, 409);
-  assert.equal((await chamar("POST", "/publico/inscricoes", { ...alunoBase(1), cpf: "12345678900" })).status, 400);
-  const xss = await chamar("POST", "/publico/inscricoes", { ...alunoBase(1), nome: "<img src=x onerror=alert(1)> Silva" });
-  assert.equal(xss.status, 400);
-  assert.equal((await chamar("POST", "/publico/inscricoes", { ...alunoBase(1), curso: "Curso Inventado" })).status, 400);
-  assert.equal((await chamar("POST", "/publico/inscricoes", '{"nome": quebrado')).status, 400);
-  assert.equal((await chamar("POST", "/publico/inscricoes", { ...alunoBase(1), lixo: "x".repeat(30000) })).status, 413);
-  assert.equal((await chamar("POST", "/publico/inscricoes", { ...alunoBase(1), __proto__: { admin: true }, id: "FORJADO" })).status, 201);
+  assert.equal(r.dados.trabalho.status, "em_analise");
+  assert.equal(r.dados.participantes, 2);
+  assert.equal(arquivosNoDisco(), 1);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao())).status, 409);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", representante: { ...alunoBase(2), cpf: "12345678900" } }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", representante: { ...alunoBase(2), nome: "<img src=x onerror=alert(1)> Silva" } }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", curso: "Curso Inventado" }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", resumo: "x".repeat(1501) }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", '{"titulo": quebrado')).status, 400);
+  assert.equal(arquivosNoDisco(), 1, "submissões recusadas não deixam arquivo no servidor");
+});
+
+test("arquivo: tipo conferido pelo conteúdo e tamanho máximo", async () => {
+  const exe = Buffer.concat([Buffer.from("MZ"), Buffer.alloc(200)]).toString("base64");
+  const disfarcado = await chamar("POST", "/publico/submissoes", submissao({ titulo: "Exe disfarcado", arquivo: { nome: "trabalho.pdf", base64: exe } }));
+  assert.equal(disfarcado.status, 400);
+  assert.match(disfarcado.dados.erro, /conteúdo/);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Exe", arquivo: { nome: "virus.exe", base64: exe } }))).status, 400);
+  const grande = Buffer.concat([Buffer.from("%PDF-1.4"), Buffer.alloc(10.5 * 1048576)]).toString("base64");
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Grande", arquivo: { nome: "grande.pdf", base64: grande } }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Sem arquivo", arquivo: undefined }))).status, 400);
+  assert.equal(arquivosNoDisco(), 1);
+});
+
+test("regra do edital: APIExt II é sempre comunicação oral", async () => {
+  const r = await chamar("POST", "/publico/submissoes", submissao({ titulo: "Teatro na comunidade", vinculo: "APIEXT2", modalidade: "banner", representante: alunoBase(2), participantes: [] }));
+  assert.equal(r.status, 201);
+  assert.equal(r.dados.trabalho.modalidade, "oral");
+});
+
+test("arquivo e avaliação dos trabalhos só para a organização", async () => {
   const dados = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados;
-  assert.ok(!dados.alunos.some((a) => a.id === "FORJADO" || a.admin), "id/campos extras não podem ser impostos por quem envia");
+  const t = dados.trabalhos.find((x) => x.titulo === "Horta comunitária na escola");
+  assert.equal((await fetch(`${base}/professor/trabalhos/${t.id}/arquivo`)).status, 401);
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { status: "aprovado" })).status, 401);
+  const r = await fetch(`${base}/professor/trabalhos/${t.id}/arquivo`, { headers: { Authorization: `Bearer ${tokenProf}` } });
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get("content-type"), "application/pdf");
+  assert.match(r.headers.get("content-disposition"), /^attachment/);
+  assert.equal(Buffer.from(await r.arrayBuffer()).toString().slice(0, 8), "%PDF-1.4");
+  assert.equal((await fetch(`${base.replace("/api/v1", "")}/dados/arquivos/${t.arquivo.ref}`)).status, 404);
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { sessao: "EV99" }, tokenProf)).status, 400);
+  const ok = await chamar("PUT", `/professor/trabalhos/${t.id}`, { status: "aprovado", sessao: "EV02", parecer: "Muito bom." }, tokenProf);
+  assert.equal(ok.status, 200);
+  const consulta = await chamar("POST", "/publico/participante", { cpf: alunoBase(0).cpf, email: alunoBase(0).email });
+  assert.equal(consulta.dados.trabalhos[0].status, "aprovado");
+  assert.equal(consulta.dados.trabalhos[0].parecer, "Muito bom.");
+  assert.ok(!("arquivo" in consulta.dados.trabalhos[0]) && !("resumo" in consulta.dados.trabalhos[0]));
+  const depois = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados;
+  assert.deepEqual(depois.alunos.find((a) => a.cpf === alunoBase(0).cpf).atividades, ["EV02"]); // lembrete da sessão
 });
 
 test("consulta do participante exige CPF + e-mail e não vaza dados de outros", async () => {
@@ -92,8 +140,7 @@ test("consulta do participante exige CPF + e-mail e não vaza dados de outros", 
   assert.equal(ok.status, 200);
   assert.equal(ok.dados.aluno.nome, alunoBase(0).nome);
   assert.ok(!("telefone" in ok.dados.aluno));
-  const existe = await chamar("POST", "/publico/cpf-inscrito", { cpf: alunoBase(0).cpf });
-  assert.deepEqual(Object.keys(existe.dados), ["inscrito"]);
+  assert.equal((await chamar("POST", "/publico/cpf-inscrito", { cpf: alunoBase(0).cpf })).status, 404); // não existe mais
 });
 
 test("força bruta no e-mail de um CPF é bloqueada após 5 erros", async () => {
@@ -137,6 +184,7 @@ test("certificado: sem presença não emite; com 1 dia sai de 20h; horas não po
   const ok = await chamar("POST", "/publico/certificado", { cpf: alunoBase(0).cpf, email: alunoBase(0).email, horas: 5 });
   assert.equal(ok.status, 200);
   assert.equal(ok.dados.certificado.horas, 20); // regra do evento, não o que foi enviado
+  assert.ok(Array.isArray(ok.dados.certificado.trabalhos)); // lista dos trabalhos apresentados (verso)
   const v = await chamar("GET", `/publico/certificados/${ok.dados.certificado.codigo}`);
   assert.equal(v.status, 200);
   assert.ok(!("cpf" in v.dados.certificado) && !("alunoId" in v.dados.certificado));
@@ -192,8 +240,8 @@ test("força bruta na senha do professor é bloqueada", async () => {
   assert.equal(ultimo.status, 429);
 });
 
-test("limite de inscrições por minuto contra robôs", async () => {
+test("limite de submissões por minuto contra robôs", async () => {
   let ultimo;
-  for (let i = 0; i < 12; i++) ultimo = await chamar("POST", "/publico/inscricoes", { nome: "x" });
+  for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });
   assert.equal(ultimo.status, 429);
 });

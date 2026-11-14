@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Submissão de trabalhos · 6ª Jornada Acadêmica</title>
+  <link rel="icon" href="assets/img/favicon.png?v=202611140207">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css?v=202611140207">
+</head>
+<body>
+  <div id="menu"></div>
+
+  <div class="cabecalho-pagina">
+    <div class="container">
+      <h1 class="fw-bold mb-1">Submissão de trabalhos</h1>
+      <p class="mb-0 opacity-75">Envie seu trabalho para a banca. Se aprovado, você apresenta na 6ª Jornada Acadêmica.</p>
+    </div>
+  </div>
+
+  <main class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+
+        <div class="card p-4 mb-4" id="cartao-edital">
+          <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
+            <div class="flex-grow-1">
+              <h2 class="h5 fw-bold text-navy mb-1">Leia o edital antes de enviar</h2>
+              <p class="small mb-0">Submissões de <strong>16 a 30 de novembro de 2026</strong>. Trabalhos selecionados divulgados em <strong>05/12/2026</strong>, com dia e horário da apresentação.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-primary" id="link-edital-ver" target="_blank" rel="noopener"><i class="bi bi-eye me-1" aria-hidden="true"></i>Visualizar edital</a>
+              <a class="btn btn-outline-primary" id="link-edital-baixar" download="edital-6-jornada-academica-2026.pdf"><i class="bi bi-download me-1" aria-hidden="true"></i>Baixar edital (PDF)</a>
+            </div>
+          </div>
+          <hr>
+          <ul class="small mb-0 ps-3">
+            <li><strong>APIExt I, III e V:</strong> apresentação em pôster/banner. <strong>APIExt II, IV e VI:</strong> comunicação oral. Demais trabalhos escolhem o formato.</li>
+            <li>Cada trabalho é enviado <strong>uma vez</strong>, por um representante, com os dados de todos os participantes.</li>
+            <li>Apresentação de 10 minutos, avaliada por pelo menos um professor ou profissional da área.</li>
+          </ul>
+        </div>
+
+        <div class="card p-4 p-md-5" id="cartao-form">
+          <form id="form-submissao" novalidate>
+            <h2 class="h5 fw-bold text-navy">1. Trabalho</h2>
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="titulo" class="form-label">Título do trabalho</label>
+                <input type="text" class="form-control" id="titulo" maxlength="200" required>
+                <div class="invalid-feedback">Informe o título do trabalho.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="vinculo" class="form-label">Vínculo / disciplina</label>
+                <select class="form-select" id="vinculo" required><option value="">Selecione</option></select>
+                <div class="invalid-feedback">Selecione o vínculo do trabalho.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="curso" class="form-label">Curso</label>
+                <select class="form-select" id="curso" required><option value="">Selecione o curso</option></select>
+                <div class="invalid-feedback">Selecione o curso.</div>
+              </div>
+              <div class="col-md-6">
+                <fieldset id="modalidade">
+                  <legend class="form-label fs-6">Formato de apresentação</legend>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="modalidade" id="mod-banner" value="banner"><label class="form-check-label" for="mod-banner">Pôster/Banner</label></div>
+                  <div class="form-check"><input class="form-check-input" type="radio" name="modalidade" id="mod-oral" value="oral"><label class="form-check-label" for="mod-oral">Comunicação oral</label></div>
+                  <div class="form-text" id="dica-modalidade"></div>
+                  <div class="invalid-feedback">Escolha o formato de apresentação.</div>
+                </fieldset>
+              </div>
+              <div class="col-md-6">
+                <label for="orientador" class="form-label">Professor orientador <span class="text-muted fw-normal">(opcional)</span></label>
+                <input type="text" class="form-control" id="orientador" maxlength="100" autocomplete="off">
+                <div class="invalid-feedback">Informe nome e sobrenome.</div>
+              </div>
+              <div class="col-12">
+                <label for="resumo" class="form-label">Resumo simples</label>
+                <textarea class="form-control" id="resumo" rows="9" required></textarea>
+                <div class="d-flex justify-content-between flex-wrap gap-2 form-text">
+                  <span>Inclua: introdução, objetivos, método, principais resultados e considerações finais.</span>
+                  <span id="contador-resumo" aria-live="polite">0 / 1500</span>
+                </div>
+                <div class="invalid-feedback" id="erro-resumo">O resumo deve ter entre 200 e 1.500 caracteres.</div>
+              </div>
+              <div class="col-12">
+                <label for="arquivo" class="form-label">Arquivo do trabalho</label>
+                <input type="file" class="form-control" id="arquivo" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                <div class="form-text" id="info-arquivo">PDF, DOC ou DOCX, até 10 MB.</div>
+                <div class="invalid-feedback" id="erro-arquivo">Anexe o arquivo em PDF, DOC ou DOCX (até 10 MB).</div>
+              </div>
+            </div>
+
+            <h2 class="h5 fw-bold text-navy mt-5">2. Representante (quem está enviando)</h2>
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="r-nome" class="form-label">Nome completo</label>
+                <input type="text" class="form-control" id="r-nome" maxlength="100" autocomplete="name" required>
+                <div class="invalid-feedback">Informe nome e sobrenome, só com letras.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="r-email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="r-email" maxlength="120" autocomplete="email" inputmode="email" required>
+                <div class="invalid-feedback">Informe um e-mail válido.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="r-telefone" class="form-label">Telefone (WhatsApp)</label>
+                <input type="tel" class="form-control" id="r-telefone" autocomplete="tel-national" inputmode="numeric" placeholder="(86) 99999-9999" required>
+                <div class="invalid-feedback">Informe DDD + número (celular começa com 9).</div>
+              </div>
+              <div class="col-md-6">
+                <label for="r-cpf" class="form-label">CPF</label>
+                <input type="text" class="form-control" id="r-cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+                <div class="invalid-feedback">CPF inválido. Confira os números.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="r-matricula" class="form-label">Matrícula <span class="text-muted fw-normal">(opcional para externos)</span></label>
+                <input type="text" class="form-control" id="r-matricula" inputmode="numeric" placeholder="Somente números">
+                <div class="invalid-feedback">A matrícula tem de 6 a 12 números.</div>
+              </div>
+            </div>
+
+            <h2 class="h5 fw-bold text-navy mt-5">3. Demais participantes do trabalho</h2>
+            <p class="small text-muted">Cada participante recebe o próprio certificado e consulta com o CPF e o e-mail informados aqui. Trabalho individual? Deixe sem participantes.</p>
+            <div id="lista-participantes" class="d-grid gap-3"></div>
+            <div class="invalid-feedback d-block" id="erro-participantes" hidden></div>
+            <button type="button" class="btn btn-outline-primary mt-3" id="btn-add-participante"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>Adicionar participante</button>
+
+            <h2 class="h5 fw-bold text-navy mt-5">4. Confirmação</h2>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="lgpd" required>
+              <label class="form-check-label" for="lgpd">
+                Declaro que os participantes autorizaram o envio dos seus dados para a submissão, o controle de presença e a emissão dos certificados da Jornada, conforme a LGPD (Lei 13.709/2018).
+              </label>
+              <div class="invalid-feedback">É preciso aceitar para concluir a submissão.</div>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="whatsapp">
+              <label class="form-check-label" for="whatsapp">Quero receber no WhatsApp um lembrete 30 minutos antes da minha apresentação.</label>
+            </div>
+            <div class="alert alert-warning small" role="note">
+              <strong>Doação solidária:</strong> cada participante deve levar 1 kg de alimento não perecível no credenciamento. Tudo será doado a uma instituição beneficente.
+            </div>
+            <!-- Campo-armadilha contra robôs: pessoas não veem nem preenchem -->
+            <div class="d-none" aria-hidden="true"><label for="site">Site</label><input type="text" id="site" tabindex="-1" autocomplete="off"></div>
+            <div class="d-grid mt-3">
+              <button type="submit" class="btn btn-amarelo btn-lg" id="btn-enviar"><i class="bi bi-send me-1" aria-hidden="true"></i>Enviar trabalho</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card p-4 p-md-5 d-none" id="cartao-sucesso" tabindex="-1">
+          <div class="text-center">
+            <h2 class="h3 fw-bold text-navy">Trabalho enviado!</h2>
+            <p class="text-muted mb-1">Protocolo <strong class="font-monospace" id="suc-protocolo"></strong></p>
+            <p class="fw-semibold mb-1" id="suc-titulo"></p>
+            <span class="badge badge-pend">Em análise pela banca</span>
+          </div>
+          <ol class="small mt-4 mb-0">
+            <li>A banca avalia o trabalho. O resultado e o dia e horário da apresentação saem em <strong>05/12/2026</strong>, em <a href="certificado.html">Meu certificado</a> (com CPF e e-mail) e no Instagram do evento.</li>
+            <li>No dia, faça o credenciamento com o QR Code abaixo e leve 1 kg de alimento.</li>
+            <li>Cada participante encontra o próprio QR Code e o certificado em <a href="certificado.html">Meu certificado</a>.</li>
+          </ol>
+          <div class="ingresso p-4 mx-auto text-center mt-4" style="max-width: 380px;">
+            <div class="small text-uppercase fw-semibold text-muted">6ª Jornada Acadêmica · Ingresso</div>
+            <img id="qr-ingresso" alt="QR Code do ingresso do representante" class="my-3">
+            <div class="fw-bold fs-5" id="ing-nome"></div>
+            <div class="small text-muted">CPF <span id="ing-cpf"></span></div>
+          </div>
+          <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+            <a class="btn btn-primary" id="btn-baixar-qr" download="ingresso-jornada.png"><i class="bi bi-download me-1"></i>Baixar QR Code</a>
+            <a class="btn btn-outline-primary" href="submissao.html"><i class="bi bi-plus-lg me-1"></i>Enviar outro trabalho</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div id="rodape"></div>
+
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="js/config.js?v=202611140207"></script>
+  <script src="js/core.js?v=202611140207"></script>
+  <script src="js/servico.js?v=202611140207"></script>
+  <script src="js/api.js?v=202611140207"></script>
+  <script src="js/ui.js?v=202611140207"></script>
+  <script src="js/submissao.js?v=202611140207"></script>
+</body>
+</html>

@@ -34,6 +34,12 @@ Auditoria feita em 11/11/2026. Cada falha foi primeiro **comprovada com um ataqu
 - **Transporte e navegador:** CORS só para o endereço do site e cabeçalhos `X-Frame-Options`, `nosniff`, CSP, `no-store` e HSTS (em HTTPS).
 - **Arquivos de dados:** gravados com permissão só do dono (600), com troca atômica para não corromper.
 
+### Arquivos dos trabalhos
+
+- Aceita só PDF, DOC e DOCX, de até 10 MB. O tipo é conferido pelo **conteúdo** do arquivo (assinatura), não só pela extensão: um `.exe` renomeado para `.pdf` é recusado.
+- O arquivo é gravado com nome aleatório numa pasta do servidor com permissão só do dono e **nunca fica público**. Só a organização logada baixa, sempre como anexo.
+- Submissão recusada não deixa arquivo no servidor.
+
 ## 3. Publicar o evento com segurança (passo a passo)
 
 1. **Servidor** (Render, Railway ou um computador da faculdade com HTTPS):
@@ -52,7 +58,7 @@ Auditoria feita em 11/11/2026. Cada falha foi primeiro **comprovada com um ataqu
 3. **Antes do evento:**
    - deixe `ALLOW_DEMO=false` e `ALLOW_RESET=false`;
    - nunca suba o `.env` para o GitHub (ele já está no `.gitignore`);
-   - rode `npm run test:servidor`, que deve terminar com 17 de 17 testes passando.
+   - rode `npm run test:servidor`, que deve terminar com 20 de 20 testes passando.
 
 ## 4. Limites conhecidos (seja transparente na apresentação)
 
@@ -75,4 +81,4 @@ npm run test:servidor
 cd servicos/api-gateway && npm audit --omit=dev
 ```
 
-São 22 testes de regras e 17 de ataque ao servidor, e o `npm audit` deve mostrar 0 vulnerabilidades.
+São 22 testes de regras e 20 de ataque ao servidor, e o `npm audit` deve mostrar 0 vulnerabilidades.

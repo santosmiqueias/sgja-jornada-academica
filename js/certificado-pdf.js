@@ -120,7 +120,7 @@
     const ids = Array.isArray(cert.atividades) ? cert.atividades : [];
     const todas = CFG.eventos;
     const feitas = todas.filter((e) => ids.includes(e.id));
-    const totalEvento = todas.reduce((s, e) => s + e.cargaHoraria, 0);
+    const totalEvento = CFG.evento.cargaHorariaTotal;
     
     const M = 18;                                   // margem lateral
     doc.addPage("a4", "landscape");
@@ -147,7 +147,7 @@
     doc.text(C.mascararCPFParaExibicao(aluno.cpf), 240, y + 6);
 
     // Tabela com todas as atividades ofertadas
-    const col = { atividade: M + 3, data: 142, horario: 168, carga: 236, presenca: PAG_W - M - 13 };
+    const col = { atividade: M + 3, data: 150, horario: 186, presenca: PAG_W - M - 13 };
     const topo = 56;
     y = topo;
     doc.setFillColor(...AZUL); doc.rect(M, y, PAG_W - 2 * M, 9, "F");
@@ -155,7 +155,6 @@
     doc.text("Atividade", col.atividade, y + 6);
     doc.text("Data", col.data, y + 6);
     doc.text("Horário", col.horario, y + 6);
-    doc.text("Carga horária", col.carga, y + 6, { align: "right" });
     doc.text("Presença", col.presenca, y + 6, { align: "center" });
     y += 9;
 
@@ -169,8 +168,7 @@
       doc.setTextColor(...CINZA);
       doc.text(UI.formatarData(e.data), col.data, y + 6);
       doc.text(`${e.horario} (${e.turno})`, col.horario, y + 6);
-      doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold");
-      doc.text(`${e.cargaHoraria} horas`, col.carga, y + 6, { align: "right" });
+      doc.setFont("helvetica", "bold");
       if (ids.includes(e.id)) { doc.setTextColor(...VERDE); doc.text("Presente", col.presenca, y + 6, { align: "center" }); }
       else { doc.setFont("helvetica", "normal"); doc.setTextColor(...CINZA); doc.text("—", col.presenca, y + 6, { align: "center" }); }
       doc.setFont("helvetica", "normal");
@@ -182,10 +180,25 @@
     doc.setFillColor(255, 246, 204); doc.rect(M, y, PAG_W - 2 * M, 11, "F");
     doc.setDrawColor(...AMARELO); doc.setLineWidth(0.6); doc.line(M, y, PAG_W - M, y);
     doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-    doc.text(`Carga horária total do evento: ${totalEvento} horas (${todas.length} atividades)`, col.atividade, y + 7.3);
+    doc.text(`Carga horária total do evento: ${totalEvento} horas`, col.atividade, y + 7.3);
     const diasPresenca = new Set(feitas.map((e) => e.data)).size, diasEvento = new Set(todas.map((e) => e.data)).size;
     doc.text(`Presença: ${feitas.length} de ${todas.length} atividades, em ${diasPresenca} de ${diasEvento} dias`, PAG_W - M - 3, y + 7.3, { align: "right" });
     y += 11;
+
+    // Trabalhos apresentados pelo participante (validados pela organização)
+    const trabs = Array.isArray(cert.trabalhos) ? cert.trabalhos : [];
+    if (trabs.length) {
+      y += 7;
+      doc.setTextColor(...AZUL); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+      doc.text(trabs.length > 1 ? "Trabalhos apresentados" : "Trabalho apresentado", M, y + 4);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+      trabs.slice(0, 3).forEach((t) => {
+        const linhas = doc.splitTextToSize(`• “${t.titulo}” — ${t.modalidade}`, PAG_W - 2 * M - 60);
+        doc.text(linhas, M, y + 10);
+        y += 5 * linhas.length;
+      });
+      y += 6;
+    }
 
     // Critério e autenticidade
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...CINZA);
@@ -194,7 +207,7 @@
 
     // QR Code de autenticidade (canto inferior direito, acima do rodapé)
     const q = 34;
-    const qx = PAG_W - M - q, qy = Math.max(y + 14, PAG_H - 14 - q - 14);
+    const qx = PAG_W - M - q, qy = PAG_H - 14 - q - 16; // posição fixa, acima do rodapé (o texto à esquerda não chega até aqui)
     doc.setDrawColor(...BORDA); doc.setLineWidth(0.3);
     doc.roundedRect(qx - 4, qy - 4, q + 8, q + 15, 2, 2);
     doc.addImage(UI.qrDataURL(urlValidacao(cert.codigo), 300), "PNG", qx, qy, q, q);
