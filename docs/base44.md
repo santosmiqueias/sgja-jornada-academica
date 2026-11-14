@@ -46,6 +46,9 @@ A programação (EV01 a EV06) fica em `js/config.js`, a mesma fonte para o site,
   comissão): tudo gravado e lido certo, membro duplicado recusado (409), e-mail errado recusado, certificado validado.
   Os dados do teste foram apagados no final.
 
+- Servidor publicado no Render (`https://sgja-api.onrender.com`): `/health` responde, a leitura do Base44 funciona com o token
+  e o site oficial (GitHub Pages) passa na checagem de origem (CORS). O site está com `backend: "servidor"`.
+
 ## Limite de requisições do Base44
 
 No plano base, o Base44 aceita por minuto: 70 listagens, 80 criações e 70 alterações (o seu plano pode multiplicar isso).

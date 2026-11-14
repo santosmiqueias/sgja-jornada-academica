@@ -87,9 +87,9 @@ window.SGJA_CONFIG = {
   //                Não use com dados reais de alunos.
   //   "servidor" -> EVENTO REAL. Tudo passa pelo servidor (servicos/api-gateway) com login por perfil;
   //                senhas, segredos e a chave do Base44 ficam só no servidor (arquivo .env).
-  backend: "local",
+  backend: "servidor",
   servidor: {
-    url: "https://SEU-SERVIDOR.onrender.com" // HTTPS obrigatório (localhost só em testes)
+    url: "https://sgja-api.onrender.com" // HTTPS obrigatório (localhost só em testes)
   },
 
   // E-mail no modo "local": "simulado" (só registra) ou "emailjs".
