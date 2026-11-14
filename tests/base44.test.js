@@ -97,26 +97,58 @@ test("Base44: tudo o que o sistema grava cabe nos esquemas", async () => {
   assert.deepEqual(erros, []);
 });
 
-test("Base44Store: lê todas as páginas, usa a chave só no cabeçalho e trata null como ausente", async () => {
+test("Base44Store: segue o cursor, usa a chave só no cabeçalho, trata null e fuso das datas", async () => {
   const { Base44Store } = require("../servicos/api-gateway/store.js");
   const chamadas = [];
   const original = global.fetch;
   global.fetch = async (url, opt) => {
     chamadas.push({ url, opt });
-    const skip = Number(new URL(url).searchParams.get("skip"));
-    const n = skip === 0 ? 500 : 3;
-    const itens = Array.from({ length: n }, (_, i) => ({ id: `A${skip + i}`, nome: "Ana Sousa", telefone: null }));
-    return { ok: true, status: 200, json: async () => itens };
+    const segunda = new URL(url).searchParams.get("cursor") === "c2";
+    const n = segunda ? 3 : 5000;
+    const items = Array.from({ length: n }, (_, i) => ({ id: `A${i}`, nome: "Ana Sousa", telefone: null, created_date: "2026-11-14T11:10:08.389000" }));
+    return { ok: true, status: 200, json: async () => ({ items, next_cursor: segunda ? null : "c2", has_more: !segunda }) };
   };
   try {
-    const st = new Base44Store("app123", "chave-secreta");
+    const st = new Base44Store("app123", "chave-secreta", { cacheSegundos: 0 });
     const todos = await st.list("Aluno");
-    assert.equal(todos.length, 503);
+    assert.equal(todos.length, 5003);
     assert.equal(chamadas.length, 2);
-    assert.match(chamadas[0].url, /\/api\/apps\/app123\/entities\/Aluno\?limit=500&skip=0$/);
-    assert.equal(chamadas[0].opt.headers.api_key, "chave-secreta");
-    assert.ok(!chamadas[0].url.includes("chave-secreta"));
+    assert.match(chamadas[0].url, /\/api\/apps\/app123\/entities\/Aluno\/v2\/list\?limit=5000$/);
+    assert.match(chamadas[1].url, /\/Aluno\/v2\/list\?cursor=c2$/);
+    assert.equal(chamadas[0].opt.headers.Authorization, "Bearer chave-secreta");
+    assert.ok(!chamadas.some((c) => c.url.includes("chave-secreta")));
     assert.equal("telefone" in todos[0], false);
+    assert.equal(todos[0].created_date, "2026-11-14T11:10:08.389000Z");
     await assert.rejects(() => st.list("User"), /Entidade inválida/);
+  } finally { global.fetch = original; }
+});
+
+test("Base44Store: cópia em memória evita o limite de leituras e espera quando o Base44 pede (429)", async () => {
+  const { Base44Store } = require("../servicos/api-gateway/store.js");
+  const original = global.fetch;
+  const banco = [{ id: "A1", nome: "Ana Sousa" }];
+  let listagens = 0, gravacoes = 0, falhou = false;
+  global.fetch = async (url, opt) => {
+    const u = new URL(url);
+    if (opt.method === "GET") { listagens++; return { ok: true, status: 200, json: async () => ({ items: banco.map((x) => ({ ...x })), has_more: false }) }; }
+    gravacoes++;
+    if (!falhou) { falhou = true; return { ok: false, status: 429, headers: { get: () => "0" }, json: async () => ({}) }; }
+    if (opt.method === "POST") { const novo = { ...JSON.parse(opt.body), id: "A2" }; banco.push(novo); return { ok: true, status: 200, json: async () => novo }; }
+    if (opt.method === "PUT") { const id = u.pathname.split("/").pop(); const r = banco.find((x) => x.id === id); Object.assign(r, JSON.parse(opt.body)); return { ok: true, status: 200, json: async () => ({ ...r }) }; }
+    return { ok: true, status: 200, json: async () => ({ success: true }) };
+  };
+  try {
+    const st = new Base44Store("app123", "k", { esperaMaxMs: 5 });
+    for (let i = 0; i < 50; i++) await st.list("Aluno");
+    assert.equal(listagens, 1); // 50 leituras, 1 chamada ao Base44
+    await st.create("Aluno", { nome: "Bruno Lima" }); // 1ª tentativa recebe 429, a 2ª grava
+    assert.equal(gravacoes, 2);
+    await st.update("Aluno", "A1", { nome: "Ana Maria Sousa" });
+    await st.remove("Aluno", "A2");
+    const lista = await st.list("Aluno");
+    assert.equal(listagens, 1);
+    assert.deepEqual(lista.map((x) => x.nome), ["Ana Maria Sousa"]);
+    lista[0].nome = "alterado fora"; // cópia: quem lê não altera o cache
+    assert.equal((await st.list("Aluno"))[0].nome, "Ana Maria Sousa");
   } finally { global.fetch = original; }
 });

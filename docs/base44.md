@@ -42,6 +42,22 @@ A programação (EV01 a EV06) fica em `js/config.js`, a mesma fonte para o site,
 - O push remove do app as entidades que não estão em `base44/entities/`. No app novo isso apagou só o exemplo `User` do modelo inicial;
   o usuário padrão do Base44 (login e papel de administrador) continua funcionando.
 
+- Teste de ponta a ponta com o app real (demonstração completa: 5 trabalhos, banca, 11 check-ins, 9 certificados e e-mails,
+  comissão): tudo gravado e lido certo, membro duplicado recusado (409), e-mail errado recusado, certificado validado.
+  Os dados do teste foram apagados no final.
+
+## Limite de requisições do Base44
+
+No plano base, o Base44 aceita por minuto: 70 listagens, 80 criações e 70 alterações (o seu plano pode multiplicar isso).
+As regras do sistema releem as tabelas a cada operação, então o `Base44Store` guarda uma cópia em memória:
+
+- o servidor é o único que grava, então a cópia é atualizada a cada gravação, sem reler;
+- a cópia é relida do Base44 a cada 60 segundos (`BASE44_CACHE_SEGUNDOS`), para pegar edições feitas direto no painel do Base44;
+- se o Base44 responder 429 (limite) ou 503, o servidor espera o tempo pedido e tenta de novo, até 5 vezes.
+
+Uma submissão com 10 participantes faz cerca de 21 gravações, então em um pico de envios algumas respostas podem demorar
+alguns segundos a mais, mas não se perdem.
+
 ## Regras que o Base44 não faz sozinho (e onde estão)
 
 - **CPF e e-mail únicos.** O Base44 não tem campo único. A regra fica em `js/servico.js`: na submissão,
@@ -80,7 +96,10 @@ O `base44:push` cria ou atualiza as 7 entidades. Rode de novo sempre que mudar u
 
 ## Ligar o servidor ao Base44
 
-1. No painel do Base44, abra o app e copie o **id do app** e a **chave de API**.
+1. No Base44, crie uma **chave de API pessoal** (ou token de acesso pessoal) com **acesso total** (*full access*),
+   na conta dona do app. Ela age como você, que é administrador do app, então passa pela regra "só administrador".
+   Uma chave de API do workspace também funciona (age como o dono do workspace). Chave **somente leitura não serve**:
+   o servidor precisa gravar. O id do app está em `base44/.app.jsonc` e no endereço do painel do app.
 2. No `.env` do servidor (`servicos/api-gateway/.env`, nunca no site e nunca no Git):
 
    ```

@@ -63,45 +63,101 @@ class ArquivoStore {
   async limparTudo() { for (const e of ENTIDADES) await this._emFila(e, () => this._gravar(e, [])); }
 }
 
-const LIMITE_PAGINA = 500;
-// O Base44 devolve null nos campos que nunca foram preenchidos; aqui eles viram "ausentes",
-// igual ao armazenamento em arquivos, para as regras de js/servico.js verem o mesmo formato.
-function semNulos(reg) {
+const LIMITE_PAGINA = 5000; // máximo por página no Base44
+
+// O Base44 devolve null nos campos nunca preenchidos e as datas automáticas sem o "Z" (são UTC).
+// Aqui os null viram "ausentes" e as datas ganham o "Z", para o código ver o mesmo formato do armazenamento em arquivos.
+const SEM_FUSO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/;
+function normalizar(reg) {
   if (!reg || typeof reg !== "object" || Array.isArray(reg)) return reg;
-  return Object.fromEntries(Object.entries(reg).filter(([, v]) => v !== null));
+  const r = Object.fromEntries(Object.entries(reg).filter(([, v]) => v !== null));
+  for (const k of ["created_date", "updated_date"]) if (typeof r[k] === "string" && SEM_FUSO.test(r[k])) r[k] += "Z";
+  return r;
 }
 
+// API de entidades do Base44. A chave (token pessoal com acesso total, ou chave de API do workspace)
+// vai no cabeçalho Authorization: Bearer, aceito pelos dois tipos. Ela fica só neste servidor.
+//
+// Limites do Base44 (plano base): 70 listagens, 80 criações e 70 alterações por minuto. As regras de
+// js/servico.js releem as tabelas a cada operação, então este store guarda uma cópia em memória:
+//   - o servidor é o único que grava (rode uma única instância), então a cópia é atualizada a cada gravação;
+//   - a cópia é relida do Base44 a cada BASE44_CACHE_SEGUNDOS (padrão 60), para pegar edições feitas no painel do Base44;
+//   - resposta 429/503 do Base44: espera o Retry-After e tenta de novo (até 5 vezes).
+const esperar = (ms) => new Promise((ok) => setTimeout(ok, ms));
 class Base44Store {
-  constructor(appId, apiKey) {
+  constructor(appId, apiKey, opcoes = {}) {
     this.url = `https://app.base44.com/api/apps/${encodeURIComponent(appId)}/entities`;
-    this.headers = { api_key: apiKey, "Content-Type": "application/json" };
+    this.headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
+    this.ttl = (opcoes.cacheSegundos ?? Number(process.env.BASE44_CACHE_SEGUNDOS || 60)) * 1000;
+    this.tentativas = opcoes.tentativas ?? 5;
+    this.esperaMaxMs = opcoes.esperaMaxMs ?? 30000;
+    this.cache = {}; // ent -> { lista, em }
+    this.carregando = {}; // ent -> Promise (uma leitura por vez)
   }
   async _req(metodo, caminho, corpo) {
-    const r = await fetch(`${this.url}/${caminho}`, { method: metodo, headers: this.headers, body: corpo ? JSON.stringify(corpo) : undefined });
-    if (!r.ok) { const e = new Error(`Base44 respondeu ${r.status}`); e.status = 502; throw e; }
-    return r.status === 204 ? null : r.json();
-  }
-  _ent(ent) { if (!ENTIDADES.includes(ent)) throw new Error("Entidade inválida"); return ent; }
-  // A listagem do Base44 é paginada: busca em páginas até acabar (o evento tem poucos milhares de registros).
-  async list(ent) {
-    const todos = [];
-    for (let skip = 0; ; skip += LIMITE_PAGINA) {
-      const pagina = await this._req("GET", `${this._ent(ent)}?limit=${LIMITE_PAGINA}&skip=${skip}`);
-      const itens = Array.isArray(pagina) ? pagina : (pagina && pagina.items) || [];
-      todos.push(...itens.map(semNulos));
-      if (itens.length < LIMITE_PAGINA) return todos;
+    for (let n = 1; ; n++) {
+      const r = await fetch(`${this.url}/${caminho}`, { method: metodo, headers: this.headers, body: corpo ? JSON.stringify(corpo) : undefined });
+      if ((r.status === 429 || r.status === 503) && n < this.tentativas) {
+        const ra = Number(r.headers && r.headers.get && r.headers.get("retry-after"));
+        await esperar(Math.min(this.esperaMaxMs, ra > 0 ? ra * 1000 : 1000 * 2 ** (n - 1)));
+        continue;
+      }
+      if (!r.ok) { const e = new Error(`Base44 respondeu ${r.status}`); e.status = 502; throw e; }
+      return r.status === 204 ? null : r.json();
     }
   }
-  async create(ent, obj) { return semNulos(await this._req("POST", this._ent(ent), obj)); }
-  async update(ent, id, patch) { return semNulos(await this._req("PUT", `${this._ent(ent)}/${encodeURIComponent(id)}`, patch)); }
-  remove(ent, id) { return this._req("DELETE", `${this._ent(ent)}/${encodeURIComponent(id)}`); }
+  _ent(ent) { if (!ENTIDADES.includes(ent)) throw new Error("Entidade inválida"); return ent; }
+  // Listagem paginada por cursor (endpoint v2/list): segue next_cursor até has_more ser false.
+  async _buscarTudo(ent) {
+    const todos = [];
+    let pagina = await this._req("GET", `${ent}/v2/list?limit=${LIMITE_PAGINA}`);
+    for (;;) {
+      todos.push(...((pagina && pagina.items) || []).map(normalizar));
+      if (!pagina || !pagina.has_more || !pagina.next_cursor) return todos;
+      pagina = await this._req("GET", `${ent}/v2/list?cursor=${encodeURIComponent(pagina.next_cursor)}`);
+    }
+  }
+  async _lista(ent) {
+    this._ent(ent);
+    const c = this.cache[ent];
+    if (c && Date.now() - c.em < this.ttl) return c.lista;
+    if (!this.carregando[ent]) {
+      this.carregando[ent] = this._buscarTudo(ent)
+        .then((lista) => { this.cache[ent] = { lista, em: Date.now() }; return lista; })
+        .finally(() => { delete this.carregando[ent]; });
+    }
+    return this.carregando[ent];
+  }
+  async list(ent) { return (await this._lista(ent)).map((x) => ({ ...x })); }
+  async create(ent, obj) {
+    const novo = normalizar(await this._req("POST", this._ent(ent), obj));
+    const c = this.cache[ent];
+    if (c) c.lista = [...c.lista, novo];
+    return { ...novo };
+  }
+  async update(ent, id, patch) {
+    const novo = normalizar(await this._req("PUT", `${this._ent(ent)}/${encodeURIComponent(id)}`, patch));
+    const c = this.cache[ent];
+    if (c) c.lista = c.lista.map((x) => (x.id === novo.id ? novo : x));
+    return { ...novo };
+  }
+  async remove(ent, id) {
+    await this._req("DELETE", `${this._ent(ent)}/${encodeURIComponent(id)}`);
+    const c = this.cache[ent];
+    if (c) c.lista = c.lista.filter((x) => x.id !== id);
+  }
   async limparTudo() { const e = new Error("Limpeza em massa desativada no Base44."); e.status = 403; throw e; }
 }
 
+// Um store por configuração, compartilhado no processo: o servidor e o agendador de lembretes
+// usam a mesma cópia em memória (e, no Base44, o mesmo controle de limite).
+const criados = {};
 function criarStore() {
   const { BASE44_APP_ID, BASE44_API_KEY } = process.env;
-  if (BASE44_APP_ID && BASE44_API_KEY) return new Base44Store(BASE44_APP_ID, BASE44_API_KEY);
-  return new ArquivoStore(process.env.DADOS_DIR || path.join(__dirname, "dados"));
+  const dir = process.env.DADOS_DIR || path.join(__dirname, "dados");
+  const chave = BASE44_APP_ID && BASE44_API_KEY ? `b44:${BASE44_APP_ID}` : `arq:${dir}`;
+  if (!criados[chave]) criados[chave] = BASE44_APP_ID && BASE44_API_KEY ? new Base44Store(BASE44_APP_ID, BASE44_API_KEY) : new ArquivoStore(dir);
+  return criados[chave];
 }
 
 module.exports = { criarStore, ArquivoStore, Base44Store, ENTIDADES };
