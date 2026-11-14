@@ -152,3 +152,23 @@ test("Base44Store: cópia em memória evita o limite de leituras e espera quando
     assert.equal((await st.list("Aluno"))[0].nome, "Ana Maria Sousa");
   } finally { global.fetch = original; }
 });
+
+test("Resumo: 1.500 caracteres sem contar os espaços é aceito; 1.501 é recusado", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-resumo-"));
+  const ctx = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(RAIZ, "js", "config.js"), "utf8"), ctx);
+  const C = require("../js/core.js");
+  const { criarServico } = require("../js/servico.js");
+  const { ArquivoStore } = require("../servicos/api-gateway/store.js");
+  const S = criarServico({ store: new ArquivoStore(dir), config: ctx.window.SGJA_CONFIG, core: C, segredo: "segredo-de-teste-com-tamanho-ok" });
+  const palavras = Array(300).fill("abcde").join(" "); // 1.500 letras + 299 espaços
+  const dados = (titulo, resumo) => ({
+    titulo, vinculo: "APIEXT2", curso: "Direito", resumo, orientadores: ["Profª. Drª. Helena Martins Costa"],
+    representante: { nome: "Ana Beatriz Sousa", cpf: "52998224725", email: "ana.resumo@exemplo.com", telefone: "86999990001", matricula: "20260001" },
+    participantes: [], consentimentoLGPD: true
+  });
+  const arq = { nome: "t.pdf", tipo: "application/pdf", tamanho: 10, ref: "x" };
+  const ok = await S.submeterTrabalho(dados("Resumo no limite", palavras), arq);
+  assert.match(ok.trabalho.protocolo, /^TR-/);
+  await assert.rejects(() => S.submeterTrabalho(dados("Resumo acima", palavras + " a"), arq), /sem contar os espaços/);
+});

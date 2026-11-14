@@ -6,11 +6,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Submissão de trabalhos · VI Jornada Acadêmica</title>
-  <link rel="icon" href="assets/img/favicon.png?v=202611141203">
+  <link rel="icon" href="assets/img/favicon.png?v=202611141337">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611141203">
+  <link rel="stylesheet" href="css/style.css?v=202611141337">
 </head>
 <body>
   <div id="menu"></div>
@@ -86,17 +86,21 @@
               </div>
               <div class="col-12">
                 <label for="resumo" class="form-label">Resumo simples</label>
-                <textarea class="form-control" id="resumo" rows="9" required></textarea>
-                <div class="d-flex justify-content-between flex-wrap gap-2 form-text">
-                  <span>Inclua: introdução, objetivos, método, principais resultados e considerações finais.</span>
-                  <span id="contador-resumo" aria-live="polite">0 / 1500</span>
-                </div>
-                <div class="invalid-feedback" id="erro-resumo">O resumo deve ter entre 200 e 1.500 caracteres.</div>
+                <textarea class="form-control" id="resumo" rows="9" aria-describedby="notas-resumo" required></textarea>
+                <ul class="notas-resumo form-text" id="notas-resumo">
+                  <li>Inclua: introdução, objetivos, método, principais resultados e considerações finais. Não use citações no corpo do texto.</li>
+                  <li><div class="d-flex justify-content-between flex-wrap gap-2"><span>Até 1.500 caracteres, sem contar os espaços.</span><span id="contador-resumo" aria-live="polite">0 / 1.500 sem espaços</span></div></li>
+                </ul>
+                <div class="invalid-feedback" id="erro-resumo">O resumo deve ter entre 200 e 1.500 caracteres, sem contar os espaços.</div>
               </div>
               <div class="col-12">
                 <label for="arquivo" class="form-label">Arquivo do trabalho</label>
-                <input type="file" class="form-control" id="arquivo" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
-                <div class="form-text" id="info-arquivo">PDF, DOC ou DOCX, até 10 MB.</div>
+                <div class="area-arquivo" id="area-arquivo">
+                  <i class="bi bi-cloud-arrow-up area-arquivo-icone" aria-hidden="true"></i>
+                  <p class="mb-2 fw-semibold">Arraste o arquivo para cá ou escolha no computador</p>
+                  <input type="file" class="form-control" id="arquivo" aria-describedby="info-arquivo" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required>
+                  <div class="form-text mt-2" id="info-arquivo">PDF, DOC ou DOCX, até 10 MB.</div>
+                </div>
                 <div class="invalid-feedback" id="erro-arquivo">Anexe o arquivo em PDF, DOC ou DOCX (até 10 MB).</div>
               </div>
             </div>
@@ -191,11 +195,11 @@
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
-  <script src="js/config.js?v=202611141203"></script>
-  <script src="js/core.js?v=202611141203"></script>
-  <script src="js/servico.js?v=202611141203"></script>
-  <script src="js/api.js?v=202611141203"></script>
-  <script src="js/ui.js?v=202611141203"></script>
-  <script src="js/submissao.js?v=202611141203"></script>
+  <script src="js/config.js?v=202611141337"></script>
+  <script src="js/core.js?v=202611141337"></script>
+  <script src="js/servico.js?v=202611141337"></script>
+  <script src="js/api.js?v=202611141337"></script>
+  <script src="js/ui.js?v=202611141337"></script>
+  <script src="js/submissao.js?v=202611141337"></script>
 </body>
 </html>

@@ -140,3 +140,12 @@ test("Certificado: participar de 1 dia do evento dá o certificado de 20 horas",
   assert.deepEqual([doisDias.dias, doisDias.feitas, doisDias.totalDias, doisDias.horas], [2, 2, 2, 8]);
   assert.equal(C.avaliarCertificado(f(["A"]), evs, "x", 2, 20).aprovado, false); // se exigirem 2 dias
 });
+
+test("Resumo: conta caracteres sem os espaços e quebras de linha", () => {
+  assert.equal(C.contarSemEspacos("a b\n c\t d"), 4);
+  assert.equal(C.contarSemEspacos(""), 0);
+  assert.equal(C.contarSemEspacos(null), 0);
+  const palavras = Array(300).fill("abcde").join(" "); // 1.500 letras + 299 espaços = 1.799 no total
+  assert.equal(palavras.length, 1799);
+  assert.equal(C.contarSemEspacos(palavras), 1500);
+});

@@ -147,3 +147,14 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .rodape-lista a.rodape-sublinhado { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255, 255, 255, .35); color: rgba(205, 210, 255, .7); }
 .rodape-base { border-top: 1px solid rgba(255, 255, 255, .14); margin-top: 3rem; padding-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem;
   font-size: .72rem; text-transform: uppercase; letter-spacing: .18em; color: rgba(255, 255, 255, .45); }
+
+/* Resumo: notas abaixo do campo */
+.notas-resumo { list-style: disc; padding-left: 1.1rem; margin: .4rem 0 0; display: grid; gap: .2rem; }
+/* Arquivo do trabalho: área de arrastar e soltar */
+.area-arquivo { border: 2px dashed #b9c3dc; border-radius: 12px; padding: 1.25rem; text-align: center; background: #fff; transition: border-color .15s, background-color .15s; }
+.area-arquivo.arrastando { border-color: var(--azul); background: rgba(23, 71, 181, .06); }
+.area-arquivo-icone { font-size: 2rem; color: var(--navy); display: block; margin-bottom: .25rem; }
+.area-arquivo .form-control { max-width: 420px; margin-inline: auto; }
+.area-arquivo:has(.is-invalid) { border-color: var(--bs-danger); }
+#area-arquivo ~ .invalid-feedback { display: none; }
+#area-arquivo:has(.is-invalid) ~ .invalid-feedback { display: block; }

@@ -1,6 +1,6 @@
 {
   "name": "sgja-api-gateway",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Servidor do S.G.J.A: API com login por perfil, dados protegidos, e-mail de certificados e lembretes por WhatsApp",
   "main": "server.js",
   "scripts": {

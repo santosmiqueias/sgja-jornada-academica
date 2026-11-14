@@ -49,6 +49,15 @@ A programação (EV01 a EV06) fica em `js/config.js`, a mesma fonte para o site,
 - Servidor publicado no Render (`https://sgja-api.onrender.com`): `/health` responde, a leitura do Base44 funciona com o token
   e o site oficial (GitHub Pages) passa na checagem de origem (CORS). O site está com `backend: "servidor"`.
 
+## Atenção: deploy do servidor no Render
+
+O serviço no Render usa `servicos/api-gateway` como pasta raiz, e o Render só faz o deploy sozinho quando muda algo
+dentro dela. As regras de negócio ficam em `js/servico.js` e `js/core.js`, fora dessa pasta. Quando mudar uma regra lá,
+faça um destes:
+
+- suba a versão em `servicos/api-gateway/package.json` no mesmo commit (o deploy dispara sozinho); ou
+- no Render, clique em **Manual Deploy → Deploy latest commit**.
+
 ## Limite de requisições do Base44
 
 No plano base, o Base44 aceita por minuto: 70 listagens, 80 criações e 70 alterações (o seu plano pode multiplicar isso).

@@ -50,7 +50,7 @@ Também foi rodado um teste de ponta a ponta no navegador (Playwright) cobrindo 
 |---|---|---|---|
 | S1 | Enviar formulário vazio | Campos em vermelho, nada enviado | ✅ |
 | S2 | Vínculo APIExt II | Formato travado em comunicação oral | ✅ |
-| S3 | Resumo com mais de 1.500 caracteres | Recusado | ✅ |
+| S3 | Resumo com mais de 1.500 caracteres sem contar os espaços | Recusado (espaços e quebras de linha não contam) | ✅ |
 | S4 | Arquivo `.exe` ou `.exe` renomeado para `.pdf` | Recusado pelo conteúdo | ✅ |
 | S5 | Arquivo acima de 10 MB | Recusado | ✅ |
 | S6 | Mesmo trabalho enviado duas vezes | Recusado | ✅ |

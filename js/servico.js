@@ -182,8 +182,10 @@
           if (orientadores.length > maxOri) throw new ErroNegocio(`No máximo ${maxOri} orientadores.`, "orientadores");
           if (orientadores.some((n) => !C.validarNome(semTitulo(n)))) throw new ErroNegocio("Informe nome e sobrenome de cada orientador.", "orientadores");
           if (new Set(orientadores.map((n) => n.toLowerCase())).size !== orientadores.length) throw new ErroNegocio("O mesmo orientador foi informado mais de uma vez.", "orientadores");
-          if (resumo.length < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres.`, "resumo");
-          if (resumo.length > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo} caracteres.`, "resumo");
+          const letras = C.contarSemEspacos(resumo);
+          if (letras < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres, sem contar os espaços.`, "resumo");
+          if (letras > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} caracteres, sem contar os espaços.`, "resumo");
+          if (resumo.length > SUB.maxCaracteresResumo * 2) throw new ErroNegocio("O resumo tem espaços ou quebras de linha demais.", "resumo");
           if (!arquivo || !arquivo.ref) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
           const ext = String(arquivo.nome || "").split(".").pop().toLowerCase();
           if (!SUB.arquivo.extensoes.includes(ext)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");

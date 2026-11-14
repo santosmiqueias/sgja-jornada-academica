@@ -90,6 +90,9 @@ test("submissão: valida no servidor, guarda o arquivo e bloqueia duplicados e e
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", representante: { ...alunoBase(2), nome: "<img src=x onerror=alert(1)> Silva" } }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", curso: "Curso Inventado" }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", resumo: "x".repeat(1501) }))).status, 400);
+  // 1.501 letras recusa, mesmo com espaços (o caso aceito está em tests/base44.test.js)
+  const comEspacos = Array(300).fill("abcde").join(" ");
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Resumo acima do limite", resumo: comEspacos + " a" }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", '{"titulo": quebrado')).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Sem orientador", orientadores: [] }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Orientador repetido", orientadores: ["Ana Lima Souza", "ana lima souza"] }))).status, 400);

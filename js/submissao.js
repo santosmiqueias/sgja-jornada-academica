@@ -32,9 +32,9 @@
 
   // Contador do resumo
   function contar() {
-    const n = $("resumo").value.trim().length;
+    const n = C.contarSemEspacos($("resumo").value);
     const el = $("contador-resumo");
-    el.textContent = `${n} / ${SUB.maxCaracteresResumo}`;
+    el.textContent = `${n.toLocaleString("pt-BR")} / ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} sem espaços`;
     el.classList.toggle("text-danger", n > SUB.maxCaracteresResumo);
     return n;
   }
@@ -49,6 +49,23 @@
     $("info-arquivo").textContent = f ? `${f.name} · ${tamanhoTexto(f.size)}` : "PDF, DOC ou DOCX, até 10 MB.";
     validar("arquivo");
   });
+
+  // Arrastar e soltar o arquivo na área (o campo continua funcionando com clique e teclado)
+  const area = $("area-arquivo");
+  ["dragenter", "dragover"].forEach((ev) => area.addEventListener(ev, (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; area.classList.add("arrastando"); }));
+  ["dragleave", "dragend"].forEach((ev) => area.addEventListener(ev, (e) => { if (!area.contains(e.relatedTarget)) area.classList.remove("arrastando"); }));
+  area.addEventListener("drop", (e) => {
+    e.preventDefault();
+    area.classList.remove("arrastando");
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    const dt = new DataTransfer();
+    dt.items.add(f); // só o primeiro arquivo: é um arquivo por trabalho
+    $("arquivo").files = dt.files;
+    $("arquivo").dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  // Soltar fora da área não abre o arquivo no navegador (e não perde o que foi preenchido)
+  ["dragover", "drop"].forEach((ev) => window.addEventListener(ev, (e) => { if (!area.contains(e.target)) e.preventDefault(); }));
 
   // Máscaras do representante
   $("r-cpf").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
@@ -127,7 +144,7 @@
     titulo: () => $("titulo").value.trim().length >= 5,
     vinculo: () => SUB.vinculos.some((v) => v.id === $("vinculo").value),
     curso: () => CFG.cursos.includes($("curso").value),
-    resumo: () => { const n = contar(); return n >= SUB.minCaracteresResumo && n <= SUB.maxCaracteresResumo; },
+    resumo: () => { const n = contar(); return n >= SUB.minCaracteresResumo && n <= SUB.maxCaracteresResumo && $("resumo").value.trim().length <= SUB.maxCaracteresResumo * 2; },
     arquivo: () => { const f = $("arquivo").files[0]; return !!f && SUB.arquivo.extensoes.includes(extensao(f.name)) && f.size > 0 && f.size <= SUB.arquivo.maxMB * 1048576; },
     "r-nome": () => C.validarNome($("r-nome").value),
     "r-email": () => C.validarEmail($("r-email").value),

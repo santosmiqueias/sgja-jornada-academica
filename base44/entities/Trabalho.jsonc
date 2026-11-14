@@ -58,8 +58,8 @@
     },
     "resumo": {
       "type": "string",
-      "maxLength": 1500,
-      "description": "Resumo simples, de 200 a 1.500 caracteres"
+      "maxLength": 3000,
+      "description": "Resumo simples: de 200 a 1.500 caracteres sem contar os espaços (o servidor recusa mais de 3.000 no total)"
     },
     "arquivo": {
       "type": "object",

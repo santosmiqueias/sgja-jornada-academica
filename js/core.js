@@ -191,6 +191,11 @@
     return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
+  // Edital/coordenação: o resumo tem até 1.500 caracteres SEM contar os espaços (nem quebras de linha).
+  function contarSemEspacos(texto) {
+    return String(texto == null ? "" : texto).replace(/\s/g, "").length;
+  }
+
   function escaparHTML(v) {
     return String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -259,6 +264,6 @@
     sha256Hex, gerarTokenIngresso, lerTokenIngresso, gerarCodigoCertificado,
     inicioEvento, eventosParaLembrete, telefoneE164, mensagemLembrete, recebeLembrete, validarAtividades,
     validarSenha, gerarSalt, hashSenha,
-    escaparHTML, gerarId
+    escaparHTML, gerarId, contarSemEspacos
   };
 });
