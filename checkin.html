@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://accounts.google.com/gsi/">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Check-in · VI Jornada Acadêmica</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=202611141456">
+  <link rel="icon" href="assets/img/favicon.png?v=202611141512">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611141456"></script>
+  <script src="js/tema.js?v=202611141512"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611141456">
+  <link rel="stylesheet" href="css/style.css?v=202611141512">
 </head>
 <body>
   <div id="menu"></div>
@@ -53,8 +53,17 @@
                 <button class="btn btn-primary w-100 mt-3" id="btn-entrar">Entrar</button>
                 <p class="small text-muted mt-3 mb-0">Ainda não tem acesso? Crie seu cadastro. Um professor precisa liberar antes do primeiro uso.</p>
               </form>
+              <div class="area-google d-none" data-google>
+                <div class="separador-ou"><span>ou</span></div>
+                <div class="botao-google" data-botao-google="signin_with"></div>
+              </div>
             </section>
             <section class="tab-pane fade" id="aba-cadastro" role="tabpanel">
+              <div class="area-google d-none mb-3" data-google>
+                <div class="botao-google" data-botao-google="signup_with"></div>
+                <p class="small text-muted text-center mt-2 mb-0">Mais rápido: o Google preenche seu nome e e-mail, e você não precisa criar senha.</p>
+                <div class="separador-ou"><span>ou preencha</span></div>
+              </div>
               <form id="form-cadastro" novalidate>
                 <div class="mb-3">
                   <label for="m-nome" class="form-label">Nome completo</label>
@@ -93,6 +102,35 @@
               </form>
               <div class="alert alert-success mt-3 mb-0 d-none" id="cadastro-ok" role="status">
                 <strong>Cadastro enviado.</strong> Assim que um professor liberar seu acesso, entre com seu e-mail e senha.
+              </div>
+            </section>
+            <!-- Completar cadastro depois do Google (nome e e-mail vêm da conta Google) -->
+            <section class="d-none" id="aba-google-cadastro" aria-labelledby="titulo-google-cadastro">
+              <h2 class="h5 fw-bold text-navy" id="titulo-google-cadastro">Complete seu cadastro</h2>
+              <p class="small text-muted">Conta Google: <strong id="g-email"></strong></p>
+              <form id="form-google-cadastro" novalidate>
+                <div class="mb-3">
+                  <label for="g-nome" class="form-label">Nome completo</label>
+                  <input type="text" id="g-nome" class="form-control" autocomplete="name" maxlength="100" required>
+                  <div class="invalid-feedback">Informe nome e sobrenome.</div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="g-cpf" class="form-label">CPF</label>
+                    <input type="text" id="g-cpf" class="form-control" inputmode="numeric" placeholder="000.000.000-00" required>
+                    <div class="invalid-feedback">CPF inválido.</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="g-telefone" class="form-label">Telefone</label>
+                    <input type="tel" id="g-telefone" class="form-control" inputmode="numeric" placeholder="(86) 99999-9999" autocomplete="tel-national" required>
+                    <div class="invalid-feedback">Telefone inválido.</div>
+                  </div>
+                </div>
+                <button class="btn btn-amarelo w-100" id="btn-google-cadastrar">Enviar cadastro</button>
+                <button type="button" class="btn btn-link w-100 mt-1" id="btn-google-cancelar">Cancelar</button>
+              </form>
+              <div class="alert alert-success mb-0 d-none" id="google-cadastro-ok" role="status">
+                <strong>Cadastro enviado.</strong> Assim que um professor liberar seu acesso, entre com o botão do Google.
               </div>
             </section>
           </div>
@@ -160,11 +198,11 @@
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="vendor/html5-qrcode.min.js"></script>
-  <script src="js/config.js?v=202611141456"></script>
-  <script src="js/core.js?v=202611141456"></script>
-  <script src="js/servico.js?v=202611141456"></script>
-  <script src="js/api.js?v=202611141456"></script>
-  <script src="js/ui.js?v=202611141456"></script>
-  <script src="js/checkin.js?v=202611141456"></script>
+  <script src="js/config.js?v=202611141512"></script>
+  <script src="js/core.js?v=202611141512"></script>
+  <script src="js/servico.js?v=202611141512"></script>
+  <script src="js/api.js?v=202611141512"></script>
+  <script src="js/ui.js?v=202611141512"></script>
+  <script src="js/checkin.js?v=202611141512"></script>
 </body>
 </html>

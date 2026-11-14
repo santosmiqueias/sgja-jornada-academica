@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-seg-"));
 Object.assign(process.env, {
   DADOS_DIR: dir, TOKEN_SEGREDO: crypto.randomBytes(32).toString("hex"), ASSINATURA_SEGREDO: crypto.randomBytes(32).toString("hex"),
-  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20"
+  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20", LIMITE_LOGIN_GOOGLE: "50"
 });
 delete process.env.BASE44_APP_ID; delete process.env.SMTP_USER;
 const auth = require("../auth");
@@ -260,4 +260,86 @@ test("Hash do professor: tolera nome/aspas/espaços colados, recusa hash cortado
   assert.equal(auth.conferirHash("Senha Teste 2026", h.slice(0, -5)), false);
   assert.equal(auth.diagnosticarHash(h.slice(0, -5)).ok, false);
   assert.equal(auth.diagnosticarHash("").motivo, "não definido");
+});
+
+/* ---------------- Login com Google (comissão) ---------------- */
+const google = require("../google");
+const parGoogle = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
+const jwkGoogle = { ...parGoogle.publicKey.export({ format: "jwk" }), kid: "chave-teste", alg: "RS256", use: "sig" };
+const CLIENTE = "123-teste.apps.googleusercontent.com";
+function tokenGoogle(extra = {}, chavePrivada = parGoogle.privateKey, cab = {}) {
+  const agora = Math.floor(Date.now() / 1000);
+  const h = Buffer.from(JSON.stringify({ alg: "RS256", kid: "chave-teste", typ: "JWT", ...cab })).toString("base64url");
+  const d = Buffer.from(JSON.stringify({ iss: "https://accounts.google.com", aud: CLIENTE, sub: "g-111", email: "lia.google@exemplo.com", email_verified: true, name: "Lia Campos Ferreira", iat: agora, exp: agora + 3600, ...extra })).toString("base64url");
+  const s = crypto.sign("RSA-SHA256", Buffer.from(`${h}.${d}`), chavePrivada).toString("base64url");
+  return `${h}.${d}.${s}`;
+}
+
+test("Google: desligado sem GOOGLE_CLIENT_ID", async () => {
+  delete process.env.GOOGLE_CLIENT_ID;
+  const r = await chamar("POST", "/comissao/google", { credencial: tokenGoogle() });
+  assert.equal(r.status, 503);
+});
+
+test("Google: só aceita token assinado pelo Google, para o nosso app, válido e com e-mail verificado", async () => {
+  process.env.GOOGLE_CLIENT_ID = CLIENTE;
+  google._definirBuscaDeChaves(async () => ({ chaves: [jwkGoogle], validadeS: 3600 }));
+  const outraChave = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey;
+  const agora = Math.floor(Date.now() / 1000);
+  for (const [nome, cred] of [
+    ["assinado por outra chave", tokenGoogle({}, outraChave)],
+    ["outro app (aud)", tokenGoogle({ aud: "outro.apps.googleusercontent.com" })],
+    ["outro emissor", tokenGoogle({ iss: "https://malicioso.exemplo" })],
+    ["expirado", tokenGoogle({ exp: agora - 3600 })],
+    ["e-mail não verificado", tokenGoogle({ email_verified: false })],
+    ["sem assinatura (alg none)", tokenGoogle({}, parGoogle.privateKey, { alg: "none" })],
+    ["lixo", "abc.def.ghi"],
+    ["vazio", ""]
+  ]) {
+    const r = await chamar("POST", "/comissao/google", { credencial: cred });
+    assert.equal(r.status, 401, nome);
+    assert.ok(!JSON.stringify(r.dados).includes("lia.google"), `${nome}: não revela dados`);
+  }
+});
+
+test("Google: sem cadastro pede CPF e telefone; cadastro fica pendente até o professor liberar", async () => {
+  process.env.GOOGLE_CLIENT_ID = CLIENTE;
+  const sem = await chamar("POST", "/comissao/google", { credencial: tokenGoogle() });
+  assert.equal(sem.status, 404);
+  assert.equal(sem.dados.campo, "precisa-cadastro");
+  assert.deepEqual(sem.dados.google, { nome: "Lia Campos Ferreira", email: "lia.google@exemplo.com" });
+
+  assert.equal((await chamar("POST", "/comissao/google/cadastro", { credencial: tokenGoogle(), cpf: "123", telefone: "86999998888" })).status, 400);
+  const cad = await chamar("POST", "/comissao/google/cadastro", { credencial: tokenGoogle(), cpf: "86288366757", telefone: "86999998888" });
+  assert.equal(cad.status, 201);
+  assert.equal(cad.dados.membro.status, "pendente");
+  assert.equal((await chamar("POST", "/comissao/google/cadastro", { credencial: tokenGoogle(), cpf: "86288366757", telefone: "86999998888" })).status, 409);
+
+  assert.equal((await chamar("POST", "/comissao/google", { credencial: tokenGoogle() })).status, 403); // pendente
+  assert.equal((await chamar("PUT", `/professor/membros/${cad.dados.membro.id}`, { status: "ativo" }, tokenProf)).status, 200);
+  const ok = await chamar("POST", "/comissao/google", { credencial: tokenGoogle() });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.dados.membro.nome, "Lia Campos Ferreira");
+  assert.equal((await chamar("GET", "/comissao/chamada?eventoId=EV01", undefined, ok.dados.token)).status, 200);
+
+  // Quem entrou pelo Google não tem senha: e-mail + senha vazia ou qualquer senha é recusado.
+  assert.equal((await chamar("POST", "/comissao/login", { email: "lia.google@exemplo.com", senha: "" })).status, 401);
+  assert.equal((await chamar("POST", "/comissao/login", { email: "lia.google@exemplo.com", senha: "qualquer123" })).status, 401);
+  // Dados internos não saem para o painel.
+  const dados = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados;
+  const lia = dados.membros.find((m) => m.email === "lia.google@exemplo.com");
+  assert.ok(lia && !("googleSub" in lia) && !("senhaHash" in lia) && !("salt" in lia));
+});
+
+test("Google: liga a conta a um cadastro antigo com o mesmo e-mail, mas recusa outra conta Google com esse e-mail", async () => {
+  process.env.GOOGLE_CLIENT_ID = CLIENTE;
+  const r = await chamar("POST", "/comissao/google", { credencial: tokenGoogle({ sub: "g-222", email: "comissao.antiga@exemplo.com", name: "Rui Antigo Lima" }) });
+  assert.equal(r.status, 404); // ainda não existe
+  const cad = await chamar("POST", "/comissao/cadastro", { nome: "Rui Antigo Lima", email: "comissao.antiga@exemplo.com", cpf: "71428793860", telefone: "86999997777", senha: "senha1234" });
+  assert.equal(cad.status, 201);
+  await chamar("PUT", `/professor/membros/${cad.dados.membro.id}`, { status: "ativo" }, tokenProf);
+  assert.equal((await chamar("POST", "/comissao/google", { credencial: tokenGoogle({ sub: "g-222", email: "comissao.antiga@exemplo.com" }) })).status, 200);
+  assert.equal((await chamar("POST", "/comissao/google", { credencial: tokenGoogle({ sub: "g-999", email: "comissao.antiga@exemplo.com" }) })).status, 409);
+  // A senha antiga continua valendo.
+  assert.equal((await chamar("POST", "/comissao/login", { email: "comissao.antiga@exemplo.com", senha: "senha1234" })).status, 200);
 });

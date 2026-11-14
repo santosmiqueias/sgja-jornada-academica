@@ -213,3 +213,8 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 [data-bs-theme="dark"] .card { --bs-card-bg: #1a2440; --bs-card-border-color: #2d3a5a; }
 [data-bs-theme="dark"] .bg-superficie .card { --bs-card-bg: #1f2a4a; }
 [data-bs-theme="dark"] .atividade { background: #1f2a4a; box-shadow: none; }
+
+/* Login com Google no check-in */
+.separador-ou { display: flex; align-items: center; gap: .75rem; color: var(--texto-suave); font-size: .85rem; margin: 1.1rem 0; }
+.separador-ou::before, .separador-ou::after { content: ""; flex: 1; border-top: 1px solid var(--bs-border-color); }
+.botao-google { display: flex; justify-content: center; min-height: 44px; }

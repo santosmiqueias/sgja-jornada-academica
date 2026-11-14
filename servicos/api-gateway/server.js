@@ -10,6 +10,7 @@
  *   GET  /api/v1/publico/certificados/:codigo    validação pública
  * Comissão organizadora (login individual)
  *   POST /api/v1/comissao/cadastro | /login
+ *   POST /api/v1/comissao/google | /google/cadastro   { credencial (ID token do Google), cpf, telefone }
  *   GET  /api/v1/comissao/chamada?eventoId=
  *   POST /api/v1/comissao/checkin                { eventoId, alunoId | cpf | qr }
  *   POST /api/v1/comissao/checkin/remover        { eventoId, alunoId }
@@ -35,6 +36,7 @@ const { criarServico, ErroNegocio } = require("../../js/servico.js");
 const { criarStore } = require("./store");
 const auth = require("./auth");
 const lembretes = require("./lembretes");
+const google = require("./google");
 
 /* ---------- Configuração ---------- */
 function carregarConfig() {
@@ -181,6 +183,27 @@ app.post("/api/v1/comissao/login", auth.limitador(10, 60000, "login-comissao"), 
     auth.limparFalhas(chave);
     res.json({ token: auth.assinarToken({ perfil: "comissao", sub: m.id, nome: m.nome }, SESSAO_COM_MIN), membro: publicoMembro(m) });
   } catch (e) { if (e.status === 401) auth.registrarFalha(chave); throw e; }
+}));
+
+// Login com Google (só quando GOOGLE_CLIENT_ID está no .env). O token do Google é conferido aqui, nunca no navegador.
+async function contaGoogle(req) {
+  try { return await google.verificarCredencial(campo(req.body && req.body.credencial, 4096)); }
+  catch (e) { throw new ErroNegocio(e.publico || "Não foi possível confirmar sua conta Google.", null, e.status || 401); }
+}
+const sessaoComissao = (m) => ({ token: auth.assinarToken({ perfil: "comissao", sub: m.id, nome: m.nome }, SESSAO_COM_MIN), membro: publicoMembro(m) });
+app.post("/api/v1/comissao/google", auth.limitador(Number(process.env.LIMITE_LOGIN_GOOGLE || 10), 60000, "login-google"), jsonPequeno, rota(async (req, res) => {
+  const conta = await contaGoogle(req);
+  try {
+    res.json(sessaoComissao(await servico.entrarComGoogle(conta)));
+  } catch (e) {
+    // Sem cadastro: devolve nome e e-mail da conta Google para preencher o cadastro (são da própria pessoa).
+    if (e.status === 404 && e.campo === "precisa-cadastro") return res.status(404).json({ erro: e.message, campo: e.campo, google: { nome: conta.nome, email: conta.email } });
+    throw e;
+  }
+}));
+app.post("/api/v1/comissao/google/cadastro", auth.limitador(5, 60000, "cadastro"), jsonPequeno, rota(async (req, res) => {
+  const conta = await contaGoogle(req);
+  res.status(201).json({ membro: publicoMembro(await servico.cadastrarMembroGoogle(conta, req.body)) });
 }));
 
 const comissao = auth.exigir("comissao");

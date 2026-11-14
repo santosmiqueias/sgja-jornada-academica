@@ -44,7 +44,7 @@
     });
     const membroPublico = (m) => {
       if (!m) return null;
-      const { senhaHash, salt, ...resto } = m;
+      const { senhaHash, salt, googleSub, ...resto } = m;
       return resto;
     };
     const certPublico = (c) => c && ({
@@ -297,11 +297,53 @@
       async autenticarMembro(email, senha) {
         const m = (await store.list(ENT.membro)).find((x) => x.email === C.normalizarEmail(email));
         // Mesmo cálculo com ou sem cadastro, para não revelar quais e-mails existem.
-        const hash = await C.hashSenha(String(senha || "").slice(0, 72), m ? m.salt : "00000000000000000000000000000000");
-        if (!m || !iguais(hash, m.senhaHash)) throw new ErroNegocio("E-mail ou senha incorretos.", null, 401);
+        // Quem se cadastrou pelo Google não tem senha: entra só pelo botão do Google.
+        const temSenha = !!(m && m.salt && m.senhaHash);
+        const hash = await C.hashSenha(String(senha || "").slice(0, 72), temSenha ? m.salt : "00000000000000000000000000000000");
+        if (!temSenha || !iguais(hash, m.senhaHash)) throw new ErroNegocio("E-mail ou senha incorretos.", null, 401);
         if (m.status === "pendente") throw new ErroNegocio("Seu cadastro ainda não foi liberado por um professor.", null, 403);
         if (m.status === "bloqueado") throw new ErroNegocio("Seu acesso ao check-in está bloqueado. Fale com a coordenação.", null, 403);
         return membroPublico(m);
+      },
+
+      // Login com Google: "conta" já vem conferida pelo servidor (assinatura do Google, e-mail verificado).
+      // Acha o membro pela conta Google ou pelo e-mail; na primeira vez, liga a conta Google ao cadastro.
+      async entrarComGoogle(conta) {
+        return comTrava("cadastrarMembro", async () => {
+          const email = C.normalizarEmail(texto(conta && conta.email, 120));
+          const sub = texto(conta && conta.sub, 64);
+          if (!sub || !C.validarEmail(email)) throw new ErroNegocio("Conta Google inválida.", null, 401);
+          const todos = await store.list(ENT.membro);
+          let m = todos.find((x) => x.googleSub === sub) || todos.find((x) => x.email === email);
+          if (!m) throw new ErroNegocio("Ainda não há cadastro na comissão com esta conta Google. Complete o cadastro.", "precisa-cadastro", 404);
+          if (m.googleSub && m.googleSub !== sub) throw new ErroNegocio("Este e-mail já está ligado a outra conta Google. Fale com a coordenação.", null, 409);
+          if (!m.googleSub) m = await store.update(ENT.membro, m.id, { googleSub: sub });
+          if (m.status === "pendente") throw new ErroNegocio("Seu cadastro ainda não foi liberado por um professor.", null, 403);
+          if (m.status === "bloqueado") throw new ErroNegocio("Seu acesso ao check-in está bloqueado. Fale com a coordenação.", null, 403);
+          return membroPublico(m);
+        });
+      },
+
+      // Cadastro pelo Google: nome e e-mail vêm da conta Google; a pessoa informa CPF e telefone. Sem senha.
+      async cadastrarMembroGoogle(conta, dados) {
+        dados = dados || {};
+        return comTrava("cadastrarMembro", async () => {
+          const membro = {
+            nome: C.capitalizarNome(texto((dados.nome || (conta && conta.nome)), 100)),
+            email: C.normalizarEmail(texto(conta && conta.email, 120)),
+            cpf: C.soDigitos(texto(dados.cpf, 20)),
+            telefone: C.soDigitos(texto(dados.telefone, 20)),
+            googleSub: texto(conta && conta.sub, 64)
+          };
+          if (!membro.googleSub || !C.validarEmail(membro.email)) throw new ErroNegocio("Conta Google inválida.", null, 401);
+          if (!C.validarNome(membro.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "g-nome");
+          if (!C.validarCPF(membro.cpf)) throw new ErroNegocio("CPF inválido.", "g-cpf");
+          if (!C.validarTelefone(membro.telefone)) throw new ErroNegocio("Telefone inválido.", "g-telefone");
+          const todos = await store.list(ENT.membro);
+          if (todos.some((m) => m.email === membro.email || m.googleSub === membro.googleSub)) throw new ErroNegocio("Já existe cadastro com esta conta. Use o botão Entrar com Google.", null, 409);
+          if (todos.some((m) => m.cpf === membro.cpf)) throw new ErroNegocio("Já existe cadastro com este CPF.", "g-cpf", 409);
+          return membroPublico(await store.create(ENT.membro, { ...membro, salt: "", senhaHash: "", status: "pendente" }));
+        });
       },
 
       async membroAtivo(membroId) { return membroPublico(await membroAtivo(membroId)); },

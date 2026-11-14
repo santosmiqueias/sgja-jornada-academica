@@ -113,6 +113,13 @@ window.SGJA_CONFIG = {
     sessaoMinutos: 120
   },
 
+  // Login com Google no check-in (só no modo "servidor"). Cole aqui o "ID do cliente" OAuth criado no
+  // Google Cloud (termina em .apps.googleusercontent.com). Não é segredo. O mesmo valor vai no servidor
+  // (GOOGLE_CLIENT_ID no Render). Vazio: o botão do Google não aparece.
+  google: {
+    clientId: ""
+  },
+
   // Comissão organizadora: cada membro cria o próprio cadastro em checkin.html
   // e só registra presença depois que um professor libera o acesso no painel.
   comissao: {

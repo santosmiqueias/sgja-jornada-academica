@@ -83,6 +83,102 @@
 
   $("btn-sair").addEventListener("click", () => sair());
 
+  /* ---------------- Login com Google ----------------
+   * Só no modo "servidor" e com o ID do cliente em js/config.js (google.clientId).
+   * O botão é o oficial do Google; quem confere a conta é o servidor (servicos/api-gateway/google.js). */
+  const CLIENT_ID = (CFG.google && CFG.google.clientId || "").trim();
+  let credencialGoogle = null; // guardada só na memória da página, para completar o cadastro
+
+  function mostrarCadastroGoogle(info) {
+    document.querySelectorAll("#tela-acesso .nav, #aba-entrar, #aba-cadastro").forEach((el) => el.classList.add("d-none"));
+    $("aba-google-cadastro").classList.remove("d-none");
+    $("form-google-cadastro").classList.remove("d-none");
+    $("google-cadastro-ok").classList.add("d-none");
+    $("g-email").textContent = info.email || "";
+    $("g-nome").value = info.nome || "";
+    (info.nome ? $("g-cpf") : $("g-nome")).focus();
+  }
+  function fecharCadastroGoogle() {
+    credencialGoogle = null;
+    $("aba-google-cadastro").classList.add("d-none");
+    document.querySelectorAll("#tela-acesso .nav, #aba-entrar, #aba-cadastro").forEach((el) => el.classList.remove("d-none"));
+  }
+  $("btn-google-cancelar").addEventListener("click", fecharCadastroGoogle);
+  $("g-cpf").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
+  $("g-telefone").addEventListener("input", (e) => (e.target.value = C.mascaraTelefone(e.target.value)));
+
+  async function aoReceberCredencial(resposta) {
+    const credencial = resposta && resposta.credential;
+    if (!credencial) return;
+    $("erro-entrar").textContent = "";
+    try {
+      const m = await API.entrarComissaoGoogle(credencial);
+      abrir({ id: m.id, nome: m.nome });
+    } catch (err) {
+      if (err instanceof API.ErroNegocio && err.status === 404 && err.campo === "precisa-cadastro") {
+        credencialGoogle = credencial;
+        mostrarCadastroGoogle((err.dados && err.dados.google) || {});
+        return;
+      }
+      // Pendente, bloqueado ou conta não confirmada: mostra na aba Entrar.
+      bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#aba-entrar"]')).show();
+      $("erro-entrar").textContent = err instanceof API.ErroNegocio ? err.message : "Não foi possível entrar com o Google agora.";
+    }
+  }
+
+  $("form-google-cadastro").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const campos = { "g-nome": C.validarNome($("g-nome").value), "g-cpf": C.validarCPF($("g-cpf").value), "g-telefone": C.validarTelefone($("g-telefone").value) };
+    Object.entries(campos).forEach(([id, ok]) => $(id).classList.toggle("is-invalid", !ok));
+    const primeiro = Object.keys(campos).find((id) => !campos[id]);
+    if (primeiro) { $(primeiro).focus(); return; }
+    UI.carregando($("btn-google-cadastrar"), true, "Enviando...");
+    try {
+      await API.cadastrarMembroGoogle(credencialGoogle, { nome: $("g-nome").value, cpf: $("g-cpf").value, telefone: $("g-telefone").value });
+      credencialGoogle = null;
+      $("form-google-cadastro").classList.add("d-none");
+      $("google-cadastro-ok").classList.remove("d-none");
+    } catch (err) {
+      if (err instanceof API.ErroNegocio && err.campo && $(err.campo)) {
+        $(err.campo).classList.add("is-invalid");
+        $(err.campo).parentElement.querySelector(".invalid-feedback").textContent = err.message;
+        $(err.campo).focus();
+      }
+      // A confirmação do Google vale por pouco tempo: se expirou, a pessoa clica no botão de novo.
+      if (err instanceof API.ErroNegocio && err.status === 401) fecharCadastroGoogle();
+      UI.aviso(err instanceof API.ErroNegocio ? err.message : "Não foi possível enviar o cadastro agora.", "erro");
+    } finally { UI.carregando($("btn-google-cadastrar"), false); }
+  });
+
+  function desenharBotoesGoogle() {
+    if (!window.google || !google.accounts || !google.accounts.id) return;
+    const escuro = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    document.querySelectorAll("[data-botao-google]").forEach((el) => {
+      el.innerHTML = "";
+      google.accounts.id.renderButton(el, {
+        type: "standard", theme: escuro ? "filled_black" : "outline", size: "large", shape: "pill",
+        text: el.dataset.botaoGoogle, logo_alignment: "left", locale: "pt-BR", width: Math.min(360, Math.max(220, el.clientWidth || 300))
+      });
+    });
+  }
+  function iniciarGoogle() {
+    if (!CLIENT_ID || !API.googleDisponivel) return; // demonstração ou sem ID do cliente: sem botão
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.onload = () => {
+      google.accounts.id.initialize({ client_id: CLIENT_ID, callback: aoReceberCredencial, ux_mode: "popup", auto_select: false, cancel_on_tap_outside: true, context: "signin" });
+      document.querySelectorAll("[data-google]").forEach((el) => el.classList.remove("d-none"));
+      desenharBotoesGoogle();
+    };
+    s.onerror = () => console.warn("Não foi possível carregar o login com Google.");
+    document.head.appendChild(s);
+    document.addEventListener("sgja:tema", desenharBotoesGoogle);
+    // A aba Criar cadastro começa escondida: desenha o botão dela com a largura certa quando abrir.
+    document.querySelector('[data-bs-target="#aba-cadastro"]').addEventListener("shown.bs.tab", desenharBotoesGoogle);
+  }
+  iniciarGoogle();
+
   /* ---------------- Estado da chamada ---------------- */
   let alunos = [], frequencias = [];
   let atividade = null;

@@ -70,7 +70,9 @@
       const dados = await r.json().catch(() => ({}));
       if (!r.ok) {
         if (r.status === 401 && perfil) sessao.apagar(`sgja_sessao_${perfil}`);
-        throw new ErroNegocio(dados.erro || "Não foi possível concluir agora.", dados.campo, r.status);
+        const e = new ErroNegocio(dados.erro || "Não foi possível concluir agora.", dados.campo, r.status);
+        e.dados = dados;
+        throw e;
       }
       return dados;
     }
@@ -97,6 +99,13 @@
         sessao.gravar("sgja_sessao_comissao", { token: r.token, id: r.membro.id, nome: r.membro.nome, expira: Date.now() + ((CFG.comissao && CFG.comissao.sessaoMinutos) || 240) * 60000 });
         return r.membro;
       },
+      googleDisponivel: true,
+      async entrarComissaoGoogle(credencial) {
+        const r = await req("POST", "/comissao/google", { credencial });
+        sessao.gravar("sgja_sessao_comissao", { token: r.token, id: r.membro.id, nome: r.membro.nome, expira: Date.now() + ((CFG.comissao && CFG.comissao.sessaoMinutos) || 240) * 60000 });
+        return r.membro;
+      },
+      async cadastrarMembroGoogle(credencial, d) { return (await req("POST", "/comissao/google/cadastro", { credencial, ...d })).membro; },
       async chamada(eventoId) { return req("GET", `/comissao/chamada?eventoId=${encodeURIComponent(eventoId)}`, null, "comissao"); },
       async checkin(dados) { return req("POST", "/comissao/checkin", dados, "comissao"); },
       async removerCheckin(alunoId, eventoId) { return req("POST", "/comissao/checkin/remover", { alunoId, eventoId }, "comissao"); },

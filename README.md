@@ -93,5 +93,6 @@ docs/                      arquitetura, Kanban, plano de testes, roteiro do pitc
 - Squad 1 (Tech Lead): [`docs/kanban.md`](docs/kanban.md)
 - Squads 2, 3 e 4 (Front, Back, PDF): [`docs/arquitetura.md`](docs/arquitetura.md)
 - Banco de dados no Base44 (Squad 3): [`docs/base44.md`](docs/base44.md)
+- Login com Google no check-in: [`docs/login-google.md`](docs/login-google.md)
 - Lembretes por WhatsApp: [`docs/whatsapp.md`](docs/whatsapp.md)
 - Squad 5 (QA, deploy e pitch): [`docs/testes-qa.md`](docs/testes-qa.md) e [`docs/pitch.md`](docs/pitch.md)

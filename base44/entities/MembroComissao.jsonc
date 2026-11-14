@@ -5,7 +5,7 @@
 {
   "name": "MembroComissao",
   "type": "object",
-  "description": "Membro da comissão que faz check-in. Cria o próprio cadastro; só registra presença depois de liberado.",
+  "description": "Membro da comissão que faz check-in. Cria o próprio cadastro (com senha ou pelo Google); só registra presença depois de liberado.",
   "properties": {
     "nome": {
       "type": "string",
@@ -26,13 +26,17 @@
       "type": "string",
       "maxLength": 20
     },
+    "googleSub": {
+      "type": "string",
+      "description": "Identificador da conta Google (login com Google). Nunca sai do servidor"
+    },
     "senhaHash": {
       "type": "string",
-      "description": "PBKDF2-SHA256. A senha nunca é guardada"
+      "description": "PBKDF2-SHA256. A senha nunca é guardada. Vazio para quem se cadastrou pelo Google"
     },
     "salt": {
       "type": "string",
-      "description": "16 bytes aleatórios em hexadecimal"
+      "description": "16 bytes aleatórios em hexadecimal. Vazio para quem se cadastrou pelo Google"
     },
     "status": {
       "type": "string",
@@ -53,8 +57,6 @@
     "nome",
     "email",
     "cpf",
-    "senhaHash",
-    "salt",
     "status"
   ],
   "rls": {
