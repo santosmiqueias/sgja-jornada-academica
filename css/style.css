@@ -18,7 +18,6 @@ body { background: var(--fundo); color: var(--texto); }
 body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 body > main { flex: 1 0 auto; }
 #rodape { margin-top: auto; }
-#rodape footer { margin-top: 3rem; }
 /* O menu acompanha a rolagem em todas as páginas. */
 #menu { position: sticky; top: 0; z-index: 1030; }
 /* Ao rolar até um campo (erro, link interno), ele não fica escondido atrás do menu fixo. */
@@ -130,3 +129,16 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .opcao-atividade input { margin-top: .2rem; flex-shrink: 0; }
 #atividades.is-invalid .opcao-atividade { border-color: var(--bs-danger); }
 #atividades.is-invalid ~ .invalid-feedback, #atividades.is-invalid .invalid-feedback { display: block; }
+
+/* Rodapé (3 colunas: marca, navegação, organização) */
+.rodape { background: var(--navy); color: rgba(255, 255, 255, .72); padding-block: 3.5rem 2rem; margin-top: 3rem; }
+.rodape-rotulo { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .22em; color: rgba(255, 255, 255, .45); margin-bottom: 1rem; }
+.rodape-marca { font-weight: 800; text-transform: uppercase; color: #fff; font-size: clamp(1.8rem, 1.2rem + 2vw, 2.6rem); line-height: 1.02; letter-spacing: -.01em; margin-bottom: 1.25rem; }
+.rodape-marca span { display: block; color: rgba(205, 210, 255, .55); }
+.rodape-texto { font-size: .92rem; line-height: 1.6; max-width: 26rem; margin-bottom: 0; }
+.rodape-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: .55rem; font-size: .93rem; }
+.rodape-lista a { color: rgba(255, 255, 255, .78); text-decoration: none; }
+.rodape-lista a:hover, .rodape-lista a:focus { color: var(--amarelo); }
+.rodape-lista a.rodape-sublinhado { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255, 255, 255, .35); color: rgba(205, 210, 255, .7); }
+.rodape-base { border-top: 1px solid rgba(255, 255, 255, .14); margin-top: 3rem; padding-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .75rem;
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .18em; color: rgba(255, 255, 255, .45); }

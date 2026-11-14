@@ -45,15 +45,43 @@
   function montarRodape() {
     const alvo = document.getElementById("rodape");
     if (!alvo) return;
-    const insta = CFG.evento.instagram;
+    const ev = CFG.evento;
+    const insta = ev.instagram;
     const usuario = insta ? "@" + insta.replace(/\/+$/, "").split("/").pop() : "";
+    const ano = (ev.datasTexto.match(/\d{4}/) || [new Date().getFullYear()])[0];
+    const links = [
+      ["index.html#sobre", "O evento"], ["index.html#programacao", "Programação"], ["index.html#cronograma", "Cronograma"],
+      ["submissao.html", "Submissão"], ["certificado.html", "Meu certificado"], ["validar.html", "Validar certificado"]
+    ];
     alvo.innerHTML = `
-      <footer class="bg-navy text-white-50 py-4">
-        <div class="container d-flex flex-column flex-md-row justify-content-between gap-2 small">
-          <span><strong class="text-white">${CFG.evento.nomeCompleto || CFG.evento.nome}</strong> · ${CFG.evento.instituicao} · ${CFG.evento.cidade}</span>
-          ${insta ? `<a class="link-rede" href="${insta}" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram me-1" aria-hidden="true"></i>${usuario}</a>` : ""}
+      <footer class="rodape">
+        <div class="container">
+          <div class="row gx-4 gy-5">
+            <div class="col-lg-5">
+              <p class="rodape-rotulo text-amarelo">6ª edição</p>
+              <p class="rodape-marca">Jornada Acadêmica<span>UNINASSAU</span></p>
+              <p class="rodape-texto">${ev.tema ? `“${ev.tema}”. ` : ""}Submissão e apresentação de trabalhos de extensão, pesquisa e TCC em dois dias de programação acadêmica em Teresina, Piauí.</p>
+            </div>
+            <div class="col-sm-5 col-lg-3">
+              <p class="rodape-rotulo">Navegação</p>
+              <ul class="rodape-lista">${links.map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join("")}</ul>
+            </div>
+            <div class="col-sm-7 col-lg-4">
+              <p class="rodape-rotulo">Organização</p>
+              <ul class="rodape-lista">
+                <li>Comissão Organizadora · ${ev.sigla} Teresina</li>
+                <li>${ev.instituicao} — ${ev.cidade}</li>
+                <li>${ev.datasTexto}</li>
+                ${insta ? `<li><a href="${insta}" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram me-1" aria-hidden="true"></i>${usuario}</a></li>` : ""}
+                <li><a class="rodape-sublinhado" href="painel.html">Painel da organização</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="rodape-base">
+            <span>© ${ano} ${ev.sigla} · ${ev.cidade.replace(" - ", " — ")}</span>
+            <span>S.G.J.A · Dados tratados conforme a LGPD</span>
+          </div>
         </div>
-        <div class="container small mt-2">S.G.J.A — Sistema de Gestão da Jornada Acadêmica · Seus dados são tratados conforme a LGPD</div>
       </footer>`;
   }
 
