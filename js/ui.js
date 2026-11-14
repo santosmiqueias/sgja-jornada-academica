@@ -13,6 +13,46 @@
     { href: "checkin.html", rotulo: "Check-in", icone: "qr-code-scan" }
   ];
 
+  // Seletor de tema: claro, escuro ou igual ao sistema do aparelho (js/tema.js guarda a escolha).
+  const TEMAS = [
+    { id: "claro", rotulo: "Claro", icone: "sun-fill" },
+    { id: "escuro", rotulo: "Escuro", icone: "moon-stars-fill" },
+    { id: "sistema", rotulo: "Igual ao aparelho", icone: "circle-half" }
+  ];
+  function seletorTema() {
+    if (!window.SGJA_TEMA) return "";
+    const itens = TEMAS.map((t) => `<li><button type="button" class="dropdown-item d-flex align-items-center gap-2" data-tema="${t.id}" aria-pressed="false">
+        <i class="bi bi-${t.icone}" aria-hidden="true"></i><span class="flex-grow-1">${t.rotulo}</span><i class="bi bi-check2 marca-tema" aria-hidden="true"></i></button></li>`).join("");
+    return `<div class="dropdown">
+        <button class="btn btn-tema" type="button" id="btn-tema" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Tema da página">
+          <i class="bi bi-circle-half" id="icone-tema" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="btn-tema">
+          <li><h6 class="dropdown-header">Tema</h6></li>${itens}
+        </ul>
+      </div>`;
+  }
+  function atualizarSeletorTema() {
+    const T = window.SGJA_TEMA;
+    const btn = document.getElementById("btn-tema");
+    if (!T || !btn) return;
+    const escolha = T.escolha();
+    const t = TEMAS.find((x) => x.id === escolha);
+    document.getElementById("icone-tema").className = `bi bi-${t.icone}`;
+    btn.setAttribute("aria-label", `Tema da página: ${t.rotulo}${escolha === "sistema" ? ` (agora ${T.efetivo()})` : ""}`);
+    btn.title = `Tema: ${t.rotulo}`;
+    document.querySelectorAll("[data-tema]").forEach((b) => {
+      const ativo = b.dataset.tema === escolha;
+      b.classList.toggle("active", ativo);
+      b.setAttribute("aria-pressed", String(ativo));
+    });
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-tema]");
+    if (b && window.SGJA_TEMA) window.SGJA_TEMA.definir(b.dataset.tema);
+  });
+  document.addEventListener("sgja:tema", atualizarSeletorTema);
+
   function montarMenu() {
     const alvo = document.getElementById("menu");
     if (!alvo) return;
@@ -28,12 +68,16 @@
           <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
             <span class="brand-badge">VI</span><span class="fw-bold">Jornada Acadêmica</span>
           </a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Abrir menu">
-            <span class="navbar-toggler-icon"></span>
-          </button>
+          <div class="d-flex align-items-center gap-2 ms-auto ms-xl-2 order-xl-last">
+            ${seletorTema()}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Abrir menu">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+          </div>
           <div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav ms-auto">${itens}</ul></div>
         </div>
       </nav>`;
+    atualizarSeletorTema();
   }
 
   function montarRodape() {

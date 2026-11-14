@@ -8,6 +8,10 @@
   --vermelho: #e3242b;
   --fundo: #f5f7fc;
   --texto: #14213d;
+  --destaque: #0b2a6f;      /* azul usado em TEXTO (títulos, horários, números): clareia no escuro */
+  --superficie: #fff;       /* fundo de cartões e seções claras */
+  --texto-suave: #5b6b8c;
+  --borda-tracejada: #b9c3dc;
   --bs-primary: #0b2a6f;
   --bs-primary-rgb: 11, 42, 111;
   --bs-body-font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -23,7 +27,7 @@ body > main { flex: 1 0 auto; }
 /* Ao rolar até um campo (erro, link interno), ele não fica escondido atrás do menu fixo. */
 html { scroll-padding-top: 90px; }
 .bg-navy { background: var(--navy) !important; }
-.text-navy { color: var(--navy) !important; }
+.text-navy { color: var(--destaque) !important; }
 .text-amarelo { color: var(--amarelo) !important; }
 
 .brand-badge {
@@ -44,10 +48,10 @@ html { scroll-padding-top: 90px; }
 .btn-outline-primary { --bs-btn-color: var(--navy); --bs-btn-border-color: var(--navy); --bs-btn-hover-bg: var(--navy); --bs-btn-hover-border-color: var(--navy); }
 
 /* Hero */
-.hero { background: #fff; }
+.hero { background: var(--superficie); }
 .hero img.logo { max-width: 100%; height: auto; }
 
-.secao-titulo { font-weight: 800; color: var(--navy); }
+.secao-titulo { font-weight: 800; color: var(--destaque); }
 .secao-titulo::after { content: ""; display: block; width: 64px; height: 4px; background: var(--amarelo); border-radius: 2px; margin-top: .5rem; }
 /* Faixa azul com o título da seção por cima (substitui a linha amarela abaixo da logo) */
 .faixa-titulo { background: var(--navy); padding-block: 1.75rem; }
@@ -56,10 +60,10 @@ html { scroll-padding-top: 90px; }
 
 .card { border: 0; border-radius: 14px; box-shadow: 0 4px 18px rgba(11, 42, 111, .08); }
 .card-destaque { border-top: 5px solid var(--amarelo); }
-.icone-redondo { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: rgba(245, 196, 0, .18); color: var(--navy); font-size: 1.5rem; }
+.icone-redondo { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: rgba(245, 196, 0, .18); color: var(--destaque); font-size: 1.5rem; }
 
 .timeline-dia { border-left: 4px solid var(--amarelo); padding-left: 1rem; }
-.atividade { background: #fff; border-radius: 10px; padding: .85rem 1rem; margin-bottom: .6rem; box-shadow: 0 2px 8px rgba(11, 42, 111, .06); }
+.atividade { background: var(--superficie); border-radius: 10px; padding: .85rem 1rem; margin-bottom: .6rem; box-shadow: 0 2px 8px rgba(11, 42, 111, .06); }
 .atividade .carga { background: var(--navy); color: #fff; border-radius: 999px; padding: .1rem .6rem; font-size: .8rem; white-space: nowrap; }
 
 /* Formulários */
@@ -69,7 +73,7 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .form-control:focus, .form-select:focus { border-color: var(--azul); box-shadow: 0 0 0 .2rem rgba(23, 71, 181, .2); }
 .form-check-input:checked { background-color: var(--navy); border-color: var(--navy); }
 .form-check-input:focus { box-shadow: 0 0 0 .2rem rgba(23, 71, 181, .25); }
-.form-text.dica { color: #5b6b8c; }
+.form-text.dica { color: var(--texto-suave); }
 .etapas { counter-reset: etapa; }
 .cabecalho-pagina { background: linear-gradient(120deg, var(--navy) 0%, var(--azul) 100%); color: #fff; padding: 2.2rem 0 4.5rem; }
 .cabecalho-pagina + .container { margin-top: -3rem; }
@@ -78,21 +82,21 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .resumo-trabalho { white-space: pre-line; background: var(--fundo); border-radius: 8px; padding: .75rem; }
 
 /* Programação */
-.atividade .hora { font-weight: 700; color: var(--navy); min-width: 7.2rem; font-variant-numeric: tabular-nums; }
+.atividade .hora { font-weight: 700; color: var(--destaque); min-width: 7.2rem; font-variant-numeric: tabular-nums; }
 
 /* Texto justificado (com hifenização em português para não abrir buracos entre palavras) */
 .texto-justificado p, .texto-justificado li { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
 #sobre .col-lg-7 > p:last-child { margin-bottom: 0; }
 
 /* Tema, passos e cronograma */
-.tema { font-size: 1.1rem; font-weight: 600; color: var(--navy); }
+.tema { font-size: 1.1rem; font-weight: 600; color: var(--destaque); }
 .tema-rotulo { display: inline-block; background: var(--navy); color: #fff; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .5rem; border-radius: 4px; margin-right: .35rem; vertical-align: middle; }
 .passo-titulo { font-size: 1.125rem; margin-bottom: .5rem; }
 .passo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); font-weight: 800; font-size: 1.2rem; }
 .cronograma { list-style: none; padding: 0; margin: 0; border-left: 4px solid var(--amarelo); }
 .cronograma li { position: relative; padding: .2rem 0 1.1rem 1.4rem; }
-.cronograma li::before { content: ""; position: absolute; left: -10px; top: .45rem; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 4px solid var(--navy); }
-.cronograma .quando { font-weight: 700; color: var(--navy); display: block; }
+.cronograma li::before { content: ""; position: absolute; left: -10px; top: .45rem; width: 16px; height: 16px; border-radius: 50%; background: var(--superficie); border: 4px solid var(--destaque); }
+.cronograma .quando { font-weight: 700; color: var(--destaque); display: block; }
 .cronograma li.destaque .quando { color: var(--vermelho); }
 
 /* Doação de alimento */
@@ -102,19 +106,19 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .link-rede:hover, .link-rede:focus { color: var(--amarelo); text-decoration: underline; }
 
 /* Ingresso */
-.ingresso { border: 2px dashed var(--navy); border-radius: 14px; background: #fff; }
+.ingresso { border: 2px dashed var(--destaque); border-radius: 14px; background: var(--superficie); }
 .ingresso img { width: 200px; height: 200px; }
 
 /* Painel */
-.stat { border-radius: 12px; padding: 1rem; background: #fff; box-shadow: 0 2px 10px rgba(11, 42, 111, .07); }
-.stat .valor { font-size: 1.8rem; font-weight: 800; color: var(--navy); line-height: 1; }
-.stat .rotulo { font-size: .8rem; color: #5b6b8c; text-transform: uppercase; letter-spacing: .04em; }
+.stat { border-radius: 12px; padding: 1rem; background: var(--superficie); box-shadow: 0 2px 10px rgba(11, 42, 111, .07); }
+.stat .valor { font-size: 1.8rem; font-weight: 800; color: var(--destaque); line-height: 1; }
+.stat .rotulo { font-size: .8rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .04em; }
 .lista-chamada .form-check-input { width: 1.6em; height: 1.6em; cursor: pointer; }
 .lista-chamada tr.presente { background: rgba(25, 135, 84, .07); }
 .lista-chamada td { vertical-align: middle; }
 #leitor { max-width: 420px; margin: 0 auto; }
 .nav-pills .nav-link.active { background: var(--navy); }
-.nav-pills .nav-link { color: var(--navy); font-weight: 600; }
+.nav-pills .nav-link { color: var(--destaque); font-weight: 600; }
 
 .badge-ok { background: rgba(25, 135, 84, .15); color: #146c43; }
 .badge-pend { background: rgba(245, 196, 0, .25); color: #7a5d00; }
@@ -128,7 +132,7 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 }
 
 /* Escolha de atividades na inscrição */
-.opcao-atividade { display: flex; gap: .6rem; align-items: flex-start; height: 100%; padding: .7rem .8rem; border: 1px solid #d6dcea; border-radius: 10px; background: #fff; cursor: pointer; }
+.opcao-atividade { display: flex; gap: .6rem; align-items: flex-start; height: 100%; padding: .7rem .8rem; border: 1px solid var(--bs-border-color); border-radius: 10px; background: var(--superficie); cursor: pointer; }
 .opcao-atividade:hover { border-color: var(--azul); }
 .opcao-atividade:has(input:checked) { border-color: var(--navy); background: rgba(11, 42, 111, .05); }
 .opcao-atividade input { margin-top: .2rem; flex-shrink: 0; }
@@ -151,10 +155,61 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 /* Resumo: notas abaixo do campo */
 .notas-resumo { list-style: disc; padding-left: 1.1rem; margin: .4rem 0 0; display: grid; gap: .2rem; }
 /* Arquivo do trabalho: área de arrastar e soltar */
-.area-arquivo { border: 2px dashed #b9c3dc; border-radius: 12px; padding: 1.25rem; text-align: center; background: #fff; transition: border-color .15s, background-color .15s; }
+.area-arquivo { border: 2px dashed var(--borda-tracejada); border-radius: 12px; padding: 1.25rem; text-align: center; background: var(--superficie); transition: border-color .15s, background-color .15s; }
 .area-arquivo.arrastando { border-color: var(--azul); background: rgba(23, 71, 181, .06); }
-.area-arquivo-icone { font-size: 2rem; color: var(--navy); display: block; margin-bottom: .25rem; }
+.area-arquivo-icone { font-size: 2rem; color: var(--destaque); display: block; margin-bottom: .25rem; }
 .area-arquivo .form-control { max-width: 420px; margin-inline: auto; }
 .area-arquivo:has(.is-invalid) { border-color: var(--bs-danger); }
 #area-arquivo ~ .invalid-feedback { display: none; }
 #area-arquivo:has(.is-invalid) ~ .invalid-feedback { display: block; }
+
+/* ===================== Tema (claro / escuro / igual ao aparelho) ===================== */
+.bg-superficie { background: var(--superficie); }
+.btn-tema { color: #fff; border: 1px solid rgba(255, 255, 255, .35); line-height: 1; padding: .45rem .6rem; }
+.btn-tema:hover, .btn-tema:focus-visible, .btn-tema.show { color: var(--navy); background: var(--amarelo); border-color: var(--amarelo); }
+.dropdown-item .marca-tema { visibility: hidden; }
+.dropdown-item.active .marca-tema { visibility: visible; }
+.dropdown-item.active, .dropdown-item:active { background: var(--navy); color: #fff; }
+
+[data-bs-theme="dark"] {
+  --fundo: #0d1424;
+  --texto: #e2e8f5;
+  --destaque: #a9c1ff;
+  --superficie: #161f35;
+  --texto-suave: #9fadcb;
+  --borda-tracejada: #3d4b6e;
+  --bs-body-bg: #0d1424;
+  --bs-body-color: #e2e8f5;
+  --bs-secondary-color: #a3b0cc;
+  --bs-border-color: #2d3a5a;
+  --bs-tertiary-bg: #1b2540;
+  --bs-card-bg: #161f35;
+  --bs-dropdown-bg: #1b2540;
+  --bs-modal-bg: #161f35;
+  --bs-link-color-rgb: 169, 193, 255;
+  --bs-link-hover-color-rgb: 245, 196, 0;
+  color-scheme: dark;
+}
+[data-bs-theme="dark"] .card { box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+[data-bs-theme="dark"] .text-muted { color: var(--bs-secondary-color) !important; }
+[data-bs-theme="dark"] .btn-primary { --bs-btn-bg: var(--azul); --bs-btn-border-color: var(--azul); --bs-btn-hover-bg: #2a5fd6; --bs-btn-hover-border-color: #2a5fd6; --bs-btn-active-bg: #12398f; --bs-btn-disabled-bg: var(--azul); --bs-btn-disabled-border-color: var(--azul); }
+[data-bs-theme="dark"] .btn-outline-primary { --bs-btn-color: var(--destaque); --bs-btn-border-color: var(--destaque); --bs-btn-hover-bg: var(--azul); --bs-btn-hover-border-color: var(--azul); --bs-btn-hover-color: #fff; --bs-btn-active-bg: var(--azul); --bs-btn-active-color: #fff; }
+[data-bs-theme="dark"] .nav-pills .nav-link.active,
+[data-bs-theme="dark"] .progress-bar,
+[data-bs-theme="dark"] .form-check-input:checked { background-color: var(--azul); border-color: var(--azul); }
+[data-bs-theme="dark"] .bg-navy, [data-bs-theme="dark"] .faixa-titulo { background: #0a1a45 !important; }
+[data-bs-theme="dark"] .rodape { background: #091538; }
+[data-bs-theme="dark"] .cabecalho-pagina { background: linear-gradient(120deg, #0a1a45 0%, #143a94 100%); }
+[data-bs-theme="dark"] .doacao { background: #29240f; border-color: #5a4c18; }
+[data-bs-theme="dark"] .badge-ok { background: rgba(25, 135, 84, .25); color: #7ddcaa; }
+[data-bs-theme="dark"] .badge-pend { background: rgba(245, 196, 0, .2); color: #f5d76e; }
+[data-bs-theme="dark"] .lista-chamada tr.presente { background: rgba(25, 135, 84, .18); }
+[data-bs-theme="dark"] .dropdown-item.active { background: var(--azul); }
+/* Logo e QR Code têm fundo branco: ficam num cartão claro para não parecer um recorte. */
+[data-bs-theme="dark"] .hero img.logo { background: #fff; border-radius: 16px; padding: .75rem; }
+[data-bs-theme="dark"] .ingresso img, [data-bs-theme="dark"] img#qr { background: #fff; padding: 8px; border-radius: 8px; }
+[data-bs-theme="dark"] .opcao-atividade:has(input:checked) { border-color: var(--destaque); background: rgba(169, 193, 255, .08); }
+/* O Bootstrap define a cor do cartão no próprio .card: aqui ele fica um pouco mais claro que o fundo, como no tema claro. */
+[data-bs-theme="dark"] .card { --bs-card-bg: #1a2440; --bs-card-border-color: #2d3a5a; }
+[data-bs-theme="dark"] .bg-superficie .card { --bs-card-bg: #1f2a4a; }
+[data-bs-theme="dark"] .atividade { background: #1f2a4a; box-shadow: none; }
