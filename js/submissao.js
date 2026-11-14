@@ -34,7 +34,7 @@
   function contar() {
     const n = C.contarSemEspacos($("resumo").value);
     const el = $("contador-resumo");
-    el.textContent = `${n.toLocaleString("pt-BR")} / ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} sem espaços`;
+    el.textContent = `${n.toLocaleString("pt-BR")} / ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")}`;
     el.classList.toggle("text-danger", n > SUB.maxCaracteresResumo);
     return n;
   }
