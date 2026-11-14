@@ -64,6 +64,12 @@ class ArquivoStore {
 }
 
 const LIMITE_PAGINA = 500;
+// O Base44 devolve null nos campos que nunca foram preenchidos; aqui eles viram "ausentes",
+// igual ao armazenamento em arquivos, para as regras de js/servico.js verem o mesmo formato.
+function semNulos(reg) {
+  if (!reg || typeof reg !== "object" || Array.isArray(reg)) return reg;
+  return Object.fromEntries(Object.entries(reg).filter(([, v]) => v !== null));
+}
 
 class Base44Store {
   constructor(appId, apiKey) {
@@ -82,12 +88,12 @@ class Base44Store {
     for (let skip = 0; ; skip += LIMITE_PAGINA) {
       const pagina = await this._req("GET", `${this._ent(ent)}?limit=${LIMITE_PAGINA}&skip=${skip}`);
       const itens = Array.isArray(pagina) ? pagina : (pagina && pagina.items) || [];
-      todos.push(...itens);
+      todos.push(...itens.map(semNulos));
       if (itens.length < LIMITE_PAGINA) return todos;
     }
   }
-  create(ent, obj) { return this._req("POST", this._ent(ent), obj); }
-  update(ent, id, patch) { return this._req("PUT", `${this._ent(ent)}/${encodeURIComponent(id)}`, patch); }
+  async create(ent, obj) { return semNulos(await this._req("POST", this._ent(ent), obj)); }
+  async update(ent, id, patch) { return semNulos(await this._req("PUT", `${this._ent(ent)}/${encodeURIComponent(id)}`, patch)); }
   remove(ent, id) { return this._req("DELETE", `${this._ent(ent)}/${encodeURIComponent(id)}`); }
   async limparTudo() { const e = new Error("Limpeza em massa desativada no Base44."); e.status = 403; throw e; }
 }
@@ -98,4 +104,4 @@ function criarStore() {
   return new ArquivoStore(process.env.DADOS_DIR || path.join(__dirname, "dados"));
 }
 
-module.exports = { criarStore, ArquivoStore, ENTIDADES };
+module.exports = { criarStore, ArquivoStore, Base44Store, ENTIDADES };

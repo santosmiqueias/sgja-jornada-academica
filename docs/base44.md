@@ -31,6 +31,17 @@ Assim, mesmo quem descobrir o endereço do app no Base44 não consegue ler CPF, 
 
 A programação (EV01 a EV06) fica em `js/config.js`, a mesma fonte para o site, o servidor e o certificado.
 
+## Verificado no Base44 (14/11/2026)
+
+- As 7 entidades foram criadas com `npm run base44:push`.
+- Visitante sem login: a listagem volta vazia, a busca por id dá "não encontrado" (404), e criar ou alterar dá "permissão negada" (403).
+  Só o administrador do app vê e grava.
+- O Base44 **não** aplica `pattern` nem `maxLength` (aceitou um CPF "123"). Esses campos documentam o formato, e quem garante o formato
+  é o servidor (`js/core.js` e `js/servico.js`), que valida tudo antes de gravar.
+- Campos nunca preenchidos voltam como `null`. O `Base44Store` remove esses `null`, então o código vê o mesmo formato do armazenamento em arquivos.
+- O push remove do app as entidades que não estão em `base44/entities/`. No app novo isso apagou só o exemplo `User` do modelo inicial;
+  o usuário padrão do Base44 (login e papel de administrador) continua funcionando.
+
 ## Regras que o Base44 não faz sozinho (e onde estão)
 
 - **CPF e e-mail únicos.** O Base44 não tem campo único. A regra fica em `js/servico.js`: na submissão,

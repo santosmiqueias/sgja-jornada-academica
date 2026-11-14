@@ -96,3 +96,27 @@ test("Base44: tudo o que o sistema grava cabe nos esquemas", async () => {
   }
   assert.deepEqual(erros, []);
 });
+
+test("Base44Store: lê todas as páginas, usa a chave só no cabeçalho e trata null como ausente", async () => {
+  const { Base44Store } = require("../servicos/api-gateway/store.js");
+  const chamadas = [];
+  const original = global.fetch;
+  global.fetch = async (url, opt) => {
+    chamadas.push({ url, opt });
+    const skip = Number(new URL(url).searchParams.get("skip"));
+    const n = skip === 0 ? 500 : 3;
+    const itens = Array.from({ length: n }, (_, i) => ({ id: `A${skip + i}`, nome: "Ana Sousa", telefone: null }));
+    return { ok: true, status: 200, json: async () => itens };
+  };
+  try {
+    const st = new Base44Store("app123", "chave-secreta");
+    const todos = await st.list("Aluno");
+    assert.equal(todos.length, 503);
+    assert.equal(chamadas.length, 2);
+    assert.match(chamadas[0].url, /\/api\/apps\/app123\/entities\/Aluno\?limit=500&skip=0$/);
+    assert.equal(chamadas[0].opt.headers.api_key, "chave-secreta");
+    assert.ok(!chamadas[0].url.includes("chave-secreta"));
+    assert.equal("telefone" in todos[0], false);
+    await assert.rejects(() => st.list("User"), /Entidade inválida/);
+  } finally { global.fetch = original; }
+});
