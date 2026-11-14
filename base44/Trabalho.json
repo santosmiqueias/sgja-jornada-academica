@@ -2,22 +2,90 @@
   "name": "Trabalho",
   "type": "object",
   "properties": {
-    "protocolo": { "type": "string", "description": "TR-XXXXXX, mostrado ao representante" },
-    "titulo": { "type": "string" },
-    "vinculo": { "type": "string", "description": "APIEXT1..APIEXT6, PIC, TCC, OUTRAS, EXTERNO" },
-    "vinculoNome": { "type": "string" },
-    "modalidade": { "type": "string", "enum": ["banner", "oral"], "description": "APIExt I, III, V: banner; II, IV, VI: oral" },
-    "curso": { "type": "string" },
-    "orientador": { "type": "string" },
-    "resumo": { "type": "string", "description": "Resumo simples, até 1.500 caracteres" },
-    "arquivo": { "type": "object", "description": "{ nome, tipo, tamanho, ref }. O arquivo fica no servidor, nunca público" },
-    "representanteId": { "type": "string" },
-    "autoresIds": { "type": "array", "items": { "type": "string" }, "description": "ids de Aluno (participantes)" },
-    "status": { "type": "string", "enum": ["em_analise", "aprovado", "reprovado"], "default": "em_analise" },
-    "parecer": { "type": "string" },
-    "sessao": { "type": "string", "description": "id da sessão de apresentação (EV02..EV05)" },
-    "horarioApresentacao": { "type": "string" },
-    "apresentado": { "type": "boolean", "default": false, "description": "Confirmado pela organização; entra no certificado" }
+    "protocolo": {
+      "type": "string",
+      "description": "TR-XXXXXX, mostrado ao representante"
+    },
+    "titulo": {
+      "type": "string"
+    },
+    "vinculo": {
+      "type": "string",
+      "description": "APIEXT1..APIEXT6, PIC, TCC, OUTRAS, EXTERNO"
+    },
+    "vinculoNome": {
+      "type": "string"
+    },
+    "modalidade": {
+      "type": "string",
+      "enum": [
+        "banner",
+        "oral"
+      ],
+      "description": "APIExt I, III, V: banner; II, IV, VI: oral"
+    },
+    "curso": {
+      "type": "string"
+    },
+    "resumo": {
+      "type": "string",
+      "description": "Resumo simples, até 1.500 caracteres"
+    },
+    "arquivo": {
+      "type": "object",
+      "description": "{ nome, tipo, tamanho, ref }. O arquivo fica no servidor, nunca público"
+    },
+    "representanteId": {
+      "type": "string"
+    },
+    "autoresIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ids de Aluno (participantes)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "em_analise",
+        "aprovado",
+        "reprovado"
+      ],
+      "default": "em_analise"
+    },
+    "parecer": {
+      "type": "string"
+    },
+    "sessao": {
+      "type": "string",
+      "description": "id da sessão de apresentação (EV02..EV05)"
+    },
+    "horarioApresentacao": {
+      "type": "string"
+    },
+    "apresentado": {
+      "type": "boolean",
+      "default": false,
+      "description": "Confirmado pela organização; entra no certificado"
+    },
+    "orientadores": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Professores orientadores (pelo menos 1, até 5)"
+    }
   },
-  "required": ["protocolo", "titulo", "vinculo", "modalidade", "resumo", "representanteId", "autoresIds", "status"]
+  "required": [
+    "protocolo",
+    "titulo",
+    "vinculo",
+    "modalidade",
+    "resumo",
+    "representanteId",
+    "autoresIds",
+    "status",
+    "orientadores"
+  ]
 }

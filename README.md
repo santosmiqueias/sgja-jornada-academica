@@ -7,10 +7,10 @@ Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de pape
 | Módulo | Página | O que faz |
 |---|---|---|
 | Página inicial | `index.html` | Tema, sobre o evento (edital), como funciona, formatos de apresentação, doação de alimento, programação e cronograma oficiais, dúvidas |
-| Submissão | `submissao.html` (menu Submissão) | Representante envia o trabalho: título, vínculo/disciplina (APIExt I–VI, PIC, TCC, outras, externo), formato, resumo de até 1.500 caracteres, **arquivo (PDF/DOC/DOCX, até 10 MB)** e dados de todos os participantes. Edital para visualizar e baixar |
+| Submissão | `submissao.html` (menu Submissão) | Representante envia o trabalho: título, vínculo/disciplina (APIExt I–VI, PIC, TCC, outras, externo), formato, **professor(es) orientador(es) (pelo menos 1)**, resumo de até 1.500 caracteres, **arquivo (PDF/DOC/DOCX, até 10 MB)** e dados de todos os participantes. Edital para visualizar e baixar |
 | Meu certificado | `certificado.html` | Com CPF + e-mail: resultado da banca, parecer, dia e horário da apresentação, ingresso (QR Code) e certificado |
 | Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora (cadastro liberado pela organização): chamada, CPF, QR Code |
-| Organização | `painel.html` (link "Organização" no topo) | Submissões e banca (baixar arquivo, aprovar/recusar, parecer, sessão, "apresentado"), participantes, certificados, lembretes, comissão, dados |
+| Organização | `painel.html` (link "Painel da organização" no rodapé) | Submissões e banca (baixar arquivo, aprovar/recusar, parecer, sessão, "apresentado"), participantes, certificados, lembretes, comissão, dados |
 | Validação | `validar.html` | Confere a autenticidade do certificado, com os trabalhos apresentados |
 
 **Certificado:** 20 horas para quem participar de pelo menos 1 dia do evento (check-in). O verso traz a programação oficial, a presença e os trabalhos apresentados (confirmados pela organização).

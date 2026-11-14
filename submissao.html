@@ -6,11 +6,11 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Submissão de trabalhos · 6ª Jornada Acadêmica</title>
-  <link rel="icon" href="assets/img/favicon.png?v=202611140220">
+  <link rel="icon" href="assets/img/favicon.png?v=202611140232">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611140220">
+  <link rel="stylesheet" href="css/style.css?v=202611140232">
 </head>
 <body>
   <div id="menu"></div>
@@ -74,9 +74,15 @@
                 </fieldset>
               </div>
               <div class="col-md-6">
-                <label for="orientador" class="form-label">Professor orientador <span class="text-muted fw-normal">(opcional)</span></label>
-                <input type="text" class="form-control" id="orientador" maxlength="100" autocomplete="off">
-                <div class="invalid-feedback">Informe nome e sobrenome.</div>
+                <label for="orientador-0" class="form-label">Professor orientador</label>
+                <div id="lista-orientadores" class="d-grid gap-2">
+                  <div class="orientador">
+                    <input type="text" class="form-control o-nome" id="orientador-0" maxlength="100" autocomplete="off" required>
+                    <div class="invalid-feedback">Informe nome e sobrenome do orientador.</div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="btn-add-orientador"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Adicionar orientador</button>
+                <div class="form-text">Mais de um professor na disciplina? Adicione cada um.</div>
               </div>
               <div class="col-12">
                 <label for="resumo" class="form-label">Resumo simples</label>
@@ -185,11 +191,11 @@
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
-  <script src="js/config.js?v=202611140220"></script>
-  <script src="js/core.js?v=202611140220"></script>
-  <script src="js/servico.js?v=202611140220"></script>
-  <script src="js/api.js?v=202611140220"></script>
-  <script src="js/ui.js?v=202611140220"></script>
-  <script src="js/submissao.js?v=202611140220"></script>
+  <script src="js/config.js?v=202611140232"></script>
+  <script src="js/core.js?v=202611140232"></script>
+  <script src="js/servico.js?v=202611140232"></script>
+  <script src="js/api.js?v=202611140232"></script>
+  <script src="js/ui.js?v=202611140232"></script>
+  <script src="js/submissao.js?v=202611140232"></script>
 </body>
 </html>

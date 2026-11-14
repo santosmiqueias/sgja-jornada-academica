@@ -56,6 +56,42 @@
   $("r-matricula").addEventListener("input", (e) => (e.target.value = C.mascaraMatricula(e.target.value)));
   $("r-nome").addEventListener("input", (e) => { const l = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ' -]/g, ""); if (l !== e.target.value) e.target.value = l; });
 
+  // Orientadores (obrigatório pelo menos 1; disciplinas com mais de um professor adicionam outros)
+  const MAX_ORIENTADORES = SUB.maxOrientadores || 5;
+  const soLetras = (e) => { const l = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'. -]/g, ""); if (l !== e.target.value) e.target.value = l; };
+  const nomeOrientadorOk = (v) => C.validarNome(String(v).replace(/^(prof(ª|a|essora|essor)?\.?\s+)?(dr(ª|a)?\.?\s+|me\.?\s+|ma\.?\s+|esp\.?\s+)?/i, ""));
+  let seqOri = 1;
+  function ligarOrientador(input) {
+    input.addEventListener("input", (e) => { soLetras(e); if (input.classList.contains("is-invalid") && nomeOrientadorOk(input.value)) input.classList.remove("is-invalid"); });
+    input.addEventListener("blur", () => { if (input.value) input.classList.toggle("is-invalid", !nomeOrientadorOk(input.value)); });
+  }
+  ligarOrientador($("orientador-0"));
+  $("btn-add-orientador").addEventListener("click", () => {
+    if (document.querySelectorAll(".orientador").length >= MAX_ORIENTADORES) { UI.aviso(`No máximo ${MAX_ORIENTADORES} orientadores.`, "alerta"); return; }
+    const n = seqOri++;
+    const el = document.createElement("div");
+    el.className = "orientador input-group has-validation";
+    el.innerHTML = `<input type="text" class="form-control o-nome" id="orientador-${n}" maxlength="100" autocomplete="off" aria-label="Outro professor orientador">
+      <button type="button" class="btn btn-outline-danger" aria-label="Remover orientador"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+      <div class="invalid-feedback">Informe nome e sobrenome do orientador.</div>`;
+    el.querySelector("button").addEventListener("click", () => el.remove());
+    ligarOrientador(el.querySelector("input"));
+    $("lista-orientadores").appendChild(el);
+    el.querySelector("input").focus();
+  });
+  function lerOrientadores() {
+    let ok = true;
+    const nomes = [...document.querySelectorAll(".o-nome")].map((i, idx) => {
+      const vazio = !i.value.trim();
+      if (vazio && idx > 0) { i.classList.remove("is-invalid"); return ""; } // extra em branco é ignorado
+      const valido = nomeOrientadorOk(i.value);
+      i.classList.toggle("is-invalid", !valido);
+      if (!valido) ok = false;
+      return i.value.trim();
+    }).filter(Boolean);
+    return { ok: ok && nomes.length > 0, nomes };
+  }
+
   // Demais participantes
   let seq = 0;
   function adicionarParticipante() {
@@ -91,7 +127,6 @@
     titulo: () => $("titulo").value.trim().length >= 5,
     vinculo: () => SUB.vinculos.some((v) => v.id === $("vinculo").value),
     curso: () => CFG.cursos.includes($("curso").value),
-    orientador: () => !$("orientador").value.trim() || C.validarNome($("orientador").value),
     resumo: () => { const n = contar(); return n >= SUB.minCaracteresResumo && n <= SUB.maxCaracteresResumo; },
     arquivo: () => { const f = $("arquivo").files[0]; return !!f && SUB.arquivo.extensoes.includes(extensao(f.name)) && f.size > 0 && f.size <= SUB.arquivo.maxMB * 1048576; },
     "r-nome": () => C.validarNome($("r-nome").value),
@@ -134,6 +169,9 @@
       if (el) { el.classList.add("is-invalid"); el.focus(); }
     } else if (err.campo === "participantes") {
       msgParticipantes.textContent = err.message; msgParticipantes.hidden = false;
+    } else if (err.campo === "orientadores") {
+      document.querySelectorAll(".o-nome").forEach((i) => { if (!i.value.trim() || !nomeOrientadorOk(i.value)) i.classList.add("is-invalid"); });
+      $("orientador-0").focus();
     } else if (err.campo === "modalidade") {
       $("modalidade").classList.add("is-invalid");
     } else if (err.campo && $(err.campo)) {
@@ -153,9 +191,10 @@
     const modalidade = (document.querySelector('input[name="modalidade"]:checked') || {}).value;
     $("modalidade").classList.toggle("is-invalid", !modalidade);
     const part = lerParticipantes();
+    const ori = lerOrientadores();
     const lgpd = $("lgpd").checked;
     $("lgpd").classList.toggle("is-invalid", !lgpd);
-    if (invalidos.length || !modalidade || !part.ok || !lgpd) {
+    if (invalidos.length || !modalidade || !part.ok || !ori.ok || !lgpd) {
       UI.aviso("Confira os campos destacados em vermelho.", "erro");
       const primeiro = document.querySelector("#form-submissao .is-invalid");
       if (primeiro) primeiro.focus();
@@ -166,7 +205,7 @@
     try {
       const r = await API.submeterTrabalho({
         titulo: $("titulo").value, vinculo: $("vinculo").value, modalidade, curso: $("curso").value,
-        orientador: $("orientador").value, resumo: $("resumo").value,
+        orientadores: ori.nomes, resumo: $("resumo").value,
         representante: { nome: $("r-nome").value, email: $("r-email").value, telefone: $("r-telefone").value, cpf: $("r-cpf").value, matricula: $("r-matricula").value },
         participantes: part.lista, consentimentoLGPD: lgpd, aceitaWhatsApp: $("whatsapp").checked
       }, $("arquivo").files[0]);

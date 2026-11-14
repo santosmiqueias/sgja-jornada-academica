@@ -55,6 +55,7 @@ window.SGJA_CONFIG = {
     bloquearForaDoPeriodo: false, // true no evento real: só aceita entre inicio e fim
     maxCaracteresResumo: 1500, minCaracteresResumo: 200,
     maxParticipantes: 10,
+    maxOrientadores: 5,
     arquivo: { maxMB: 10, extensoes: ["pdf", "doc", "docx"] },
     edital: "assets/docs/edital-6-jornada-academica-2026.pdf",
     modalidades: { banner: "Pôster/Banner", oral: "Comunicação oral" },

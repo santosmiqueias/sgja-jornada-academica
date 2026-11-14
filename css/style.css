@@ -21,7 +21,7 @@ body > main { flex: 1 0 auto; }
 /* O menu acompanha a rolagem em todas as páginas. */
 #menu { position: sticky; top: 0; z-index: 1030; }
 /* Ao rolar até um campo (erro, link interno), ele não fica escondido atrás do menu fixo. */
-html { scroll-padding-top: 120px; }
+html { scroll-padding-top: 90px; }
 .bg-navy { background: var(--navy) !important; }
 .text-navy { color: var(--navy) !important; }
 .text-amarelo { color: var(--amarelo) !important; }
@@ -83,6 +83,7 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 /* Tema, passos e cronograma */
 .tema { font-size: 1.1rem; font-weight: 600; color: var(--navy); }
 .tema-rotulo { display: inline-block; background: var(--navy); color: #fff; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .5rem; border-radius: 4px; margin-right: .35rem; vertical-align: middle; }
+.passo-titulo { font-size: 1.125rem; margin-bottom: .5rem; }
 .passo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); font-weight: 800; font-size: 1.2rem; }
 .cronograma { list-style: none; padding: 0; margin: 0; border-left: 4px solid var(--amarelo); }
 .cronograma li { position: relative; padding: .2rem 0 1.1rem 1.4rem; }

@@ -22,13 +22,7 @@
       const aria = ativo ? ' aria-current="page"' : "";
       return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}"><i class="bi bi-${l.icone} me-1" aria-hidden="true"></i>${l.rotulo}</a></li>`;
     }).join("");
-    const naOrganizacao = atual === "painel.html";
     alvo.innerHTML = `
-      <div class="barra-topo">
-        <div class="container d-flex justify-content-end gap-3">
-          <a href="painel.html" class="link-topo${naOrganizacao ? " ativo" : ""}"${naOrganizacao ? ' aria-current="page"' : ""}>Organização</a>
-        </div>
-      </div>
       <nav class="navbar navbar-expand-xl navbar-dark bg-navy sticky-top shadow-sm">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">

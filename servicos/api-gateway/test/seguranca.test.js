@@ -35,7 +35,7 @@ const alunoBase = (n) => ({
 });
 const pdfFalso = { nome: "trabalho.pdf", base64: Buffer.from("%PDF-1.4\nconteudo de teste").toString("base64") };
 const submissao = (extra = {}) => ({
-  titulo: "Horta comunitária na escola", vinculo: "APIEXT1", curso: "Direito",
+  titulo: "Horta comunitária na escola", vinculo: "APIEXT1", curso: "Direito", orientadores: ["Profª. Drª. Helena Martins Costa"],
   resumo: "Introdução: projeto de horta. Objetivos: educar. Método: oficinas semanais com a comunidade escolar. Resultados: maior consumo de verduras e participação das famílias. Considerações finais: a ação deve continuar no próximo semestre.",
   representante: alunoBase(0), participantes: [{ nome: alunoBase(1).nome, cpf: alunoBase(1).cpf, email: alunoBase(1).email }],
   consentimentoLGPD: true, aceitaWhatsApp: true, arquivo: pdfFalso, ...extra
@@ -91,6 +91,8 @@ test("submissão: valida no servidor, guarda o arquivo e bloqueia duplicados e e
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", curso: "Curso Inventado" }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Outro", resumo: "x".repeat(1501) }))).status, 400);
   assert.equal((await chamar("POST", "/publico/submissoes", '{"titulo": quebrado')).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Sem orientador", orientadores: [] }))).status, 400);
+  assert.equal((await chamar("POST", "/publico/submissoes", submissao({ titulo: "Orientador repetido", orientadores: ["Ana Lima Souza", "ana lima souza"] }))).status, 400);
   assert.equal(arquivosNoDisco(), 1, "submissões recusadas não deixam arquivo no servidor");
 });
 

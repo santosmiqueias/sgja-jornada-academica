@@ -255,7 +255,7 @@
     const linha = (k, v) => `<dt class="col-sm-4">${esc(k)}</dt><dd class="col-sm-8">${v}</dd>`;
     $("mt-dados").innerHTML =
       linha("Vínculo", esc(t.vinculoNome)) + linha("Formato", esc(SUB.modalidades[t.modalidade] || t.modalidade)) + linha("Curso", esc(t.curso)) +
-      (t.orientador ? linha("Orientador", esc(t.orientador)) : "") +
+      (() => { const o = t.orientadores || (t.orientador ? [t.orientador] : []); return o.length ? linha(o.length > 1 ? "Orientadores" : "Orientador", o.map(esc).join("<br>")) : ""; })() +
       linha("Participantes", (t.autoresIds || []).map((id) => { const a = alunos.find((x) => x.id === id); return a ? `${esc(a.nome)} <span class="text-muted">· ${esc(a.email)}</span>${id === t.representanteId ? " <span class=\"badge text-bg-light\">representante</span>" : ""}` : "—"; }).join("<br>")) +
       linha("Arquivo", t.arquivo ? `${esc(t.arquivo.nome)} <span class="text-muted">· ${Math.max(1, Math.round(t.arquivo.tamanho / 1024))} KB</span>` : "—");
     $("mt-resumo").textContent = t.resumo;

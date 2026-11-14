@@ -167,14 +167,21 @@
           const titulo = texto(dados.titulo, 200).replace(/\s+/g, " ");
           const vinculo = SUB.vinculos.find((v) => v.id === dados.vinculo);
           const curso = texto(dados.curso, 80);
-          const orientador = C.normalizarNome(texto(dados.orientador, 100));
+          // Orientadores: pelo menos 1 (obrigatório). Aceita títulos como "Prof.", "Profª", "Dr.", "Drª".
+          const semTitulo = (n) => n.replace(/^(prof(ª|a|essora|essor)?\.?\s+)?(dr(ª|a)?\.?\s+|me\.?\s+|ma\.?\s+|esp\.?\s+)?/i, "");
+          const listaOri = Array.isArray(dados.orientadores) ? dados.orientadores : (dados.orientador ? [dados.orientador] : []);
+          const orientadores = listaOri.map((n) => C.normalizarNome(texto(n, 100))).filter(Boolean);
           const resumo = String(dados.resumo == null ? "" : dados.resumo).replace(/\r\n/g, "\n").trim();
           if (titulo.length < 5) throw new ErroNegocio("Informe o título do trabalho.", "titulo");
           if (!vinculo) throw new ErroNegocio("Selecione o vínculo do trabalho.", "vinculo");
           const modalidade = vinculo.modalidade || dados.modalidade;
           if (!SUB.modalidades[modalidade]) throw new ErroNegocio("Escolha o formato de apresentação.", "modalidade");
           if (!CFG.cursos.includes(curso)) throw new ErroNegocio("Selecione o curso.", "curso");
-          if (orientador && !C.validarNome(orientador)) throw new ErroNegocio("Nome do orientador inválido.", "orientador");
+          const maxOri = SUB.maxOrientadores || 5;
+          if (!orientadores.length) throw new ErroNegocio("Informe o professor orientador.", "orientadores");
+          if (orientadores.length > maxOri) throw new ErroNegocio(`No máximo ${maxOri} orientadores.`, "orientadores");
+          if (orientadores.some((n) => !C.validarNome(semTitulo(n)))) throw new ErroNegocio("Informe nome e sobrenome de cada orientador.", "orientadores");
+          if (new Set(orientadores.map((n) => n.toLowerCase())).size !== orientadores.length) throw new ErroNegocio("O mesmo orientador foi informado mais de uma vez.", "orientadores");
           if (resumo.length < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres.`, "resumo");
           if (resumo.length > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo} caracteres.`, "resumo");
           if (!arquivo || !arquivo.ref) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
@@ -237,7 +244,7 @@
           }
           const protocolo = `TR-${C.gerarId("").slice(-6)}`;
           const t = await store.create(ENT.trabalho, {
-            protocolo, titulo, vinculo: vinculo.id, vinculoNome: vinculo.nome, modalidade, curso, orientador, resumo,
+            protocolo, titulo, vinculo: vinculo.id, vinculoNome: vinculo.nome, modalidade, curso, orientadores, resumo,
             arquivo: { nome: texto(arquivo.nome, 120), tipo: texto(arquivo.tipo, 100), tamanho: arquivo.tamanho, ref: arquivo.ref },
             representanteId: representante.id, autoresIds: ids, status: "em_analise", parecer: "", sessao: null, horarioApresentacao: "", apresentado: false
           });
@@ -446,7 +453,7 @@
         const trabalhos = [
           { titulo: "Educação financeira para jovens da comunidade", vinculo: "APIEXT1", curso: "Administração", autores: [0, 8], status: "aprovado", sessao: "EV02", apresentado: true },
           { titulo: "Primeiros socorros nas escolas públicas de Teresina", vinculo: "APIEXT2", curso: "Enfermagem", autores: [4, 6], status: "aprovado", sessao: "EV03" },
-          { titulo: "Aplicativo de agendamento para a clínica-escola", vinculo: "TCC", modalidade: "oral", curso: "Análise e Desenvolvimento de Sistemas", autores: [1, 9, 3], status: "em_analise" },
+          { titulo: "Aplicativo de agendamento para a clínica-escola", vinculo: "TCC", modalidade: "oral", curso: "Análise e Desenvolvimento de Sistemas", autores: [1, 9, 3], status: "em_analise", orientadores: ["Prof. Me. Ricardo Alves Sousa", "Profª. Ana Paula Lima"] },
           { titulo: "Direitos do consumidor no comércio digital", vinculo: "APIEXT3", curso: "Direito", autores: [2], status: "reprovado", parecer: "O resumo não apresenta método e resultados. Reenvie no próximo edital." },
           { titulo: "Reaproveitamento de resíduos da construção civil", vinculo: "PIC", modalidade: "banner", curso: "Engenharia Civil", autores: [5, 7], status: "aprovado", sessao: "EV04", apresentado: true }
         ];
@@ -456,6 +463,7 @@
             const [rep, ...outros] = t.autores.map(pessoa);
             const r = await S.submeterTrabalho({
               titulo: t.titulo, vinculo: t.vinculo, modalidade: t.modalidade, curso: t.curso, resumo: resumo(t.titulo.toLowerCase()),
+              orientadores: t.orientadores || ["Profª. Drª. Helena Martins Costa"],
               representante: rep, participantes: outros, consentimentoLGPD: true, aceitaWhatsApp: true
             }, { nome: "trabalho-exemplo.pdf", tipo: "application/pdf", tamanho: 2048, ref: "exemplo" });
             const salvo = (await store.list(ENT.trabalho)).find((x) => x.protocolo === r.trabalho.protocolo);
