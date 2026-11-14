@@ -247,3 +247,14 @@ test("limite de submissões por minuto contra robôs", async () => {
   for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });
   assert.equal(ultimo.status, 429);
 });
+
+test("Hash do professor: tolera nome/aspas/espaços colados, recusa hash cortado e senha errada", () => {
+  const h = auth.gerarHash("Senha Teste 2026");
+  for (const v of [h, `PROFESSOR_SENHA_HASH=${h}`, `"${h}" `, `“${h}”`]) {
+    assert.equal(auth.conferirHash("Senha Teste 2026", v), true);
+    assert.equal(auth.conferirHash("Senha Errada 2026", v), false);
+  }
+  assert.equal(auth.conferirHash("Senha Teste 2026", h.slice(0, -5)), false);
+  assert.equal(auth.diagnosticarHash(h.slice(0, -5)).ok, false);
+  assert.equal(auth.diagnosticarHash("").motivo, "não definido");
+});

@@ -46,7 +46,11 @@ const CFG = carregarConfig();
 const SEGREDO = process.env.ASSINATURA_SEGREDO || "";
 if (SEGREDO.length < 32) throw new Error("Defina ASSINATURA_SEGREDO no .env com pelo menos 32 caracteres aleatórios.");
 auth.assinarToken({ teste: 1 }, 1); // falha cedo se TOKEN_SEGREDO estiver ausente
-if (!process.env.PROFESSOR_SENHA_HASH) console.warn("Aviso: PROFESSOR_SENHA_HASH não definido. O login do professor fica desativado.");
+{
+  const d = auth.diagnosticarHash(process.env.PROFESSOR_SENHA_HASH);
+  if (d.ok) console.log(`PROFESSOR_SENHA_HASH: ${d.motivo}.`);
+  else console.warn(`Aviso: PROFESSOR_SENHA_HASH ${d.motivo}. O login do professor não vai funcionar.`);
+}
 
 const store = criarStore();
 const servico = criarServico({ store, config: CFG, core: C, segredo: SEGREDO });

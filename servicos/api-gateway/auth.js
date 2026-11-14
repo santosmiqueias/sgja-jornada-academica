@@ -21,16 +21,34 @@ function gerarHash(senha) {
   return `scrypt$16384$8$1$${b64u(salt)}$${b64u(hash)}`;
 }
 
+// Aceita o hash colado com o nome na frente, aspas ou espaços (erros comuns ao copiar para o Render).
+function normalizarHash(valor) {
+  return String(valor || "").trim().replace(/^PROFESSOR_SENHA_HASH\s*=\s*/, "").replace(/^["'\u2018\u2019\u201C\u201D]+|["'\u2018\u2019\u201C\u201D]+$/g, "").trim();
+}
+
+// Diagnóstico sem revelar o hash: diz só se o formato está certo e, se não, por quê.
+function diagnosticarHash(valor) {
+  const bruto = String(valor || "");
+  if (!bruto.trim()) return { ok: false, motivo: "não definido" };
+  const h = normalizarHash(bruto);
+  const partes = h.split("$");
+  if (partes[0] !== "scrypt") return { ok: false, motivo: "não começa com scrypt$ (use a linha gerada por: node gerar-hash.js 'sua senha')" };
+  if (partes.length !== 6) return { ok: false, motivo: `tem ${partes.length} partes separadas por $, o certo são 6 (copie a linha inteira, até o fim)` };
+  const [, N, r, p, salt, hash] = partes;
+  if (N !== "16384" || r !== "8" || p !== "1") return { ok: false, motivo: "parâmetros diferentes de 16384$8$1" };
+  if (Buffer.from(salt, "base64url").length !== 16 || Buffer.from(hash, "base64url").length !== 32) return { ok: false, motivo: "salt ou hash cortado (copie a linha inteira)" };
+  return { ok: true, motivo: h === bruto ? "formato válido" : "formato válido (o servidor removeu nome, aspas ou espaços que vieram junto)" };
+}
+
 function conferirHash(senha, guardado) {
-  const partes = String(guardado || "").split("$");
-  if (partes.length !== 6 || partes[0] !== "scrypt") {
+  if (!diagnosticarHash(guardado).ok) {
     crypto.scryptSync("x", "y", 32); // mesmo custo de tempo, mesmo sem hash válido
     return false;
   }
-  const [, N, r, p, salt, hash] = partes;
+  const [, N, r, p, salt, hash] = normalizarHash(guardado).split("$");
   const esperado = Buffer.from(hash, "base64url");
-  const calc = crypto.scryptSync(String(senha).slice(0, 200), Buffer.from(salt, "base64url"), esperado.length, { N: +N, r: +r, p: +p });
-  return calc.length === esperado.length && crypto.timingSafeEqual(calc, esperado);
+  const calc = crypto.scryptSync(String(senha).slice(0, 200), Buffer.from(salt, "base64url"), 32, { N: +N, r: +r, p: +p });
+  return crypto.timingSafeEqual(calc, esperado);
 }
 
 function assinarToken(dados, minutos) {
@@ -93,4 +111,5 @@ function registrarFalha(chave) {
 }
 function limparFalhas(chave) { falhas.delete(chave); }
 
-module.exports = { gerarHash, conferirHash, assinarToken, lerToken, exigir, limitador, contaBloqueada, registrarFalha, limparFalhas };
+module.exports = {
+  normalizarHash, diagnosticarHash, gerarHash, conferirHash, assinarToken, lerToken, exigir, limitador, contaBloqueada, registrarFalha, limparFalhas };
