@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-seg-"));
 Object.assign(process.env, {
   DADOS_DIR: dir, TOKEN_SEGREDO: crypto.randomBytes(32).toString("hex"), ASSINATURA_SEGREDO: crypto.randomBytes(32).toString("hex"),
-  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20", LIMITE_LOGIN_GOOGLE: "50"
+  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20", LIMITE_LOGIN_GOOGLE: "50", LIMITE_CONSULTAS: "50"
 });
 delete process.env.BASE44_APP_ID; delete process.env.SMTP_USER;
 const auth = require("../auth");
@@ -46,7 +46,9 @@ let tokenProf, ana, tokenCom;
 
 test("rotas antigas sem login não existem mais (vazamento em massa)", async () => {
   for (const ent of ["Aluno", "MembroComissao", "Frequencia", "Trabalho"]) assert.equal((await chamar("GET", `/entidades/${ent}`)).status, 404);
-  assert.equal((await chamar("POST", "/publico/inscricoes", alunoBase(0))).status, 404);
+  // /publico/inscricoes voltou com outra função (inscrição de participante, com validação e sem dados de terceiros):
+  // ela recusa dados incompletos. Os testes dela estão no fim deste arquivo.
+  assert.equal((await chamar("POST", "/publico/inscricoes", alunoBase(0))).status, 400);
   assert.equal((await chamar("POST", "/certificados/enviar", { para: "vitima@exemplo.com", pdfBase64: "JVBERi0=" })).status, 404);
 });
 
@@ -342,4 +344,52 @@ test("Google: liga a conta a um cadastro antigo com o mesmo e-mail, mas recusa o
   assert.equal((await chamar("POST", "/comissao/google", { credencial: tokenGoogle({ sub: "g-999", email: "comissao.antiga@exemplo.com" }) })).status, 409);
   // A senha antiga continua valendo.
   assert.equal((await chamar("POST", "/comissao/login", { email: "comissao.antiga@exemplo.com", senha: "senha1234" })).status, 200);
+});
+
+/* ---------------- Inscrição de participante (sem trabalho) ---------------- */
+test("Participante: inscreve com nome, CPF, e-mail e telefone, recebe ingresso e bloqueia duplicados", async () => {
+  const dados = { nome: "Carla Mendes Rocha", cpf: "123.456.780-62", email: "Carla.Part@Exemplo.com", telefone: "(86) 99999-1212", consentimentoLGPD: true };
+  assert.equal((await chamar("POST", "/publico/inscricoes", { ...dados, consentimentoLGPD: false })).status, 400);
+  assert.equal((await chamar("POST", "/publico/inscricoes", { ...dados, cpf: "123.456.780-00" })).status, 400);
+  assert.equal((await chamar("POST", "/publico/inscricoes", { ...dados, telefone: "123" })).status, 400);
+  const ok = await chamar("POST", "/publico/inscricoes", dados);
+  assert.equal(ok.status, 201);
+  assert.equal(ok.dados.aluno.nome, "Carla Mendes Rocha");
+  assert.equal(ok.dados.aluno.email, "carla.part@exemplo.com");
+  assert.ok(ok.dados.aluno.tokenIngresso, "tem QR Code de ingresso");
+  // Mesma pessoa de novo: não duplica e não devolve o ingresso sem comprovar o e-mail.
+  const de_novo = await chamar("POST", "/publico/inscricoes", dados);
+  assert.equal(de_novo.status, 409);
+  assert.ok(!("aluno" in de_novo.dados));
+  assert.equal((await chamar("POST", "/publico/inscricoes", { ...dados, email: "outro@exemplo.com" })).status, 409);   // CPF com outro e-mail
+  assert.equal((await chamar("POST", "/publico/inscricoes", { ...dados, cpf: "234.567.891-73" })).status, 409);       // e-mail com outro CPF
+  // Aparece no painel como participante, e a consulta de Meu certificado funciona com CPF + e-mail.
+  const p = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados.alunos.find((a) => a.cpf === "12345678062");
+  assert.equal(p.inscricao, "participante");
+  assert.equal((await chamar("POST", "/publico/participante", { cpf: "12345678062", email: "carla.part@exemplo.com" })).status, 200);
+});
+
+test("Participante pelo Google: pede CPF e telefone, inscreve e devolve o ingresso de quem já está inscrito", async () => {
+  process.env.GOOGLE_CLIENT_ID = CLIENTE;
+  google._definirBuscaDeChaves(async () => ({ chaves: [jwkGoogle], validadeS: 3600 }));
+  const conta = { sub: "g-part-1", email: "joao.part@exemplo.com", name: "João Pedro Alves" };
+  assert.equal((await chamar("POST", "/publico/inscricoes/google", { credencial: tokenGoogle({ ...conta, aud: "outro" }) })).status, 401);
+  const sem = await chamar("POST", "/publico/inscricoes/google", { credencial: tokenGoogle(conta) });
+  assert.equal(sem.status, 404);
+  assert.deepEqual(sem.dados.google, { nome: "João Pedro Alves", email: "joao.part@exemplo.com" });
+  // O e-mail vem do Google, não do formulário (mesmo que alguém tente trocar).
+  const cad = await chamar("POST", "/publico/inscricoes/google", { credencial: tokenGoogle(conta), cpf: "345.678.912-28", telefone: "86999991313", email: "invasor@exemplo.com", consentimentoLGPD: true });
+  assert.equal(cad.status, 201);
+  assert.equal(cad.dados.aluno.email, "joao.part@exemplo.com");
+  assert.ok(cad.dados.aluno.tokenIngresso);
+  const ja = await chamar("POST", "/publico/inscricoes/google", { credencial: tokenGoogle(conta) });
+  assert.equal(ja.status, 200);
+  assert.equal(ja.dados.jaInscrito, true);
+  assert.equal(ja.dados.aluno.tokenIngresso, cad.dados.aluno.tokenIngresso);
+  // E-mail do Google já inscrito com outro CPF: recusa.
+  const outra = { sub: "g-part-2", email: "carla.part@exemplo.com", name: "Carla Mendes Rocha" };
+  assert.equal((await chamar("POST", "/publico/inscricoes/google", { credencial: tokenGoogle(outra), cpf: "456.789.123-64", telefone: "86999991414", consentimentoLGPD: true })).status, 409);
+  // O identificador do Google não sai no painel.
+  const j = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados.alunos.find((a) => a.cpf === "34567891228");
+  assert.ok(j && !("googleSub" in j));
 });

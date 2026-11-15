@@ -254,6 +254,51 @@
         });
       },
 
+      /* ---------- Inscrição de participante (quem vai assistir, sem trabalho) ----------
+       * Nome, CPF, e-mail e telefone; ou conta Google (nome e e-mail vêm do Google, já conferidos pelo servidor).
+       * Recebe o QR Code de ingresso na hora; o certificado sai pela presença, como o dos autores. */
+      async inscreverParticipante(dados, conta) {
+        dados = dados || {};
+        return comTrava("submeterTrabalho", async () => {
+          const aluno = {
+            nome: C.capitalizarNome(texto(dados.nome || (conta && conta.nome), 100)),
+            email: C.normalizarEmail(texto(conta ? conta.email : dados.email, 120)),
+            cpf: C.soDigitos(texto(dados.cpf, 20)),
+            telefone: C.soDigitos(texto(dados.telefone, 20))
+          };
+          if (!C.validarNome(aluno.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "p-nome");
+          if (!C.validarCPF(aluno.cpf)) throw new ErroNegocio("CPF inválido.", "p-cpf");
+          if (!C.validarEmail(aluno.email)) throw new ErroNegocio("E-mail inválido.", "p-email");
+          if (!C.validarTelefone(aluno.telefone)) throw new ErroNegocio("Telefone inválido.", "p-telefone");
+          if (dados.consentimentoLGPD !== true) throw new ErroNegocio("É preciso aceitar o termo de uso de dados.", "p-lgpd");
+          const todos = await store.list(ENT.aluno);
+          const porCPF = todos.find((a) => a.cpf === aluno.cpf);
+          const porEmail = todos.find((a) => a.email === aluno.email);
+          if (porCPF && porCPF.email === aluno.email) {
+            // Pelo Google o e-mail é comprovado: devolve o ingresso de quem já estava inscrito.
+            if (conta) return { aluno: alunoDono(porCPF), jaInscrito: true };
+            throw new ErroNegocio("Você já está inscrito(a) na Jornada. Seu ingresso está em Meu certificado.", "p-cpf", 409);
+          }
+          if (porCPF) throw new ErroNegocio("Este CPF já está inscrito com outro e-mail. Use o e-mail da inscrição ou fale com a organização.", "p-cpf", 409);
+          if (porEmail) throw new ErroNegocio(conta ? "Seu e-mail do Google já está inscrito com outro CPF. Fale com a organização." : "Este e-mail já está inscrito com outro CPF.", conta ? "p-cpf" : "p-email", 409);
+          let criado = await store.create(ENT.aluno, {
+            ...aluno, matricula: "", curso: "", periodo: "", consentimentoLGPD: true, aceitaWhatsApp: false, atividades: [],
+            inscricao: "participante", ...(conta ? { googleSub: texto(conta.sub, 64) } : {})
+          });
+          criado = await store.update(ENT.aluno, criado.id, { tokenIngresso: await C.gerarTokenIngresso(criado.id, criado.cpf, segredo) });
+          return { aluno: alunoDono(criado), jaInscrito: false };
+        });
+      },
+
+      // Google: se a conta já está inscrita (pelo e-mail comprovado), devolve o ingresso; senão pede CPF e telefone.
+      async participanteGoogle(conta) {
+        const email = C.normalizarEmail(texto(conta && conta.email, 120));
+        if (!conta || !conta.sub || !C.validarEmail(email)) throw new ErroNegocio("Conta Google inválida.", null, 401);
+        const a = (await store.list(ENT.aluno)).find((x) => x.email === email);
+        if (a) return { aluno: alunoDono(a), jaInscrito: true };
+        throw new ErroNegocio("Complete sua inscrição com CPF e telefone.", "precisa-cadastro", 404);
+      },
+
       async consultarParticipante(cpf, email) {
         const a = await identificarParticipante(cpf, email);
         return { aluno: alunoDono(a), situacao: await situacaoDe(a.id), trabalhos: (await trabalhosDe(a.id)).map(trabalhoParticipante) };
@@ -395,7 +440,7 @@
           store.list(ENT.aluno), store.list(ENT.frequencia), store.list(ENT.certificado), store.list(ENT.membro), store.list(ENT.email), store.list(ENT.trabalho)
         ]);
         return {
-          alunos: alunos.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+          alunos: alunos.map(({ googleSub, ...a }) => a).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
           frequencias,
           certificados,
           membros: membros.map(membroPublico).sort((a, b) => (a.status === "pendente" ? -1 : 0) - (b.status === "pendente" ? -1 : 0) || a.nome.localeCompare(b.nome, "pt-BR")),
@@ -501,7 +546,7 @@
           { titulo: "Direitos do consumidor no comércio digital", vinculo: "APIEXT3", curso: "Direito", autores: [2], status: "reprovado", parecer: "O resumo não apresenta método e resultados. Reenvie no próximo edital." },
           { titulo: "Reaproveitamento de resíduos da construção civil", vinculo: "PIC", modalidade: "banner", curso: "Engenharia Civil", autores: [5, 7], status: "aprovado", sessao: "EV04", apresentado: true }
         ];
-        const presencas = { 0: ["EV01", "EV02"], 8: ["EV02"], 4: ["EV03"], 6: ["EV03"], 1: ["EV01"], 5: ["EV04", "EV05"], 7: ["EV04"], 3: ["EV02"], 9: ["EV05"] };
+        const presencas = { 29: ["EV01", "EV02"], 0: ["EV01", "EV02"], 8: ["EV02"], 4: ["EV03"], 6: ["EV03"], 1: ["EV01"], 5: ["EV04", "EV05"], 7: ["EV04"], 3: ["EV02"], 9: ["EV05"] };
         for (const t of trabalhos) {
           try {
             const [rep, ...outros] = t.autores.map(pessoa);
@@ -514,6 +559,9 @@
             await S.avaliarTrabalho(salvo.id, { status: t.status, parecer: t.parecer || (t.status === "aprovado" ? "Trabalho aprovado pela banca." : ""), sessao: t.sessao, horarioApresentacao: t.sessao ? "Ordem definida no dia" : "", apresentado: !!t.apresentado });
           } catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
         }
+        // Um participante que só vai assistir (sem trabalho)
+        try { await S.inscreverParticipante({ nome: "Patrícia Gomes Viana", cpf: gerarCPF(40), email: "patricia.demo@exemplo.com", telefone: "86999993333", consentimentoLGPD: true }); }
+        catch (e) { if (!(e instanceof ErroNegocio)) throw e; }
         const todos = await store.list(ENT.aluno);
         for (const [i, sessoes] of Object.entries(presencas)) {
           const a = todos.find((x) => x.cpf === gerarCPF(Number(i) + 11));

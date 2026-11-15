@@ -24,7 +24,7 @@
     } catch (err) {
       atual = null;
       if (err instanceof API.ErroNegocio && err.status !== 0) {
-        res.innerHTML = `<div class="alert alert-warning">${esc(err.message)} Confira os dados ou <a href="submissao.html" class="alert-link">submeta um trabalho</a>.</div>`;
+        res.innerHTML = `<div class="alert alert-warning">${esc(err.message)} Confira os dados ou <a href="submissao.html#participante" class="alert-link">faça sua inscrição</a>.</div>`;
       } else { UI.aviso(err.message || "Erro ao consultar. Tente novamente.", "erro"); }
     } finally { UI.carregando($("btn-consultar"), false); }
   });

@@ -9,6 +9,7 @@
  *   POST /api/v1/publico/certificado/email       { cpf, email, pdfBase64 } -> envia ao e-mail da inscrição
  *   GET  /api/v1/publico/certificados/:codigo    validação pública
  * Comissão organizadora (login individual)
+ *   POST /api/v1/publico/inscricoes | /inscricoes/google   participante: nome, cpf, email, telefone (ou conta Google)
  *   POST /api/v1/comissao/cadastro | /login
  *   POST /api/v1/comissao/google | /google/cadastro   { credencial (ID token do Google), cpf, telefone }
  *   GET  /api/v1/comissao/chamada?eventoId=
@@ -147,7 +148,7 @@ async function comCredenciais(req, fn) {
   try { const r = await fn(cpf, email); auth.limparFalhas(chave); return r; }
   catch (e) { if (e.status === 404) auth.registrarFalha(chave); throw e; }
 }
-const limiteConsulta = auth.limitador(10, 60000, "consulta");
+const limiteConsulta = auth.limitador(Number(process.env.LIMITE_CONSULTAS || 10), 60000, "consulta");
 
 app.post("/api/v1/publico/participante", limiteConsulta, jsonPequeno, rota(async (req, res) => {
   res.json(await comCredenciais(req, (cpf, email) => servico.consultarParticipante(cpf, email)));
@@ -167,6 +168,24 @@ app.get("/api/v1/publico/certificados/:codigo", auth.limitador(30, 60000, "valid
   const cert = await servico.buscarCertificadoPorCodigo(campo(req.params.codigo, 20));
   if (!cert) return res.status(404).json({ erro: "Certificado não encontrado." });
   res.json({ certificado: cert });
+}));
+
+/* ---------- Inscrição de participante ---------- */
+app.post("/api/v1/publico/inscricoes", auth.limitador(Number(process.env.LIMITE_INSCRICOES || 10), 60000, "inscricao"), jsonPequeno, rota(async (req, res) => {
+  const { credencial, ...dados } = req.body || {};
+  res.status(201).json(await servico.inscreverParticipante(dados));
+}));
+// Com Google: só a credencial -> devolve o ingresso se já inscrito, ou 404 pedindo CPF e telefone; com CPF e telefone -> inscreve.
+app.post("/api/v1/publico/inscricoes/google", auth.limitador(Number(process.env.LIMITE_INSCRICOES || 10), 60000, "inscricao-google"), jsonPequeno, rota(async (req, res) => {
+  const conta = await contaGoogle(req);
+  const { credencial, ...dados } = req.body || {};
+  try {
+    if (dados.cpf) { const r = await servico.inscreverParticipante(dados, conta); return res.status(r.jaInscrito ? 200 : 201).json(r); }
+    res.json(await servico.participanteGoogle(conta));
+  } catch (e) {
+    if (e.status === 404 && e.campo === "precisa-cadastro") return res.status(404).json({ erro: e.message, campo: e.campo, google: { nome: conta.nome, email: conta.email } });
+    throw e;
+  }
 }));
 
 /* ---------- Comissão organizadora ---------- */

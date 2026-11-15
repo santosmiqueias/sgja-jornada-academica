@@ -5,7 +5,7 @@
 {
   "name": "Aluno",
   "type": "object",
-  "description": "Participante da Jornada: representante ou coautor de um trabalho. CPF e e-mail são únicos (regra aplicada no servidor, js/servico.js).",
+  "description": "Pessoa inscrita na Jornada: autor de trabalho (representante ou coautor) ou participante que só vai assistir. CPF e e-mail são únicos (regra no servidor, js/servico.js).",
   "properties": {
     "nome": {
       "type": "string",
@@ -71,6 +71,17 @@
     "tokenIngresso": {
       "type": "string",
       "description": "Conteúdo assinado (HMAC) do QR Code de ingresso"
+    },
+    "inscricao": {
+      "type": "string",
+      "enum": [
+        "participante"
+      ],
+      "description": "'participante' = inscrito só para assistir (sem trabalho). Vazio = autor de trabalho"
+    },
+    "googleSub": {
+      "type": "string",
+      "description": "Identificador da conta Google de quem se inscreveu pelo Google. Nunca sai do servidor"
     }
   },
   "required": [

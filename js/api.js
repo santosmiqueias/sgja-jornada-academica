@@ -106,6 +106,8 @@
         return r.membro;
       },
       async cadastrarMembroGoogle(credencial, d) { return (await req("POST", "/comissao/google/cadastro", { credencial, ...d })).membro; },
+      async inscreverParticipante(d) { return req("POST", "/publico/inscricoes", d); },
+      async participanteGoogle(credencial, d) { return req("POST", "/publico/inscricoes/google", { credencial, ...(d || {}) }); },
       async chamada(eventoId) { return req("GET", `/comissao/chamada?eventoId=${encodeURIComponent(eventoId)}`, null, "comissao"); },
       async checkin(dados) { return req("POST", "/comissao/checkin", dados, "comissao"); },
       async removerCheckin(alunoId, eventoId) { return req("POST", "/comissao/checkin/remover", { alunoId, eventoId }, "comissao"); },
@@ -221,6 +223,8 @@
       buscarCertificadoPorCodigo: (codigo) => S.buscarCertificadoPorCodigo(codigo),
 
       cadastrarMembro: (d) => S.cadastrarMembro(d),
+      inscreverParticipante: (d) => S.inscreverParticipante(d),
+      // Na demonstração não há servidor para conferir a conta Google: o botão não aparece.
       async entrarComissao(email, senha) {
         const m = await S.autenticarMembro(email, senha);
         sessao.gravar("sgja_sessao_comissao", { id: m.id, nome: m.nome, expira: Date.now() + ((CFG.comissao && CFG.comissao.sessaoMinutos) || 240) * 60000 });

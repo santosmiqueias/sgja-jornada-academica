@@ -7,7 +7,7 @@
     { href: "index.html", rotulo: "Início", icone: "house" },
     { href: "index.html#programacao", rotulo: "Programação", icone: "calendar3" },
     { href: "index.html#cronograma", rotulo: "Cronograma", icone: "list-check" },
-    { href: "submissao.html", rotulo: "Submissão", icone: "send" },
+    { href: "submissao.html", rotulo: "Inscrição", icone: "person-plus" },
     { href: "certificado.html", rotulo: "Meu certificado", icone: "award" },
     { href: "validar.html", rotulo: "Validar", icone: "patch-check" },
     { href: "checkin.html", rotulo: "Check-in", icone: "qr-code-scan" }
@@ -89,7 +89,7 @@
     const ano = (ev.datasTexto.match(/\d{4}/) || [new Date().getFullYear()])[0];
     const links = [
       ["index.html#sobre", "O evento"], ["index.html#programacao", "Programação"], ["index.html#cronograma", "Cronograma"],
-      ["submissao.html", "Submissão"], ["certificado.html", "Meu certificado"], ["validar.html", "Validar certificado"]
+      ["submissao.html", "Inscrição"], ["certificado.html", "Meu certificado"], ["validar.html", "Validar certificado"]
     ];
     alvo.innerHTML = `
       <footer class="rodape">

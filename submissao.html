@@ -3,30 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src https://accounts.google.com/gsi/">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Submissão de trabalhos · VI Jornada Acadêmica</title>
-  <link rel="icon" href="assets/img/favicon.png?v=202611141554">
+  <title>Inscrição · VI Jornada Acadêmica</title>
+  <link rel="icon" href="assets/img/favicon.png?v=202611152301">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611141554"></script>
+  <script src="js/tema.js?v=202611152301"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611141554">
+  <link rel="stylesheet" href="css/style.css?v=202611152301">
 </head>
 <body>
   <div id="menu"></div>
 
   <div class="cabecalho-pagina">
     <div class="container">
-      <h1 class="fw-bold mb-1">Submissão de trabalhos</h1>
-      <p class="mb-0 opacity-75">Envie seu trabalho para a banca. Se aprovado, você apresenta na VI Jornada Acadêmica.</p>
+      <h1 class="fw-bold mb-1">Inscrição</h1>
+      <p class="mb-0 opacity-75">Submeta um trabalho para a banca ou inscreva-se como participante da VI Jornada Acadêmica.</p>
     </div>
   </div>
 
   <main class="container">
     <div class="row justify-content-center">
       <div class="col-lg-9">
+        <div class="card p-2 mb-4">
+          <ul class="nav nav-pills nav-fill gap-1 seletor-inscricao" role="tablist" aria-label="Tipo de inscrição">
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-submissao" data-bs-toggle="pill" data-bs-target="#painel-submissao" type="button" role="tab" aria-controls="painel-submissao" aria-selected="true"><i class="bi bi-send me-1" aria-hidden="true"></i>Submissão</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="tab-participante" data-bs-toggle="pill" data-bs-target="#painel-participante" type="button" role="tab" aria-controls="painel-participante" aria-selected="false"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>Participante</button></li>
+          </ul>
+        </div>
+        <div class="tab-content">
+        <div class="tab-pane fade show active" id="painel-submissao" role="tabpanel" aria-labelledby="tab-submissao" tabindex="0">
 
         <div class="card p-4 mb-4" id="cartao-edital">
           <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
@@ -188,6 +196,105 @@
             <a class="btn btn-outline-primary" href="submissao.html"><i class="bi bi-plus-lg me-1"></i>Enviar outro trabalho</a>
           </div>
         </div>
+        </div><!-- /painel-submissao -->
+
+        <div class="tab-pane fade" id="painel-participante" role="tabpanel" aria-labelledby="tab-participante" tabindex="0">
+          <div class="card p-4 p-md-5" id="cartao-participante">
+            <h2 class="h5 fw-bold text-navy mb-1">Inscrição de participante</h2>
+            <p class="text-muted small">Para quem vai assistir às apresentações. Você recebe o QR Code de ingresso na hora e, com presença em pelo menos 1 dia do evento, o certificado de 20 horas.</p>
+
+            <div id="part-inicio">
+              <div class="area-google d-none" data-google-part>
+                <div class="botao-google" data-botao-google="signup_with"></div>
+                <p class="small text-muted text-center mt-2 mb-0">Com a conta Google, seu nome e e-mail já vêm preenchidos.</p>
+                <div class="separador-ou"><span>ou preencha</span></div>
+              </div>
+              <form id="form-participante" novalidate>
+                <div class="mb-3">
+                  <label for="p-nome" class="form-label">Nome completo</label>
+                  <input type="text" id="p-nome" class="form-control" autocomplete="name" maxlength="100" required>
+                  <div class="invalid-feedback">Informe nome e sobrenome.</div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="p-cpf" class="form-label">CPF</label>
+                    <input type="text" id="p-cpf" class="form-control" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off" required>
+                    <div class="invalid-feedback">CPF inválido.</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="p-telefone" class="form-label">Telefone</label>
+                    <input type="tel" id="p-telefone" class="form-control" inputmode="numeric" placeholder="(86) 99999-9999" autocomplete="tel-national" required>
+                    <div class="invalid-feedback">Telefone inválido.</div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="p-email" class="form-label">E-mail</label>
+                  <input type="email" id="p-email" class="form-control" inputmode="email" autocomplete="email" maxlength="120" required>
+                  <div class="invalid-feedback">E-mail inválido.</div>
+                </div>
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" id="p-lgpd" required>
+                  <label class="form-check-label small" for="p-lgpd">Autorizo o uso dos meus dados para a inscrição, o controle de presença e o certificado da Jornada, conforme a LGPD e a <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>.</label>
+                  <div class="invalid-feedback">É preciso aceitar para se inscrever.</div>
+                </div>
+                <button class="btn btn-amarelo btn-lg w-100" id="btn-participante"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Inscrever-me</button>
+              </form>
+            </div>
+
+            <!-- Completar a inscrição depois do Google -->
+            <div class="d-none" id="part-google">
+              <p class="small text-muted mb-3">Conta Google: <strong id="pg-email"></strong></p>
+              <form id="form-participante-google" novalidate>
+                <div class="mb-3">
+                  <label for="pg-nome" class="form-label">Nome completo</label>
+                  <input type="text" id="pg-nome" class="form-control" autocomplete="name" maxlength="100" required>
+                  <div class="invalid-feedback">Informe nome e sobrenome.</div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-sm-6">
+                    <label for="pg-cpf" class="form-label">CPF</label>
+                    <input type="text" id="pg-cpf" class="form-control" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off" required>
+                    <div class="invalid-feedback">CPF inválido.</div>
+                  </div>
+                  <div class="col-sm-6">
+                    <label for="pg-telefone" class="form-label">Telefone</label>
+                    <input type="tel" id="pg-telefone" class="form-control" inputmode="numeric" placeholder="(86) 99999-9999" autocomplete="tel-national" required>
+                    <div class="invalid-feedback">Telefone inválido.</div>
+                  </div>
+                </div>
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" id="pg-lgpd" required>
+                  <label class="form-check-label small" for="pg-lgpd">Autorizo o uso dos meus dados para a inscrição, o controle de presença e o certificado da Jornada, conforme a LGPD e a <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>.</label>
+                  <div class="invalid-feedback">É preciso aceitar para se inscrever.</div>
+                </div>
+                <button class="btn btn-amarelo btn-lg w-100" id="btn-participante-google"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Concluir inscrição</button>
+                <button type="button" class="btn btn-link w-100 mt-1" id="btn-participante-cancelar">Cancelar</button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card p-4 p-md-5 d-none" id="cartao-participante-ok" tabindex="-1">
+            <div class="text-center">
+              <h2 class="h3 fw-bold text-navy" id="part-ok-titulo">Inscrição confirmada!</h2>
+              <p class="text-muted mb-0" id="part-ok-texto">Guarde o QR Code abaixo: ele é o seu ingresso.</p>
+            </div>
+            <ol class="small mt-4 mb-0">
+              <li>No dia, faça o credenciamento com este QR Code e leve 1 kg de alimento não perecível.</li>
+              <li>Com presença em pelo menos 1 dia, o certificado de 20 horas fica em <a href="certificado.html">Meu certificado</a> (com CPF e e-mail).</li>
+              <li>Perdeu o QR Code? Ele também está em <a href="certificado.html">Meu certificado</a>.</li>
+            </ol>
+            <div class="ingresso p-4 mx-auto text-center mt-4" style="max-width: 380px;">
+              <div class="small text-uppercase fw-semibold text-muted">VI Jornada Acadêmica · Ingresso</div>
+              <img id="qr-participante" alt="QR Code do seu ingresso" class="my-3">
+              <div class="fw-bold fs-5" id="part-nome"></div>
+              <div class="small text-muted">CPF <span id="part-cpf"></span></div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+              <a class="btn btn-primary" id="btn-baixar-qr-participante" download="ingresso-jornada.png"><i class="bi bi-download me-1"></i>Baixar QR Code</a>
+            </div>
+          </div>
+        </div><!-- /painel-participante -->
+        </div><!-- /tab-content -->
 
       </div>
     </div>
@@ -197,11 +304,12 @@
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
-  <script src="js/config.js?v=202611141554"></script>
-  <script src="js/core.js?v=202611141554"></script>
-  <script src="js/servico.js?v=202611141554"></script>
-  <script src="js/api.js?v=202611141554"></script>
-  <script src="js/ui.js?v=202611141554"></script>
-  <script src="js/submissao.js?v=202611141554"></script>
+  <script src="js/config.js?v=202611152301"></script>
+  <script src="js/core.js?v=202611152301"></script>
+  <script src="js/servico.js?v=202611152301"></script>
+  <script src="js/api.js?v=202611152301"></script>
+  <script src="js/ui.js?v=202611152301"></script>
+  <script src="js/participante.js?v=202611152301"></script>
+  <script src="js/submissao.js?v=202611152301"></script>
 </body>
 </html>

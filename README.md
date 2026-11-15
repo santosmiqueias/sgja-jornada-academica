@@ -7,7 +7,8 @@ Resolve a dor do cliente (Prof. Edson): acabar com Google Forms e listas de pape
 | Módulo | Página | O que faz |
 |---|---|---|
 | Página inicial | `index.html` | Tema, sobre o evento (edital), como funciona, formatos de apresentação, doação de alimento, programação e cronograma oficiais, dúvidas |
-| Submissão | `submissao.html` (menu Submissão) | Representante envia o trabalho: título, vínculo/disciplina (APIExt I–VI, PIC, TCC, outras, externo), formato, **professor(es) orientador(es) (pelo menos 1)**, resumo de até 1.500 caracteres sem contar os espaços (sem citações no corpo do texto), **arquivo (PDF/DOC/DOCX, até 10 MB)** e dados de todos os participantes. Edital para visualizar e baixar |
+| Inscrição → Submissão | `submissao.html` (menu Inscrição, botão Submissão) | Representante envia o trabalho: título, vínculo/disciplina (APIExt I–VI, PIC, TCC, outras, externo), formato, **professor(es) orientador(es) (pelo menos 1)**, resumo de até 1.500 caracteres sem contar os espaços (sem citações no corpo do texto), **arquivo (PDF/DOC/DOCX, até 10 MB)** e dados de todos os participantes. Edital para visualizar e baixar |
+| Inscrição → Participante | `submissao.html#participante` (menu Inscrição, botão Participante) | Quem só vai assistir se inscreve com nome, CPF, e-mail e telefone, ou com a conta Google (completa CPF e telefone). Recebe o QR Code de ingresso na hora; certificado pela presença |
 | Meu certificado | `certificado.html` | Com CPF + e-mail: resultado da banca, parecer, dia e horário da apresentação, ingresso (QR Code) e certificado |
 | Check-in | `checkin.html` (menu Check-in) | Acesso individual da comissão organizadora (cadastro liberado pela organização): chamada, CPF, QR Code |
 | Organização | `painel.html` (link "Painel da organização" no rodapé) | Submissões e banca (baixar arquivo, aprovar/recusar, parecer, sessão, "apresentado"), participantes, certificados, lembretes, comissão, dados |
