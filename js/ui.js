@@ -119,7 +119,7 @@
               <ul class="rodape-lista">
                 <li><a class="rede-social-usuario" href="${insta}" target="_blank" rel="noopener noreferrer" aria-label="Instagram do evento: ${usuario} (abre em nova aba)">${usuario}</a></li>
               </ul>
-              <p class="rodape-texto small mt-3">Novidades, resultado da banca e horários das apresentações.</p>
+              <p class="rodape-texto small mt-3">Acompanhe novidades sobre o evento.</p>
             </div>` : ""}
           </div>
           <div class="rodape-base">
