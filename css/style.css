@@ -224,3 +224,10 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .politica h2:first-of-type { margin-top: .5rem; }
 /* O botão do Google é um iframe com tema claro: sem isto, no modo escuro o navegador pinta um fundo branco atrás dele. */
 .botao-google, .botao-google iframe { color-scheme: light; }
+
+/* Rodapé: redes sociais */
+.rede-social { display: inline-flex; align-items: center; gap: .75rem; max-width: 100%; padding: .55rem 1rem .55rem .55rem; border: 1px solid rgba(255, 255, 255, .18); border-radius: 999px; color: #fff; text-decoration: none; transition: border-color .15s, background-color .15s; }
+.rede-social:hover, .rede-social:focus-visible { border-color: var(--amarelo); background: rgba(255, 255, 255, .06); color: #fff; }
+.rede-social-icone { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 1.2rem; color: #fff; background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.rede-social-nome { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: rgba(255, 255, 255, .55); }
+.rede-social-usuario { display: block; font-weight: 600; font-size: .92rem; overflow-wrap: anywhere; }

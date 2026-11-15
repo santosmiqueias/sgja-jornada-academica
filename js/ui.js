@@ -95,26 +95,33 @@
       <footer class="rodape">
         <div class="container">
           <div class="row gx-4 gy-5">
-            <div class="col-lg-5">
+            <div class="col-lg-4">
               <p class="rodape-rotulo text-amarelo">VI edição</p>
               <p class="rodape-marca">Jornada Acadêmica<span>UNINASSAU</span></p>
               <p class="rodape-texto">${ev.tema ? `“${ev.tema}”. ` : ""}Submissão e apresentação de trabalhos de extensão, pesquisa e TCC em dois dias de programação acadêmica em Teresina, Piauí.</p>
             </div>
-            <div class="col-sm-5 col-lg-3">
+            <div class="col-6 col-md-4 col-lg-2">
               <p class="rodape-rotulo">Navegação</p>
               <ul class="rodape-lista">${links.map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join("")}</ul>
             </div>
-            <div class="col-sm-7 col-lg-4">
+            <div class="col-6 col-md-4 col-lg-3">
               <p class="rodape-rotulo">Organização</p>
               <ul class="rodape-lista">
                 <li>Comissão Organizadora · ${ev.sigla} Teresina</li>
                 <li>${ev.instituicao} — ${ev.cidade}</li>
                 <li>${ev.datasTexto}</li>
-                ${insta ? `<li><a href="${insta}" target="_blank" rel="noopener noreferrer"><i class="bi bi-instagram me-1" aria-hidden="true"></i>${usuario}</a></li>` : ""}
                 <li><a href="privacidade.html">Política de privacidade</a></li>
                 <li><a class="rodape-sublinhado" href="painel.html">Painel da organização</a></li>
               </ul>
             </div>
+            ${insta ? `<div class="col-md-4 col-lg-3">
+              <p class="rodape-rotulo">Redes sociais</p>
+              <a class="rede-social" href="${insta}" target="_blank" rel="noopener noreferrer" aria-label="Instagram do evento: ${usuario} (abre em nova aba)">
+                <span class="rede-social-icone" aria-hidden="true"><i class="bi bi-instagram"></i></span>
+                <span><span class="rede-social-nome">Instagram</span><span class="rede-social-usuario">${usuario}</span></span>
+              </a>
+              <p class="rodape-texto small mt-3">Novidades, resultado da banca e horários das apresentações.</p>
+            </div>` : ""}
           </div>
           <div class="rodape-base">
             <span>© ${ano} ${ev.sigla} · ${ev.cidade.replace(" - ", " — ")}</span>
