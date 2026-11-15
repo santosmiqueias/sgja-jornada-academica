@@ -60,14 +60,14 @@
     const itens = LINKS.map((l) => {
       const ativo = l.href === atual ? " active" : "";
       const aria = ativo ? ' aria-current="page"' : "";
-      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}"><i class="bi bi-${l.icone} me-1" aria-hidden="true"></i>${l.rotulo}</a></li>`;
+      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}">${l.rotulo}</a></li>`;
     }).join("");
     alvo.innerHTML = `
       <nav class="navbar navbar-expand-xl menu-principal" aria-label="Menu principal">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="index.html">
-            <span class="brand-badge">VI</span>
-            <span class="marca-texto"><strong>Jornada Acadêmica</strong><small>UNINASSAU Teresina</small></span>
+            <img class="marca-icone" src="assets/img/favicon.png" alt="" width="40" height="40">
+            <span class="marca-texto"><strong>VI Jornada Acadêmica</strong><small>UNINASSAU Teresina</small></span>
           </a>
           <div class="d-flex align-items-center gap-2 ms-auto ms-xl-2 order-xl-last">
             ${seletorTema()}
@@ -79,6 +79,17 @@
         </div>
       </nav>`;
     atualizarSeletorTema();
+  }
+
+  // Trilha "Início › Página" acima do título das páginas internas.
+  function montarTrilha() {
+    const h1 = document.querySelector(".cabecalho-pagina h1");
+    if (!h1 || document.querySelector(".trilha")) return;
+    const nav = document.createElement("nav");
+    nav.className = "trilha";
+    nav.setAttribute("aria-label", "Você está em");
+    nav.innerHTML = `<ol class="breadcrumb mb-2"><li class="breadcrumb-item"><a href="index.html">Início</a></li><li class="breadcrumb-item active" aria-current="page">${h1.textContent.trim().replace(/[&<>]/g, "")}</li></ol>`;
+    h1.parentElement.insertBefore(nav, h1);
   }
 
   function montarRodape() {
@@ -238,7 +249,7 @@
     alvo.prepend(el);
   }
 
-  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarRodape(); avisoDemonstracao(); });
+  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarTrilha(); montarRodape(); avisoDemonstracao(); });
 
   window.SGJA_UI = { aviso, formatarData, formatarDataHora, carregando, qrDataURL, confirmar };
 })();

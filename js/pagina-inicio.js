@@ -7,31 +7,24 @@
   $("link-edital-ver").href = CFG.submissao.edital;
   $("link-edital-baixar").href = CFG.submissao.edital;
 
-  // Programação oficial (edital, item 5)
+  // Programação oficial (edital, item 5): tabela com o dia em destaque e as atividades de cada dia.
+  const esc = C.escaparHTML;
+  const nomesDia = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
   const porDia = {};
   API.eventos().forEach((e) => (porDia[e.data] = porDia[e.data] || []).push(e));
-  const nomesDia = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-  $("lista-programacao").innerHTML = Object.entries(porDia).map(([data, evs], i) => {
+  const corpoProg = Object.entries(porDia).map(([data, evs], i) => {
     const dia = nomesDia[new Date(data + "T12:00:00").getDay()];
-    const itens = evs.map((e) => `
-      <div class="atividade d-flex gap-3 align-items-baseline">
-        <span class="hora">${C.escaparHTML(e.horario)}</span>
-        <span class="fw-semibold">${C.escaparHTML(e.titulo)}</span>
-      </div>`).join("");
-    return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${i + 1}º dia · ${dia}, ${UI.formatarData(data)}</h3>${itens}</div></div>`;
+    const linhas = evs.map((e) => `<tr><td class="col-hora">${esc(e.horario)}</td><td>${esc(e.titulo)}</td><td class="col-turno">${esc(e.turno || "")}</td></tr>`).join("");
+    return `<tbody><tr class="linha-dia"><th colspan="3" scope="rowgroup">${i + 1}º dia · ${UI.formatarData(data)} (${dia})</th></tr>${linhas}</tbody>`;
   }).join("");
+  $("lista-programacao").innerHTML = `<div class="table-responsive"><table class="table tabela-oficial">
+    <thead><tr><th scope="col">Horário</th><th scope="col">Atividade</th><th scope="col" class="col-turno">Turno</th></tr></thead>${corpoProg}</table></div>`;
 
-  // Cronograma oficial (edital, item 6), no mesmo formato da programação: uma coluna por fase.
-  const porFase = {};
-  (CFG.cronograma || []).forEach((c) => (porFase[c.fase || "Cronograma"] = porFase[c.fase || "Cronograma"] || []).push(c));
-  $("lista-cronograma").innerHTML = Object.entries(porFase).map(([fase, itens]) => {
-    const linhas = itens.map((c) => `
-      <div class="atividade atividade-cronograma d-flex gap-3 align-items-baseline${c.destaque ? " destaque" : ""}">
-        <span class="hora">${C.escaparHTML(c.quando)}</span>
-        <span class="fw-semibold">${C.escaparHTML(c.oque)}</span>
-      </div>`).join("");
-    return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${C.escaparHTML(fase)}</h3>${linhas}</div></div>`;
-  }).join("");
+  // Cronograma oficial (edital, item 6)
+  const linhasCrono = (CFG.cronograma || []).map((c) =>
+    `<tr${c.destaque ? ' class="linha-destaque"' : ""}><td class="col-data">${esc(c.quando)}</td><td>${esc(c.oque)}</td></tr>`).join("");
+  $("lista-cronograma").innerHTML = `<div class="table-responsive"><table class="table tabela-oficial">
+    <thead><tr><th scope="col">Data</th><th scope="col">Etapa</th></tr></thead><tbody>${linhasCrono}</tbody></table></div>`;
 
   try { $("contador-inscritos").textContent = await API.contarInscritos(); }
   catch (_) { $("contador-inscritos").textContent = "—"; }
