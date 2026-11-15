@@ -6,13 +6,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https: http://localhost:3000 http://127.0.0.1:3000; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Meu certificado · VI Jornada Acadêmica</title>
-  <link rel="icon" href="assets/img/favicon.png?v=202611152312">
+  <link rel="icon" href="assets/img/favicon.png?v=202611152318">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611152312"></script>
+  <script src="js/tema.js?v=202611152318"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611152312">
+  <link rel="stylesheet" href="css/style.css?v=202611152318">
 </head>
 <body>
   <div id="menu"></div>
@@ -27,6 +27,20 @@
   <main class="container">
     <div class="row justify-content-center">
       <div class="col-lg-8">
+        <div class="aviso-certificados card p-4 mb-4 d-none" id="aviso-certificados" role="status">
+          <div class="d-flex gap-3 align-items-start">
+            <span class="aviso-certificados-icone" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>
+            <div>
+              <h2 class="h5 fw-bold text-navy mb-1">Certificados disponíveis a partir de <span id="aviso-data"></span></h2>
+              <p class="mb-2">Os certificados de participação são liberados depois do evento. Até lá, consulte abaixo com seu CPF e e-mail:</p>
+              <ul class="small mb-0">
+                <li>o resultado da banca e o dia e horário da sua apresentação (a partir de 05/12/2026);</li>
+                <li>o seu ingresso (QR Code) para o credenciamento;</li>
+                <li>as suas presenças registradas no evento.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
         <div class="card p-4 p-md-5">
           <form id="form-consulta" class="row g-3 align-items-end" novalidate>
             <div class="col-md-5">
@@ -57,13 +71,13 @@
   <script src="vendor/qrcode.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/emailjs.min.js"></script>
-  <script src="js/config.js?v=202611152312"></script>
-  <script src="js/core.js?v=202611152312"></script>
-  <script src="js/servico.js?v=202611152312"></script>
-  <script src="js/api.js?v=202611152312"></script>
-  <script src="js/ui.js?v=202611152312"></script>
-  <script src="js/certificado-base64.js?v=202611152312"></script>
-  <script src="js/certificado-pdf.js?v=202611152312"></script>
-  <script src="js/meu-certificado.js?v=202611152312"></script>
+  <script src="js/config.js?v=202611152318"></script>
+  <script src="js/core.js?v=202611152318"></script>
+  <script src="js/servico.js?v=202611152318"></script>
+  <script src="js/api.js?v=202611152318"></script>
+  <script src="js/ui.js?v=202611152318"></script>
+  <script src="js/certificado-base64.js?v=202611152318"></script>
+  <script src="js/certificado-pdf.js?v=202611152318"></script>
+  <script src="js/meu-certificado.js?v=202611152318"></script>
 </body>
 </html>

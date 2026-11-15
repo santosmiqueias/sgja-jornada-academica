@@ -9,6 +9,15 @@
 
   let atual = null; // { cpf, email, aluno, sit }
 
+  // Antes da data de liberação (js/config.js -> evento.certificadosAPartirDe): aviso no topo e sem botões de certificado.
+  const DATA_LIB = CFG.evento.certificadosAPartirDe;
+  const liberado = () => C.certificadosLiberados(DATA_LIB, CFG.evento.fusoHorario);
+  const dataLiberacaoTexto = () => { const [a, m, d] = String(DATA_LIB).split("-"); return `${d}/${m}/${a}`; };
+  if (!liberado()) {
+    $("aviso-data").textContent = dataLiberacaoTexto();
+    $("aviso-certificados").classList.remove("d-none");
+  }
+
   $("form-consulta").addEventListener("submit", async (e) => {
     e.preventDefault();
     const cpf = $("cpf").value, email = $("email").value.trim();
@@ -57,7 +66,11 @@
         <span class="badge ${foi ? "badge-ok" : "badge-pend"}">${foi ? "Presente" : "Sem registro"}</span></li>`;
     }).join("");
 
-    const blocoCert = sit.aprovado
+    const blocoCert = !liberado()
+      ? `<div class="alert alert-info d-flex gap-2 align-items-center mb-0"><i class="bi bi-calendar-event fs-3" aria-hidden="true"></i><div><strong>Certificado disponível a partir de ${dataLiberacaoTexto()}.</strong><br>${sit.aprovado
+          ? `Sua presença já está registrada (${sit.dias} de ${sit.totalDias} dias). Volte a partir dessa data para baixar o certificado de ${sit.horasCertificado} horas.`
+          : `Para ter o certificado de ${sit.horasCertificado} horas, participe de pelo menos ${sit.minimo} dia do evento (09 e 10/12) e faça o check-in com o QR Code ao lado.`}</div></div>`
+      : sit.aprovado
       ? `<div class="alert alert-success d-flex gap-2 align-items-center"><i class="bi bi-award fs-3"></i><div><strong>Parabéns! Certificado liberado.</strong><br>Você participou de ${sit.dias} de ${sit.totalDias} dias do evento (${sit.feitas} atividades). Seu certificado é de ${sit.horasCertificado} horas.</div></div>
          <div class="d-flex flex-wrap gap-2">
            <button class="btn btn-amarelo btn-lg" id="btn-baixar"><i class="bi bi-file-earmark-pdf me-1"></i>Baixar certificado (PDF)</button>
@@ -70,7 +83,7 @@
         <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
           <div class="flex-grow-1">
             <h2 class="h4 fw-bold text-navy mb-1">${esc(aluno.nome)}</h2>
-            <div class="text-muted small">${esc(aluno.curso)} · Matrícula ${esc(aluno.matricula)} · CPF ${C.mascararCPFParaExibicao(aluno.cpf)}</div>
+            <div class="text-muted small">${[aluno.curso ? esc(aluno.curso) : "", aluno.matricula ? `Matrícula ${esc(aluno.matricula)}` : "", `CPF ${C.mascararCPFParaExibicao(aluno.cpf)}`].filter(Boolean).join(" · ")}</div>
             <div class="mt-3 d-flex justify-content-between small fw-semibold"><span>Dias com presença</span><span>${sit.dias} de ${sit.totalDias} · ${sit.feitas} atividade(s)</span></div>
             <div class="progress mt-1" role="progressbar" aria-label="Dias com presença" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar ${sit.aprovado ? "bg-success" : ""}" style="width:${pct}%"></div></div>
             <div class="small text-muted mt-1">Critério: participar de pelo menos ${sit.minimo} dia do evento. Certificado de ${sit.horasCertificado} horas.</div>
@@ -87,7 +100,7 @@
         <ul class="list-group list-group-flush">${linhas}</ul>
       </div>`;
     if (aluno.tokenIngresso) $("qr").src = UI.qrDataURL(aluno.tokenIngresso, 300);
-    if (sit.aprovado) {
+    if (sit.aprovado && liberado()) {
       $("btn-baixar").addEventListener("click", baixar);
       $("btn-email").addEventListener("click", enviarEmail);
     }

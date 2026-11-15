@@ -304,7 +304,17 @@
         return { aluno: alunoDono(a), situacao: await situacaoDe(a.id), trabalhos: (await trabalhosDe(a.id)).map(trabalhoParticipante) };
       },
 
+      // Antes da data de liberação (config.evento.certificadosAPartirDe) o participante não emite nem recebe o certificado.
+      certificadosLiberados() { return C.certificadosLiberados(CFG.evento.certificadosAPartirDe, CFG.evento.fusoHorario); },
+      exigirCertificadosLiberados() {
+        if (!S.certificadosLiberados()) {
+          const [a, m, d] = String(CFG.evento.certificadosAPartirDe).split("-");
+          throw new ErroNegocio(`Os certificados ficam disponíveis a partir de ${d}/${m}/${a}.`, null, 403);
+        }
+      },
+
       async emitirCertificadoParticipante(cpf, email) {
+        S.exigirCertificadosLiberados();
         const a = await identificarParticipante(cpf, email);
         return S.emitirCertificado(a.id);
       },

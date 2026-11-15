@@ -18,6 +18,9 @@ window.SGJA_CONFIG = {
     // Critério do certificado: participar de pelo menos 1 dia do evento (check-in em alguma
     // atividade daquele dia). Quem cumpre recebe o certificado de 20 horas (carga total do evento).
     diasMinimosCertificado: 1,
+    // Certificados liberados para os participantes a partir deste dia (00:00, horário de Teresina). Edital: a partir de 14/12/2026.
+    // Antes disso, "Meu certificado" mostra um aviso e o servidor recusa a emissão pública.
+    certificadosAPartirDe: "2026-12-14",
     instagram: "https://www.instagram.com/vi_jornadaacademicauninassau/",
     doacao: "1 kg de alimento não perecível, que será doado a uma instituição beneficente",
     fusoHorario: "-03:00", // Teresina (sem horário de verão)

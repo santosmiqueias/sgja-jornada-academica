@@ -149,3 +149,10 @@ test("Resumo: conta caracteres sem os espaços e quebras de linha", () => {
   assert.equal(palavras.length, 1799);
   assert.equal(C.contarSemEspacos(palavras), 1500);
 });
+
+test("Certificados: liberados só a partir da data (00:00 no horário de Teresina)", () => {
+  assert.equal(C.certificadosLiberados("2026-12-14", "-03:00", new Date("2026-12-13T23:59:59-03:00")), false);
+  assert.equal(C.certificadosLiberados("2026-12-14", "-03:00", new Date("2026-12-14T00:00:00-03:00")), true);
+  assert.equal(C.certificadosLiberados("2026-12-14", "-03:00", new Date("2026-12-14T02:59:00Z")), false); // 23:59 em Teresina
+  assert.equal(C.certificadosLiberados("", "-03:00", new Date("2000-01-01")), true); // sem data: liberado
+});

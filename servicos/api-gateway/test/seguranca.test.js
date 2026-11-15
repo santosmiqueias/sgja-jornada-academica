@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-seg-"));
 Object.assign(process.env, {
   DADOS_DIR: dir, TOKEN_SEGREDO: crypto.randomBytes(32).toString("hex"), ASSINATURA_SEGREDO: crypto.randomBytes(32).toString("hex"),
-  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20", LIMITE_LOGIN_GOOGLE: "50", LIMITE_CONSULTAS: "50"
+  ORIGENS_PERMITIDAS: "https://site.exemplo", ALLOW_DEMO: "true", ALLOW_RESET: "false", LEMBRETES_ATIVO: "false", LIMITE_SUBMISSOES: "20", LIMITE_LOGIN_GOOGLE: "50", LIMITE_CONSULTAS: "50", CERTIFICADOS_A_PARTIR_DE: "2026-01-01"
 });
 delete process.env.BASE44_APP_ID; delete process.env.SMTP_USER;
 const auth = require("../auth");
@@ -392,4 +392,18 @@ test("Participante pelo Google: pede CPF e telefone, inscreve e devolve o ingres
   // O identificador do Google não sai no painel.
   const j = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados.alunos.find((a) => a.cpf === "34567891228");
   assert.ok(j && !("googleSub" in j));
+});
+
+test("Certificados: antes da data de liberação o participante não emite nem recebe por e-mail", async () => {
+  const antes = process.env.CERTIFICADOS_A_PARTIR_DE;
+  process.env.CERTIFICADOS_A_PARTIR_DE = "2099-12-14";
+  try {
+    const cred = { cpf: alunoBase(0).cpf, email: alunoBase(0).email };
+    const r = await chamar("POST", "/publico/certificado", cred);
+    assert.equal(r.status, 403);
+    assert.match(r.dados.erro, /a partir de 14\/12\/2099/);
+    assert.equal((await chamar("POST", "/publico/certificado/email", { ...cred, pdfBase64: "JVBERi0=" })).status, 403);
+    // A consulta (resultado, ingresso, presença) continua funcionando.
+    assert.equal((await chamar("POST", "/publico/participante", cred)).status, 200);
+  } finally { process.env.CERTIFICADOS_A_PARTIR_DE = antes; }
 });

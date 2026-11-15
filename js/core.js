@@ -191,6 +191,13 @@
     return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
+  // Certificados liberados a partir de uma data (00:00 no fuso do evento). Sem data configurada: liberado.
+  function certificadosLiberados(dataISO, fuso, agora) {
+    if (!dataISO) return true;
+    const inicio = new Date(`${dataISO}T00:00:00${fuso || "-03:00"}`);
+    return (agora || new Date()).getTime() >= inicio.getTime();
+  }
+
   // Edital/coordenação: o resumo tem até 1.500 caracteres SEM contar os espaços (nem quebras de linha).
   function contarSemEspacos(texto) {
     return String(texto == null ? "" : texto).replace(/\s/g, "").length;
@@ -264,6 +271,6 @@
     sha256Hex, gerarTokenIngresso, lerTokenIngresso, gerarCodigoCertificado,
     inicioEvento, eventosParaLembrete, telefoneE164, mensagemLembrete, recebeLembrete, validarAtividades,
     validarSenha, gerarSalt, hashSenha,
-    escaparHTML, gerarId, contarSemEspacos
+    escaparHTML, gerarId, contarSemEspacos, certificadosLiberados
   };
 });

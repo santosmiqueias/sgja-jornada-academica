@@ -46,6 +46,11 @@ function carregarConfig() {
   return ctx.window.SGJA_CONFIG;
 }
 const CFG = carregarConfig();
+// Data de liberação dos certificados: a do js/config.js, ou CERTIFICADOS_A_PARTIR_DE no .env (ex.: para testes).
+{
+  const original = CFG.evento.certificadosAPartirDe;
+  Object.defineProperty(CFG.evento, "certificadosAPartirDe", { enumerable: true, get: () => process.env.CERTIFICADOS_A_PARTIR_DE || original });
+}
 const SEGREDO = process.env.ASSINATURA_SEGREDO || "";
 if (SEGREDO.length < 32) throw new Error("Defina ASSINATURA_SEGREDO no .env com pelo menos 32 caracteres aleatórios.");
 auth.assinarToken({ teste: 1 }, 1); // falha cedo se TOKEN_SEGREDO estiver ausente
@@ -160,6 +165,7 @@ app.post("/api/v1/publico/certificado", limiteConsulta, jsonPequeno, rota(async 
 }));
 
 app.post("/api/v1/publico/certificado/email", auth.limitador(3, 60000, "email-participante"), jsonPdf, rota(async (req, res) => {
+  servico.exigirCertificadosLiberados();
   const aluno = await comCredenciais(req, (cpf, email) => servico.identificarParticipante(cpf, email));
   res.json(await enviarCertificado(aluno, req.body && req.body.pdfBase64));
 }));
