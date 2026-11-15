@@ -21,9 +21,17 @@
     return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${i + 1}º dia · ${dia}, ${UI.formatarData(data)}</h3>${itens}</div></div>`;
   }).join("");
 
-  // Cronograma oficial (edital, item 6)
-  $("lista-cronograma").innerHTML = (CFG.cronograma || []).map((c) =>
-    `<li class="${/Jornada Acadêmica/.test(c.oque) ? "destaque" : ""}"><span class="quando">${C.escaparHTML(c.quando)}</span>${C.escaparHTML(c.oque)}</li>`).join("");
+  // Cronograma oficial (edital, item 6), no mesmo formato da programação: uma coluna por fase.
+  const porFase = {};
+  (CFG.cronograma || []).forEach((c) => (porFase[c.fase || "Cronograma"] = porFase[c.fase || "Cronograma"] || []).push(c));
+  $("lista-cronograma").innerHTML = Object.entries(porFase).map(([fase, itens]) => {
+    const linhas = itens.map((c) => `
+      <div class="atividade atividade-cronograma d-flex gap-3 align-items-baseline${c.destaque ? " destaque" : ""}">
+        <span class="hora">${C.escaparHTML(c.quando)}</span>
+        <span class="fw-semibold">${C.escaparHTML(c.oque)}</span>
+      </div>`).join("");
+    return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${C.escaparHTML(fase)}</h3>${linhas}</div></div>`;
+  }).join("");
 
   try { $("contador-inscritos").textContent = await API.contarInscritos(); }
   catch (_) { $("contador-inscritos").textContent = "—"; }

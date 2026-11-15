@@ -93,11 +93,13 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .tema-rotulo { display: inline-block; background: var(--navy); color: #fff; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .5rem; border-radius: 4px; margin-right: .35rem; vertical-align: middle; }
 .passo-titulo { font-size: 1.125rem; margin-bottom: .5rem; }
 .passo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); font-weight: 800; font-size: 1.2rem; }
-.cronograma { list-style: none; padding: 0; margin: 0; border-left: 4px solid var(--amarelo); }
-.cronograma li { position: relative; padding: .2rem 0 1.1rem 1.4rem; }
-.cronograma li::before { content: ""; position: absolute; left: -10px; top: .45rem; width: 16px; height: 16px; border-radius: 50%; background: var(--superficie); border: 4px solid var(--destaque); }
-.cronograma .quando { font-weight: 700; color: var(--destaque); display: block; }
-.cronograma li.destaque .quando { color: var(--vermelho); }
+/* Cronograma: mesmo formato da programação; a data ocupa o lugar do horário */
+.atividade-cronograma .hora { min-width: 9.5rem; }
+.atividade-cronograma.destaque { box-shadow: inset 4px 0 0 var(--vermelho), 0 2px 8px rgba(11, 42, 111, .06); }
+[data-bs-theme="dark"] .atividade-cronograma.destaque { box-shadow: inset 4px 0 0 var(--vermelho); }
+.atividade-cronograma.destaque .hora { color: var(--vermelho); }
+[data-bs-theme="dark"] .atividade-cronograma.destaque .hora { color: #ff7b80; }
+@media (max-width: 420px) { .atividade-cronograma { flex-direction: column; gap: .15rem !important; } .atividade-cronograma .hora { min-width: 0; } }
 
 /* Doação de alimento */
 .doacao { background: #fff6cc; border: 1px solid #f0dc8a; border-radius: 14px; }

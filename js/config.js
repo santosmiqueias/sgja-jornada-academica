@@ -39,14 +39,14 @@ window.SGJA_CONFIG = {
     { id: "EV06", titulo: "Encerramento e premiação dos trabalhos", data: "2026-12-10", turno: "Noite", horario: "20:30" }
   ],
 
-  // Cronograma oficial (edital, item 6).
+  // Cronograma oficial (edital, item 6). "fase" separa as colunas na página inicial.
   cronograma: [
-    { quando: "13/11/2026", oque: "Lançamento do edital" },
-    { quando: "16 a 30/11/2026", oque: "Período de submissão de trabalhos" },
-    { quando: "05/12/2026", oque: "Divulgação dos trabalhos selecionados" },
-    { quando: "05/12/2026", oque: "Definição de dia e horário das apresentações" },
-    { quando: "09 e 10/12/2026", oque: "VI Jornada Acadêmica" },
-    { quando: "A partir de 14/12/2026", oque: "Certificados disponíveis no site do evento" }
+    { fase: "Antes do evento", quando: "13/11/2026", oque: "Lançamento do edital" },
+    { fase: "Antes do evento", quando: "16 a 30/11/2026", oque: "Período de submissão de trabalhos" },
+    { fase: "Antes do evento", quando: "05/12/2026", oque: "Divulgação dos trabalhos selecionados" },
+    { fase: "Antes do evento", quando: "05/12/2026", oque: "Definição de dia e horário das apresentações" },
+    { fase: "Evento e certificados", quando: "09 e 10/12/2026", oque: "VI Jornada Acadêmica", destaque: true },
+    { fase: "Evento e certificados", quando: "A partir de 14/12/2026", oque: "Certificados disponíveis no site do evento" }
   ],
 
   // Submissão de trabalhos (edital, itens 1 e 2).
