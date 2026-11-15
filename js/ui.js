@@ -116,10 +116,9 @@
             </div>
             ${insta ? `<div class="col-md-4 col-lg-3">
               <p class="rodape-rotulo">Redes sociais</p>
-              <a class="rede-social" href="${insta}" target="_blank" rel="noopener noreferrer" aria-label="Instagram do evento: ${usuario} (abre em nova aba)">
-                <span class="rede-social-icone" aria-hidden="true"><i class="bi bi-instagram"></i></span>
-                <span><span class="rede-social-nome">Instagram</span><span class="rede-social-usuario">${usuario}</span></span>
-              </a>
+              <ul class="rodape-lista">
+                <li><a class="rede-social-usuario" href="${insta}" target="_blank" rel="noopener noreferrer" aria-label="Instagram do evento: ${usuario} (abre em nova aba)">${usuario}</a></li>
+              </ul>
               <p class="rodape-texto small mt-3">Novidades, resultado da banca e horários das apresentações.</p>
             </div>` : ""}
           </div>
