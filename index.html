@@ -7,14 +7,14 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>VI Jornada Acadêmica da UNINASSAU Teresina</title>
   <meta name="description" content="Submissão e apresentação de trabalhos na VI Jornada Acadêmica da UNINASSAU Teresina — 09 e 10 de dezembro de 2026. Tema: Conhecimento que conecta pessoas e transforma realidades.">
-  <link rel="icon" href="assets/img/favicon.png?v=202611160033">
+  <link rel="icon" href="assets/img/favicon.png?v=202611160049">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611160033"></script>
+  <script src="js/tema.js?v=202611160049"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611160033">
+  <link rel="stylesheet" href="css/style.css?v=202611160049">
 </head>
 <body>
   <div id="menu"></div>
@@ -22,8 +22,23 @@
   <header class="hero py-4 py-lg-5">
     <div class="container">
       <div class="row align-items-center g-4">
-        <div class="col-lg-7 text-center">
-          <img class="logo" src="assets/img/logo-jornada.jpg?v=202611160033" alt="Logo da 6ª Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI" width="1600" height="900">
+        <div class="col-lg-7">
+          <section class="card local-evento overflow-hidden" aria-labelledby="local-titulo">
+            <div class="local-foto">
+              <img id="foto-local" src="assets/img/uninassau-joquei.jpg?v=202611160049" alt="Fachada da UNINASSAU Teresina, unidade Jóquei Clube" width="1280" height="720" loading="lazy">
+              <div class="local-foto-reserva" id="foto-reserva" hidden><i class="bi bi-building" aria-hidden="true"></i><span>UNINASSAU Teresina · Jóquei</span></div>
+              <a class="local-pino" id="local-pino" target="_blank" rel="noopener noreferrer" title="Ver localização no mapa" aria-label="Ver a localização da UNINASSAU Jóquei no mapa (abre em nova aba)"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i></a>
+            </div>
+            <div class="local-info p-4">
+              <p class="local-rotulo mb-1"><i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>Local do evento</p>
+              <h2 class="h4 fw-bold text-navy mb-1" id="local-titulo"></h2>
+              <p class="mb-3 text-muted" id="local-endereco"></p>
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-sm" id="local-rota" target="_blank" rel="noopener noreferrer"><i class="bi bi-sign-turn-right me-1" aria-hidden="true"></i>Como chegar</a>
+                <a class="btn btn-outline-primary btn-sm" id="local-mapa-link" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt me-1" aria-hidden="true"></i>Ver no mapa</a>
+              </div>
+            </div>
+          </section>
         </div>
         <div class="col-lg-5">
           <span class="badge rounded-pill text-bg-warning mb-2"><i class="bi bi-calendar-event me-1"></i>09 e 10 de dezembro de 2026</span>
@@ -197,11 +212,11 @@
   <div id="rodape"></div>
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js?v=202611160033"></script>
-  <script src="js/core.js?v=202611160033"></script>
-  <script src="js/servico.js?v=202611160033"></script>
-  <script src="js/api.js?v=202611160033"></script>
-  <script src="js/ui.js?v=202611160033"></script>
-  <script src="js/pagina-inicio.js?v=202611160033"></script>
+  <script src="js/config.js?v=202611160049"></script>
+  <script src="js/core.js?v=202611160049"></script>
+  <script src="js/servico.js?v=202611160049"></script>
+  <script src="js/api.js?v=202611160049"></script>
+  <script src="js/ui.js?v=202611160049"></script>
+  <script src="js/pagina-inicio.js?v=202611160049"></script>
 </body>
 </html>

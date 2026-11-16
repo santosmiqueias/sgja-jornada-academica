@@ -3,6 +3,21 @@
   const $ = (id) => document.getElementById(id);
 
   $("local-evento").textContent = CFG.evento.local;
+
+  // Local do evento: mapa do OpenStreetMap com marcador, endereço e links de rota
+  const L = CFG.evento.localDetalhe;
+  if (L) {
+    $("local-titulo").textContent = L.unidade;
+    $("local-endereco").innerHTML = `${C.escaparHTML(L.endereco)}<br>${C.escaparHTML(L.cidade)}`;
+    const mapa = `https://www.google.com/maps/search/?api=1&query=${L.lat},${L.lon}`;
+    $("local-mapa-link").href = mapa;
+    $("local-pino").href = mapa;
+    // Sem a foto em assets/img/uninassau-joquei.jpg, mostra um painel no lugar (nunca imagem quebrada)
+    const foto = $("foto-local");
+    const semFoto = () => { foto.hidden = true; $("foto-reserva").hidden = false; };
+    if (foto.complete && !foto.naturalWidth) semFoto(); else foto.addEventListener("error", semFoto);
+    $("local-rota").href = `https://www.google.com/maps/dir/?api=1&destination=${L.lat},${L.lon}`;
+  }
   $("regra-minimo").textContent = `pelo menos ${API.diasMinimos()} dia do evento`;
   $("link-edital-ver").href = CFG.submissao.edital;
   $("link-edital-baixar").href = CFG.submissao.edital;

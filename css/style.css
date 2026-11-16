@@ -233,3 +233,17 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 /* Meu certificado: aviso antes da liberação */
 .aviso-certificados { border-left: 5px solid var(--amarelo); }
 .aviso-certificados-icone { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(245, 196, 0, .2); color: var(--destaque); font-size: 1.4rem; }
+
+/* Menu: arte do evento à esquerda de "Jornada Acadêmica" */
+.marca-logo { display: inline-grid; place-items: center; height: 44px; padding: 2px 4px; border-radius: 6px; background: #fff; flex-shrink: 0; }
+.marca-logo img { height: 40px; width: auto; display: block; }
+
+/* Página inicial: card do local do evento (foto + endereço + localização) */
+.local-evento { border-top: 5px solid var(--amarelo); }
+.local-foto { position: relative; aspect-ratio: 16 / 9; background: var(--navy); }
+.local-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.local-foto-reserva { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; color: rgba(255, 255, 255, .85); background: linear-gradient(135deg, var(--navy) 0%, #1747b5 100%); font-weight: 600; }
+.local-foto-reserva i { font-size: 3rem; color: var(--amarelo); }
+.local-pino { position: absolute; right: 1rem; bottom: 1rem; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--amarelo); color: var(--navy); font-size: 1.5rem; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); transition: transform .15s; }
+.local-pino:hover, .local-pino:focus-visible { transform: scale(1.08); color: var(--navy); }
+.local-rotulo { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-suave, #5b6b8c); }

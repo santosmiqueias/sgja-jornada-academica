@@ -14,6 +14,15 @@ window.SGJA_CONFIG = {
     datasTexto: "09 e 10 de dezembro de 2026",
     dataEmissao: "10 de dezembro de 2026",
     local: "UNINASSAU Teresina",
+    // Local do evento (card com mapa na página inicial). Endereço do MEC (Prédio I – Jóquei Clube);
+    // ponto do mapa: "Faculdade Uninassau FAP" no OpenStreetMap. Confirme com a coordenação.
+    localDetalhe: {
+      unidade: "UNINASSAU Teresina — Unidade Jóquei Clube",
+      endereco: "Av. Jóquei Clube, 710 — Jóquei",
+      cidade: "Teresina - PI · CEP 64049-240",
+      lat: -5.0755978,
+      lon: -42.7903081
+    },
     cargaHorariaTotal: 20,
     // Critério do certificado: participar de pelo menos 1 dia do evento (check-in em alguma
     // atividade daquele dia). Quem cumpre recebe o certificado de 20 horas (carga total do evento).
