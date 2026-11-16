@@ -13,7 +13,7 @@
   }
 
   if (API.backend === "servidor") {
-    document.querySelector('label[for="pin"]').textContent = "Senha do professor";
+    document.querySelector('label[for="pin"]').textContent = "Senha da organização";
     $("pin").removeAttribute("inputmode"); $("pin").removeAttribute("maxlength");
     const dica = $("pin").parentElement.querySelector(".form-text"); if (dica) dica.remove();
   }
