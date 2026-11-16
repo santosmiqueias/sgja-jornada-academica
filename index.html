@@ -7,100 +7,117 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>VI Jornada Acadêmica da UNINASSAU Teresina</title>
   <meta name="description" content="Submissão e apresentação de trabalhos na VI Jornada Acadêmica da UNINASSAU Teresina — 09 e 10 de dezembro de 2026. Tema: Conhecimento que conecta pessoas e transforma realidades.">
-  <link rel="icon" href="assets/img/favicon.png?v=202611152356">
+  <link rel="icon" href="assets/img/favicon.png?v=202611160005">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611152356"></script>
+  <script src="js/tema.js?v=202611160005"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611152356">
+  <link rel="stylesheet" href="css/style.css?v=202611160005">
 </head>
 <body>
   <div id="menu"></div>
 
   <header class="hero">
-    <div class="container">
-      <div class="row gx-4 gy-4 align-items-stretch">
-        <div class="col-lg-8">
-          <img class="hero-arte" src="assets/img/logo-jornada.jpg?v=202611152356" alt="Arte da VI Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI. Ensino, pesquisa, extensão, inovação e transformação." width="1600" height="900">
-        </div>
-        <div class="col-lg-4">
-          <aside class="ficha" aria-labelledby="ficha-titulo">
-            <h1 class="ficha-titulo" id="ficha-titulo">VI Jornada Acadêmica da UNINASSAU Teresina</h1>
-            <p class="ficha-tema">Tema: “Conhecimento que conecta pessoas e transforma realidades”</p>
-            <dl class="ficha-dados">
-              <dt>Data</dt><dd>09 e 10 de dezembro de 2026</dd>
-              <dt>Local</dt><dd id="local-evento"></dd>
-              <dt>Submissão</dt><dd>16 a 30 de novembro de 2026</dd>
-              <dt>Certificado</dt><dd>20 horas, a partir de 14/12</dd>
-              <dt>Inscritos</dt><dd><span id="contador-inscritos">—</span> até agora</dd>
-            </dl>
-            <a href="submissao.html" class="btn btn-primary w-100">Fazer inscrição</a>
-            <a href="certificado.html" class="btn btn-outline-primary w-100 mt-2">Consultar meu certificado</a>
-          </aside>
-        </div>
+    <div class="container hero-conteudo">
+      <p class="hero-saudacao">09 e 10 de dezembro de 2026 · <span id="local-evento"></span></p>
+      <h1 class="hero-titulo">VI Jornada Acadêmica.<span>UNINASSAU Teresina</span></h1>
+      <p class="hero-tema">Conhecimento que conecta pessoas e transforma realidades</p>
+      <p class="hero-texto">Apresente seu trabalho de extensão, pesquisa ou TCC, ou participe como ouvinte. Certificado de 20 horas para quem participar de pelo menos um dia. <span class="hero-inscritos"><span id="contador-inscritos">—</span> inscritos até agora.</span></p>
+      <div class="hero-botoes">
+        <a href="submissao.html" class="btn-contorno">Fazer inscrição <i class="bi bi-chevron-double-right" aria-hidden="true"></i></a>
+        <a class="btn-contorno" id="link-edital-baixar" download="edital-6-jornada-academica-2026.pdf">Baixar edital <i class="bi bi-download" aria-hidden="true"></i></a>
       </div>
     </div>
   </header>
 
-  <main class="container pagina-inicial">
-    <div class="row gx-4 gy-4 gx-xl-5">
-      <div class="col-lg-8">
+  <main class="pagina-inicial">
 
-        <section id="sobre" class="bloco texto-justificado">
-          <h2>Apresentação</h2>
+    <section id="sobre" class="secao container">
+      <h2 class="titulo-secao"><span class="num">1.</span> Sobre o evento</h2>
+      <div class="row gx-4 gy-4 gx-lg-5 align-items-center">
+        <div class="col-lg-7 texto-justificado">
           <p>Em 2026, a UNINASSAU Teresina realiza a <strong>VI Jornada Acadêmica</strong>, com o tema <strong>“Conhecimento que conecta pessoas e transforma realidades”</strong>, nos dias 09 e 10 de dezembro. O edital estabelece as normas de inscrição, submissão e apresentação de trabalhos.</p>
           <p>A Jornada integra a estratégia de ampliação das atividades acadêmicas internas e externas da UNINASSAU Teresina, com o objetivo de ampliar e intensificar sua inserção na comunidade científica local e elevar o padrão da formação acadêmica dos alunos, em ligação com a sociedade.</p>
-          <p>É um espaço para dar visibilidade às atividades de extensão e a outros trabalhos científicos, fortalecendo a formação acadêmica e profissional. O evento estimula a produção de conhecimento, a formação de recursos humanos e a troca de experiências entre alunos das diversas áreas dos cursos de graduação da unidade.</p>
-        </section>
+          <p>É um espaço para dar visibilidade às atividades de extensão e a outros trabalhos científicos. <strong>Podem participar estudantes e profissionais de diversas áreas, sem taxa de inscrição</strong>; a participação é obrigatória para os alunos das disciplinas de APIExt I a VI.</p>
+          <p class="mb-0"><a class="link-mono" id="link-edital-ver" target="_blank" rel="noopener">Ler o edital completo (PDF) <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></p>
+        </div>
+        <div class="col-lg-5">
+          <figure class="moldura-arte mb-0">
+            <img src="assets/img/logo-jornada.jpg?v=202611160005" alt="Arte da VI Jornada Acadêmica — Centro Universitário Maurício de Nassau, Teresina-PI" width="1600" height="900">
+          </figure>
+        </div>
+      </div>
+    </section>
 
-        <section id="como-funciona" class="bloco">
-          <h2>Como participar</h2>
-          <ol class="lista-passos">
-            <li><strong>Inscrição ou submissão (16 a 30/11).</strong> Quem vai apresentar trabalho: o representante envia o resumo (até 1.500 caracteres, sem contar os espaços), o arquivo e os dados de todos os participantes. Quem vai só assistir: faz a inscrição como participante.</li>
-            <li><strong>Avaliação da banca.</strong> Professores da instituição analisam os trabalhos. Os selecionados e o dia e horário de cada apresentação são divulgados em 05/12, no site e no Instagram.</li>
-            <li><strong>Credenciamento e check-in.</strong> No evento, apresente o QR Code do seu ingresso e entregue 1 kg de alimento não perecível. A comissão organizadora registra a sua presença.</li>
-            <li><strong>Certificado.</strong> Com presença em <strong id="regra-minimo">pelo menos 1 dia do evento</strong>, o certificado de 20 horas fica disponível a partir de 14/12, em <a href="certificado.html">Meu certificado</a>.</li>
-          </ol>
-        </section>
+    <section id="como-funciona" class="secao container">
+      <h2 class="titulo-secao"><span class="num">2.</span> Como participar</h2>
+      <ol class="linha-tempo">
+        <li>
+          <span class="etiqueta">Etapa 1</span>
+          <p class="quando">16 a 30 de novembro</p>
+          <h3>Inscrição ou submissão</h3>
+          <p>Quem vai apresentar: o representante envia o resumo (até 1.500 caracteres, sem contar os espaços), o arquivo e os dados de todos os participantes. Quem vai só assistir: faz a inscrição como participante.</p>
+        </li>
+        <li>
+          <span class="etiqueta">Etapa 2</span>
+          <p class="quando">até 05 de dezembro</p>
+          <h3>Avaliação da banca</h3>
+          <p>Professores da instituição analisam os trabalhos. Os selecionados e o dia e horário de cada apresentação saem no site e no Instagram.</p>
+        </li>
+        <li>
+          <span class="etiqueta">Etapa 3</span>
+          <p class="quando">09 e 10 de dezembro</p>
+          <h3>Credenciamento e check-in</h3>
+          <p>Apresente o QR Code do seu ingresso e entregue <strong>1 kg de alimento não perecível</strong>, que será doado a uma instituição de trabalho social. A comissão registra a sua presença.</p>
+        </li>
+        <li>
+          <span class="etiqueta">Etapa 4</span>
+          <p class="quando">a partir de 14 de dezembro</p>
+          <h3>Certificado</h3>
+          <p>Com presença em <strong id="regra-minimo">pelo menos 1 dia do evento</strong>, o certificado de 20 horas fica disponível em <a href="certificado.html">Meu certificado</a>.</p>
+        </li>
+      </ol>
+    </section>
 
-        <section id="formatos" class="bloco">
-          <h2>Formatos de apresentação</h2>
-          <div class="table-responsive">
-            <table class="table tabela-oficial align-top">
-              <thead><tr><th scope="col">Formato</th><th scope="col">Obrigatório para</th><th scope="col">Orientações</th></tr></thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Pôster/Banner</th>
-                  <td>APIExt I, III e V</td>
-                  <td>Apresentação de 10 minutos, avaliada por pelo menos um professor ou profissional da área. Posicione o banner pelo menos 30 minutos antes do turno (manhã até 8h; noite até 18h) e siga os modelos divulgados pela organização.</td>
-                </tr>
-                <tr>
-                  <th scope="row">Comunicação oral</th>
-                  <td>APIExt II, IV e VI</td>
-                  <td>Apresentação de 10 minutos, avaliada por pelo menos um professor ou profissional da área. Entregue o material pelo menos 10 minutos antes do início da sessão e leve o próprio computador com saída HDMI.</td>
-                </tr>
-              </tbody>
-            </table>
+    <section id="formatos" class="secao container">
+      <h2 class="titulo-secao"><span class="num">3.</span> Formatos de apresentação</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="cartao-item h-100">
+            <i class="bi bi-easel icone" aria-hidden="true"></i>
+            <h3>Pôster/Banner</h3>
+            <p class="sub">Obrigatório para APIExt I, III e V</p>
+            <p>Apresentação de 10 minutos, avaliada por pelo menos um professor ou profissional da área. Posicione o banner pelo menos 30 minutos antes do turno (manhã até 8h; noite até 18h).</p>
           </div>
-          <p class="nota">PIC, outras disciplinas e trabalhos externos escolhem o formato na submissão. Os melhores trabalhos de cada curso e modalidade recebem menção honrosa.</p>
-        </section>
+        </div>
+        <div class="col-md-6">
+          <div class="cartao-item h-100">
+            <i class="bi bi-mic icone" aria-hidden="true"></i>
+            <h3>Comunicação oral</h3>
+            <p class="sub">Obrigatória para APIExt II, IV e VI</p>
+            <p>Apresentação de 10 minutos, avaliada por pelo menos um professor ou profissional da área. Entregue o material 10 minutos antes da sessão e leve o próprio computador com saída HDMI.</p>
+          </div>
+        </div>
+      </div>
+      <p class="nota mt-3">PIC, outras disciplinas e trabalhos externos escolhem o formato na submissão. Os melhores trabalhos de cada curso e modalidade recebem menção honrosa.</p>
+    </section>
 
-        <section id="programacao" class="bloco">
-          <h2>Programação</h2>
-          <p class="nota mb-3">O dia e o horário de cada apresentação serão divulgados em 05/12/2026.</p>
-          <div id="lista-programacao"></div>
-        </section>
+    <section id="programacao" class="secao container">
+      <h2 class="titulo-secao"><span class="num">4.</span> Programação</h2>
+      <p class="nota text-center mb-4">O dia e o horário de cada apresentação serão divulgados em 05/12/2026.</p>
+      <div class="row g-4" id="lista-programacao"></div>
+    </section>
 
-        <section id="cronograma" class="bloco">
-          <h2>Cronograma</h2>
-          <div id="lista-cronograma"></div>
-        </section>
+    <section id="cronograma" class="secao container">
+      <h2 class="titulo-secao"><span class="num">5.</span> Cronograma</h2>
+      <ol class="linha-tempo" id="lista-cronograma"></ol>
+    </section>
 
-        <section id="faq" class="bloco">
-          <h2>Perguntas frequentes</h2>
-        <div class="accordion" id="acordeao-faq">
+    <section id="faq" class="secao container">
+      <h2 class="titulo-secao"><span class="num">6.</span> Dúvidas frequentes</h2>
+      <div class="accordion" id="acordeao-faq">
           <div class="accordion-item">
             <h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#f1" aria-expanded="true">Cada participante precisa enviar o trabalho?</button></h3>
             <div id="f1" class="accordion-collapse collapse show" data-bs-parent="#acordeao-faq"><div class="accordion-body">Não. Um representante envia o trabalho uma única vez, com nome, CPF e e-mail de todos os participantes. Cada um depois consulta o resultado e o próprio certificado.</div></div>
@@ -122,51 +139,28 @@
             <div id="f5" class="accordion-collapse collapse" data-bs-parent="#acordeao-faq"><div class="accordion-body">Os dados são usados só para a submissão, a presença e os certificados (LGPD, Lei 13.709/2018). O arquivo do trabalho só é visto pela organização e pela banca.</div></div>
           </div>
         </div>
-        </section>
+    </section>
 
+    <section id="agora" class="secao container text-center">
+      <h2 class="titulo-secao"><span class="num">7.</span> E agora?</h2>
+      <h3 class="chamada-titulo">Garanta sua participação</h3>
+      <p class="chamada-texto">Submeta seu trabalho até 30/11 ou inscreva-se como participante.<br>Novidades e resultados saem também no Instagram do evento.</p>
+      <div class="caixas-icone">
+        <a class="caixa-icone" href="submissao.html" title="Inscrição" aria-label="Inscrição"><i class="bi bi-person-plus" aria-hidden="true"></i></a>
+        <a class="caixa-icone" href="certificado.html" title="Meu certificado" aria-label="Meu certificado"><i class="bi bi-award" aria-hidden="true"></i></a>
+        <a class="caixa-icone" href="https://www.instagram.com/vi_jornadaacademicauninassau/" target="_blank" rel="noopener noreferrer" title="Instagram do evento" aria-label="Instagram do evento"><i class="bi bi-instagram" aria-hidden="true"></i></a>
       </div>
-
-      <aside class="col-lg-4 lateral">
-        <div class="caixa">
-          <h2 class="caixa-titulo">Edital</h2>
-          <p>Edital nº 6 da VI Jornada Acadêmica (2026), com normas de submissão, apresentação e certificação.</p>
-          <a class="link-doc" id="link-edital-ver" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Visualizar edital (PDF)</a>
-          <a class="link-doc" id="link-edital-baixar" download="edital-6-jornada-academica-2026.pdf"><i class="bi bi-download" aria-hidden="true"></i> Baixar edital</a>
-        </div>
-        <div class="caixa">
-          <h2 class="caixa-titulo">Quem pode participar</h2>
-          <p>Estudantes e profissionais de diversas áreas, sem taxa de inscrição.</p>
-          <ul>
-            <li><strong>Obrigatória</strong> para alunos das disciplinas de Atividades Práticas Interdisciplinares de Extensão (APIExt I a VI).</li>
-            <li>São aceitos também relatos de experiência, resultados de pesquisa, TCCs e outros trabalhos, vinculados ou não à instituição.</li>
-            <li>Cada trabalho é inscrito uma vez, por um representante do grupo.</li>
-          </ul>
-        </div>
-        <div class="caixa caixa-aviso" id="doacao">
-          <h2 class="caixa-titulo">Doação de alimento</h2>
-          <p class="mb-0">Cada participante deve levar <strong>1 kg de alimento não perecível</strong> no credenciamento. O arrecadado será doado a uma instituição de trabalho social.</p>
-        </div>
-        <div class="caixa">
-          <h2 class="caixa-titulo">Acesso rápido</h2>
-          <ul class="lista-links">
-            <li><a href="submissao.html">Submeter trabalho</a></li>
-            <li><a href="submissao.html#participante">Inscrição de participante</a></li>
-            <li><a href="certificado.html">Resultado, ingresso e certificado</a></li>
-            <li><a href="validar.html">Validar um certificado</a></li>
-          </ul>
-        </div>
-      </aside>
-    </div>
+    </section>
   </main>
 
   <div id="rodape"></div>
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="js/config.js?v=202611152356"></script>
-  <script src="js/core.js?v=202611152356"></script>
-  <script src="js/servico.js?v=202611152356"></script>
-  <script src="js/api.js?v=202611152356"></script>
-  <script src="js/ui.js?v=202611152356"></script>
-  <script src="js/pagina-inicio.js?v=202611152356"></script>
+  <script src="js/config.js?v=202611160005"></script>
+  <script src="js/core.js?v=202611160005"></script>
+  <script src="js/servico.js?v=202611160005"></script>
+  <script src="js/api.js?v=202611160005"></script>
+  <script src="js/ui.js?v=202611160005"></script>
+  <script src="js/pagina-inicio.js?v=202611160005"></script>
 </body>
 </html>

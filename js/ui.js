@@ -57,16 +57,16 @@
     const alvo = document.getElementById("menu");
     if (!alvo) return;
     const atual = location.pathname.split("/").pop() || "index.html";
-    const itens = LINKS.map((l) => {
+    const itens = LINKS.map((l, i) => {
       const ativo = l.href === atual ? " active" : "";
       const aria = ativo ? ' aria-current="page"' : "";
-      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}">${l.rotulo}</a></li>`;
+      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}"><span class="num">${i + 1}.</span>${l.rotulo}</a></li>`;
     }).join("");
     alvo.innerHTML = `
       <nav class="navbar navbar-expand-xl menu-principal" aria-label="Menu principal">
         <div class="container">
           <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="index.html">
-            <img class="marca-icone" src="assets/img/favicon.png" alt="" width="40" height="40">
+            <span class="marca-circulo"><img src="assets/img/favicon.png" alt="" width="30" height="30"></span>
             <span class="marca-texto"><strong>VI Jornada Acadêmica</strong><small>UNINASSAU Teresina</small></span>
           </a>
           <div class="d-flex align-items-center gap-2 ms-auto ms-xl-2 order-xl-last">
@@ -108,7 +108,7 @@
         <div class="container">
           <div class="row gx-4 gy-5">
             <div class="col-lg-4">
-              <p class="rodape-rotulo text-amarelo">VI edição</p>
+              <p class="rodape-rotulo">VI edição</p>
               <p class="rodape-marca">Jornada Acadêmica<span>UNINASSAU</span></p>
               <p class="rodape-texto">${ev.tema ? `“${ev.tema}”. ` : ""}Submissão e apresentação de trabalhos de extensão, pesquisa e TCC em dois dias de programação acadêmica em Teresina, Piauí.</p>
             </div>
@@ -135,8 +135,9 @@
             </div>` : ""}
           </div>
           <div class="rodape-base">
-            <span>© ${ano} ${ev.sigla} · ${ev.cidade.replace(" - ", " — ")}</span>
-            <span>S.G.J.A · Dados tratados conforme a LGPD</span>
+            <a class="voltar-topo" href="#" aria-label="Voltar ao topo"><i class="bi bi-chevron-double-up" aria-hidden="true"></i></a>
+            <p>Comissão Organizadora · <strong>${ev.sigla} Teresina</strong> © ${ano}</p>
+            <p>S.G.J.A · dados tratados conforme a <strong>LGPD</strong></p>
           </div>
         </div>
       </footer>`;
