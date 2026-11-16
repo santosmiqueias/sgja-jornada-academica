@@ -7,40 +7,31 @@
   $("link-edital-ver").href = CFG.submissao.edital;
   $("link-edital-baixar").href = CFG.submissao.edital;
 
-  // Programação oficial (edital, item 5): abas por dia + linhas (horário · atividade · turno).
-  const esc = C.escaparHTML;
-  const nomesDia = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+  // Programação oficial (edital, item 5)
   const porDia = {};
   API.eventos().forEach((e) => (porDia[e.data] = porDia[e.data] || []).push(e));
-  const dias = Object.entries(porDia);
-  $("abas-dias").innerHTML = dias.map(([data], i) => {
+  const nomesDia = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  $("lista-programacao").innerHTML = Object.entries(porDia).map(([data, evs], i) => {
     const dia = nomesDia[new Date(data + "T12:00:00").getDay()];
-    return `<button type="button" role="tab" id="aba-dia-${i}" aria-controls="painel-dia-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" class="aba-dia${i === 0 ? " ativa" : ""}">
-      <span class="aba-dia-num">Dia ${i + 1}</span><span class="aba-dia-data">${UI.formatarData(data)}</span><span class="aba-dia-semana">${dia}</span></button>`;
+    const itens = evs.map((e) => `
+      <div class="atividade d-flex gap-3 align-items-baseline">
+        <span class="hora">${C.escaparHTML(e.horario)}</span>
+        <span class="fw-semibold">${C.escaparHTML(e.titulo)}</span>
+      </div>`).join("");
+    return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${i + 1}º dia · ${dia}, ${UI.formatarData(data)}</h3>${itens}</div></div>`;
   }).join("");
-  $("lista-programacao").innerHTML = dias.map(([data, evs], i) => `
-    <ol class="lista-agenda" role="tabpanel" id="painel-dia-${i}" aria-labelledby="aba-dia-${i}" tabindex="0"${i === 0 ? "" : " hidden"}>
-      ${evs.map((e) => `<li><span class="agenda-hora">${esc(e.horario)}</span><span class="agenda-titulo">${esc(e.titulo)}</span><span class="agenda-tag">${esc(e.turno || "")}</span></li>`).join("")}
-    </ol>`).join("");
-  const abas = [...document.querySelectorAll("#abas-dias [role=tab]")];
-  function ativar(i, foco) {
-    abas.forEach((b, j) => {
-      const sel = i === j;
-      b.classList.toggle("ativa", sel); b.setAttribute("aria-selected", String(sel)); b.tabIndex = sel ? 0 : -1;
-      $(`painel-dia-${j}`).hidden = !sel;
-    });
-    if (foco) abas[i].focus();
-  }
-  abas.forEach((b, i) => {
-    b.addEventListener("click", () => ativar(i));
-    b.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); ativar((i + (e.key === "ArrowRight" ? 1 : -1) + abas.length) % abas.length, true); }
-    });
-  });
 
-  // Cronograma oficial (edital, item 6): linhas (data · etapa · fase)
-  $("lista-cronograma").innerHTML = (CFG.cronograma || []).map((c) =>
-    `<li${c.destaque ? ' class="destaque"' : ""}><span class="agenda-hora">${esc(c.quando)}</span><span class="agenda-titulo">${esc(c.oque)}</span><span class="agenda-tag">${esc(c.fase || "")}</span></li>`).join("");
+  // Cronograma oficial (edital, item 6), no mesmo formato da programação: uma coluna por fase.
+  const porFase = {};
+  (CFG.cronograma || []).forEach((c) => (porFase[c.fase || "Cronograma"] = porFase[c.fase || "Cronograma"] || []).push(c));
+  $("lista-cronograma").innerHTML = Object.entries(porFase).map(([fase, itens]) => {
+    const linhas = itens.map((c) => `
+      <div class="atividade atividade-cronograma d-flex gap-3 align-items-baseline${c.destaque ? " destaque" : ""}">
+        <span class="hora">${C.escaparHTML(c.quando)}</span>
+        <span class="fw-semibold">${C.escaparHTML(c.oque)}</span>
+      </div>`).join("");
+    return `<div class="col-md-6"><div class="timeline-dia"><h3 class="h5 fw-bold text-navy">${C.escaparHTML(fase)}</h3>${linhas}</div></div>`;
+  }).join("");
 
   try { $("contador-inscritos").textContent = await API.contarInscritos(); }
   catch (_) { $("contador-inscritos").textContent = "—"; }

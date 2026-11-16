@@ -7,6 +7,7 @@
     { href: "index.html", rotulo: "Início", icone: "house" },
     { href: "index.html#programacao", rotulo: "Programação", icone: "calendar3" },
     { href: "index.html#cronograma", rotulo: "Cronograma", icone: "list-check" },
+    { href: "submissao.html", rotulo: "Inscrição", icone: "person-plus" },
     { href: "certificado.html", rotulo: "Meu certificado", icone: "award" },
     { href: "validar.html", rotulo: "Validar", icone: "patch-check" },
     { href: "checkin.html", rotulo: "Check-in", icone: "qr-code-scan" }
@@ -56,40 +57,27 @@
     const alvo = document.getElementById("menu");
     if (!alvo) return;
     const atual = location.pathname.split("/").pop() || "index.html";
-    const itens = LINKS.map((l, i) => {
+    const itens = LINKS.map((l) => {
       const ativo = l.href === atual ? " active" : "";
       const aria = ativo ? ' aria-current="page"' : "";
-      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}">${l.rotulo}</a></li>`;
+      return `<li class="nav-item"><a class="nav-link${ativo}"${aria} href="${l.href}"><i class="bi bi-${l.icone} me-1" aria-hidden="true"></i>${l.rotulo}</a></li>`;
     }).join("");
     alvo.innerHTML = `
-      <nav class="navbar navbar-expand-xl menu-principal" aria-label="Menu principal">
+      <nav class="navbar navbar-expand-xl navbar-dark bg-navy sticky-top shadow-sm">
         <div class="container">
-          <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="index.html">
-            <img class="marca-icone" src="assets/img/favicon.png" alt="" width="40" height="40">
-            <span class="marca-texto"><strong>VI Jornada Acadêmica</strong><small>09 e 10 de dezembro de 2026</small></span>
+          <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+            <span class="brand-badge">VI</span><span class="fw-bold">Jornada Acadêmica</span>
           </a>
-          <div class="d-flex align-items-center gap-2 ms-auto ms-xl-3 order-xl-last">
-            <a class="btn-marca btn-marca-amarelo btn-menu d-none d-sm-inline-flex${atual === "submissao.html" ? " ativo" : ""}" href="submissao.html"${atual === "submissao.html" ? ' aria-current="page"' : ""}>Inscreva-se</a>
+          <div class="d-flex align-items-center gap-2 ms-auto ms-xl-2 order-xl-last">
             ${seletorTema()}
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Abrir menu">
               <span class="navbar-toggler-icon"></span>
             </button>
           </div>
-          <div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav ms-auto">${itens}<li class="nav-item d-sm-none"><a class="nav-link${atual === "submissao.html" ? " active" : ""}" href="submissao.html">Inscrição</a></li></ul></div>
+          <div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav ms-auto">${itens}</ul></div>
         </div>
       </nav>`;
     atualizarSeletorTema();
-  }
-
-  // Trilha "Início › Página" acima do título das páginas internas.
-  function montarTrilha() {
-    const h1 = document.querySelector(".cabecalho-pagina h1");
-    if (!h1 || document.querySelector(".trilha")) return;
-    const nav = document.createElement("nav");
-    nav.className = "trilha";
-    nav.setAttribute("aria-label", "Você está em");
-    nav.innerHTML = `<ol class="breadcrumb mb-2"><li class="breadcrumb-item"><a href="index.html">Início</a></li><li class="breadcrumb-item active" aria-current="page">${h1.textContent.trim().replace(/[&<>]/g, "")}</li></ol>`;
-    h1.parentElement.insertBefore(nav, h1);
   }
 
   function montarRodape() {
@@ -108,7 +96,7 @@
         <div class="container">
           <div class="row gx-4 gy-5">
             <div class="col-lg-4">
-              <p class="rodape-rotulo rodape-rotulo-amarelo">6ª edição</p>
+              <p class="rodape-rotulo text-amarelo">VI edição</p>
               <p class="rodape-marca">Jornada Acadêmica<span>UNINASSAU</span></p>
               <p class="rodape-texto">${ev.tema ? `“${ev.tema}”. ` : ""}Submissão e apresentação de trabalhos de extensão, pesquisa e TCC em dois dias de programação acadêmica em Teresina, Piauí.</p>
             </div>
@@ -135,9 +123,8 @@
             </div>` : ""}
           </div>
           <div class="rodape-base">
-            <span>© ${ano} ${ev.sigla} · Teresina — PI</span>
+            <span>© ${ano} ${ev.sigla} · ${ev.cidade.replace(" - ", " — ")}</span>
             <span>S.G.J.A · Dados tratados conforme a LGPD</span>
-            <a class="voltar-topo" href="#">Voltar ao topo <i class="bi bi-arrow-up" aria-hidden="true"></i></a>
           </div>
         </div>
       </footer>`;
@@ -250,7 +237,7 @@
     alvo.prepend(el);
   }
 
-  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarTrilha(); montarRodape(); avisoDemonstracao(); });
+  document.addEventListener("DOMContentLoaded", () => { montarMenu(); montarRodape(); avisoDemonstracao(); });
 
   window.SGJA_UI = { aviso, formatarData, formatarDataHora, carregando, qrDataURL, confirmar };
 })();
