@@ -247,6 +247,21 @@ test("força bruta na senha do professor é bloqueada", async () => {
   assert.equal(ultimo.status, 429);
 });
 
+test("Submissão: representante aluno exige matrícula; público externo exige instituição e não guarda matrícula", async () => {
+  const base = (rep, titulo) => submissao({ titulo, participantes: [], representante: rep });
+  const aluno = { nome: "Rita Moura Lopes", email: "rita.aluna@exemplo.com", telefone: "86999995555", cpf: "45678912364", tipo: "aluno" };
+  const semMat = await chamar("POST", "/publico/submissoes", base({ ...aluno, matricula: "" }, "Trabalho da aluna sem matrícula"));
+  assert.equal(semMat.dados.campo, "r-matricula", JSON.stringify(semMat));
+  const okAluno = await chamar("POST", "/publico/submissoes", base({ ...aluno, matricula: "20261234" }, "Trabalho da aluna com matrícula"));
+  assert.equal(okAluno.status, 201);
+  const ext = { nome: "Caio Brito Nunes", email: "caio.externo@exemplo.com", telefone: "86999996666", cpf: "23456789173", tipo: "externo", matricula: "99999999" };
+  assert.equal((await chamar("POST", "/publico/submissoes", base({ ...ext, instituicao: "" }, "Trabalho externo sem instituição"))).dados.campo, "r-instituicao");
+  const okExt = await chamar("POST", "/publico/submissoes", base({ ...ext, instituicao: "UFPI" }, "Trabalho externo com instituição"));
+  assert.equal(okExt.status, 201);
+  const c = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados.alunos.find((a) => a.cpf === "23456789173");
+  assert.equal(c.publico, "externo"); assert.equal(c.instituicao, "UFPI"); assert.equal(c.matricula, "");
+});
+
 test("limite de submissões por minuto contra robôs", async () => {
   let ultimo;
   for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });
@@ -407,3 +422,4 @@ test("Certificados: antes da data de liberação o participante não emite nem r
     assert.equal((await chamar("POST", "/publico/participante", cred)).status, 200);
   } finally { process.env.CERTIFICADOS_A_PARTIR_DE = antes; }
 });
+

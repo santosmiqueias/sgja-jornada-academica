@@ -71,6 +71,17 @@
   $("r-cpf").addEventListener("input", (e) => (e.target.value = C.mascaraCPF(e.target.value)));
   $("r-telefone").addEventListener("input", (e) => (e.target.value = C.mascaraTelefone(e.target.value)));
   $("r-matricula").addEventListener("input", (e) => (e.target.value = C.mascaraMatricula(e.target.value)));
+
+  // Representante: Aluno UNINASSAU (informa a matrícula) ou Público externo (informa a instituição de origem)
+  const tipoRep = () => (document.querySelector('input[name="tipo-rep"]:checked') || {}).value || "aluno";
+  function atualizarTipoRep() {
+    const aluno = tipoRep() === "aluno";
+    $("campo-matricula").hidden = !aluno; $("r-matricula").required = aluno;
+    $("campo-instituicao").hidden = aluno; $("r-instituicao").required = !aluno;
+    (aluno ? $("r-instituicao") : $("r-matricula")).classList.remove("is-invalid");
+  }
+  document.querySelectorAll('input[name="tipo-rep"]').forEach((r) => r.addEventListener("change", atualizarTipoRep));
+  atualizarTipoRep();
   $("r-nome").addEventListener("input", (e) => { const l = e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ' -]/g, ""); if (l !== e.target.value) e.target.value = l; });
 
   // Orientadores (obrigatório pelo menos 1; disciplinas com mais de um professor adicionam outros)
@@ -150,7 +161,8 @@
     "r-email": () => C.validarEmail($("r-email").value),
     "r-telefone": () => C.validarTelefone($("r-telefone").value),
     "r-cpf": () => C.validarCPF($("r-cpf").value),
-    "r-matricula": () => !$("r-matricula").value || C.validarMatricula($("r-matricula").value)
+    "r-matricula": () => tipoRep() !== "aluno" || C.validarMatricula($("r-matricula").value),
+    "r-instituicao": () => tipoRep() !== "externo" || $("r-instituicao").value.trim().length >= 2
   };
   function validar(id) {
     const ok = regras[id]();
@@ -223,7 +235,8 @@
       const r = await API.submeterTrabalho({
         titulo: $("titulo").value, vinculo: $("vinculo").value, modalidade, curso: $("curso").value,
         orientadores: ori.nomes, resumo: $("resumo").value,
-        representante: { nome: $("r-nome").value, email: $("r-email").value, telefone: $("r-telefone").value, cpf: $("r-cpf").value, matricula: $("r-matricula").value },
+        representante: { nome: $("r-nome").value, email: $("r-email").value, telefone: $("r-telefone").value, cpf: $("r-cpf").value, tipo: tipoRep(),
+          matricula: tipoRep() === "aluno" ? $("r-matricula").value : "", instituicao: tipoRep() === "externo" ? $("r-instituicao").value : "" },
         participantes: part.lista, consentimentoLGPD: lgpd, aceitaWhatsApp: $("whatsapp").checked
       }, $("arquivo").files[0]);
       mostrarSucesso(r);

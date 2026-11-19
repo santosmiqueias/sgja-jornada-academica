@@ -196,13 +196,18 @@
           const r = dados.representante || {};
           const rep = {
             nome: C.capitalizarNome(texto(r.nome, 100)), email: C.normalizarEmail(texto(r.email, 120)), telefone: C.soDigitos(texto(r.telefone, 20)),
-            cpf: C.soDigitos(texto(r.cpf, 20)), matricula: C.soDigitos(texto(r.matricula, 20))
+            cpf: C.soDigitos(texto(r.cpf, 20)), matricula: C.soDigitos(texto(r.matricula, 20)),
+            instituicao: texto(r.instituicao, 120).trim()
           };
+          // Aluno UNINASSAU: matrícula obrigatória. Público externo: sem matrícula, com a instituição de origem.
+          rep.tipo = r.tipo === "externo" || r.tipo === "aluno" ? r.tipo : (rep.matricula ? "aluno" : "externo");
+          if (rep.tipo === "aluno") rep.instituicao = ""; else rep.matricula = "";
           if (!C.validarNome(rep.nome)) throw new ErroNegocio("Informe nome e sobrenome do representante.", "r-nome");
           if (!C.validarEmail(rep.email)) throw new ErroNegocio("E-mail do representante inválido.", "r-email");
           if (!C.validarTelefone(rep.telefone)) throw new ErroNegocio("Telefone do representante inválido.", "r-telefone");
           if (!C.validarCPF(rep.cpf)) throw new ErroNegocio("CPF do representante inválido.", "r-cpf");
-          if (rep.matricula && !C.validarMatricula(rep.matricula)) throw new ErroNegocio("Matrícula deve ter de 6 a 12 dígitos.", "r-matricula");
+          if (rep.tipo === "aluno" && !C.validarMatricula(rep.matricula)) throw new ErroNegocio("Informe a matrícula (6 a 12 dígitos).", "r-matricula");
+          if (rep.tipo === "externo" && rep.instituicao.length < 2) throw new ErroNegocio("Informe a instituição de origem.", "r-instituicao");
           const outros = (Array.isArray(dados.participantes) ? dados.participantes : []).slice(0, SUB.maxParticipantes).map((p, i) => ({
             i, nome: C.capitalizarNome(texto(p && p.nome, 100)), email: C.normalizarEmail(texto(p && p.email, 120)), cpf: C.soDigitos(texto(p && p.cpf, 20))
           }));
@@ -237,6 +242,7 @@
             if (!pessoa) {
               pessoa = await store.create(ENT.aluno, {
                 nome: pl.nome, email: pl.email, cpf: pl.cpf, telefone: pl.representante ? pl.telefone : "", matricula: pl.representante ? pl.matricula : "",
+                ...(pl.representante ? { publico: pl.tipo, instituicao: pl.instituicao } : {}),
                 curso, periodo: "", consentimentoLGPD: true, aceitaWhatsApp: Boolean(pl.representante) && dados.aceitaWhatsApp === true, atividades: []
               });
               pessoa = await store.update(ENT.aluno, pessoa.id, { tokenIngresso: await C.gerarTokenIngresso(pessoa.id, pessoa.cpf, segredo) });

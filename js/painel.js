@@ -87,9 +87,10 @@
     const lista = filtrarAlunos($("busca-inscritos").value);
     $("tb-inscritos").innerHTML = lista.length ? lista.map((a) => {
       const s = situacaoDe(a);
-      const tipo = a.inscricao === "participante" ? ' <span class="badge text-bg-light border fw-normal" title="Inscrito para assistir, sem trabalho">Participante</span>' : "";
+      const tipo = (a.inscricao === "participante" ? ' <span class="badge text-bg-light border fw-normal" title="Inscrito para assistir, sem trabalho">Participante</span>' : "")
+        + (a.publico === "externo" ? ` <span class="badge text-bg-light border fw-normal" title="${esc(a.instituicao || "Público externo")}">Externo</span>` : "");
       return `<tr><td class="fw-semibold">${esc(a.nome)}${tipo}</td><td class="small">${esc(a.curso) || "—"}</td><td class="small">${C.mascararCPFParaExibicao(a.cpf)}</td>
-        <td class="small">${esc(a.matricula) || "—"}</td>
+        <td class="small">${esc(a.matricula) || (a.publico === "externo" ? esc(a.instituicao) : "") || "—"}</td>
         <td class="small" title="${esc((a.atividades || []).join(", "))}">${(a.atividades || []).length} de ${CFG.eventos.length}</td><td class="small">${s.feitas} · ${s.dias} dia(s)</td>
         <td><span class="badge ${s.aprovado ? "badge-ok" : "badge-pend"}">${s.aprovado ? "Apto" : "Sem presença"}</span></td>
         <td>${a.aceitaWhatsApp ? '<i class="bi bi-check-lg text-success" aria-label="Autorizou"></i>' : '<span class="text-muted" aria-label="Não autorizou">—</span>'}</td></tr>`;

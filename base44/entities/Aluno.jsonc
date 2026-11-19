@@ -82,6 +82,19 @@
     "googleSub": {
       "type": "string",
       "description": "Identificador da conta Google de quem se inscreveu pelo Google. Nunca sai do servidor"
+    },
+    "publico": {
+      "type": "string",
+      "enum": [
+        "aluno",
+        "externo"
+      ],
+      "description": "Representante: aluno da UNINASSAU (com matrícula) ou público externo (com instituição de origem)"
+    },
+    "instituicao": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Instituição de origem do público externo"
     }
   },
   "required": [
