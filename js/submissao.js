@@ -17,18 +17,19 @@
   // Formato obrigatório conforme o vínculo (APIExt I, III, V: banner; II, IV, VI: oral)
   function atualizarModalidade() {
     const v = SUB.vinculos.find((x) => x.id === $("vinculo").value);
-    const radios = document.querySelectorAll('input[name="modalidade"]');
+    const opcoes = [...$("modalidade").options].filter((o) => o.value);
     if (v && v.modalidade) {
-      radios.forEach((r) => { r.checked = r.value === v.modalidade; r.disabled = r.value !== v.modalidade; });
+      $("modalidade").value = v.modalidade;
+      opcoes.forEach((o) => { o.disabled = o.value !== v.modalidade; });
       $("dica-modalidade").textContent = `Para ${v.nome}, o formato é obrigatório: ${SUB.modalidades[v.modalidade]}.`;
     } else {
-      radios.forEach((r) => { r.disabled = false; });
+      opcoes.forEach((o) => { o.disabled = false; });
       $("dica-modalidade").textContent = v ? "Escolha o formato que prefere." : "";
     }
     $("modalidade").classList.remove("is-invalid");
   }
   $("vinculo").addEventListener("change", atualizarModalidade);
-  document.querySelectorAll('input[name="modalidade"]').forEach((r) => r.addEventListener("change", () => $("modalidade").classList.remove("is-invalid")));
+  $("modalidade").addEventListener("change", () => { if ($("modalidade").value) $("modalidade").classList.remove("is-invalid"); });
 
   // Contador do resumo
   function contar() {
@@ -217,7 +218,7 @@
     e.preventDefault();
     if (enviando || $("site").value) return;
     const invalidos = Object.keys(regras).filter((id) => !validar(id));
-    const modalidade = (document.querySelector('input[name="modalidade"]:checked') || {}).value;
+    const modalidade = $("modalidade").value;
     $("modalidade").classList.toggle("is-invalid", !modalidade);
     const part = lerParticipantes();
     const ori = lerOrientadores();
