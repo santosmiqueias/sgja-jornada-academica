@@ -246,6 +246,7 @@
     $("ing-cpf").textContent = C.mascararCPFParaExibicao(r.representante.cpf);
     $("cartao-form").classList.add("d-none");
     $("cartao-edital").classList.add("d-none");
+    $("cartao-modelos").classList.add("d-none");
     const card = $("cartao-sucesso");
     card.classList.remove("d-none");
     card.style.pointerEvents = "none"; // o 2º clique de um clique duplo não aciona os botões

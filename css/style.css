@@ -250,3 +250,7 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 .local-pino { position: absolute; right: 1rem; bottom: 1rem; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--amarelo); color: var(--navy); font-size: 1.5rem; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); transition: transform .15s; }
 .local-pino:hover, .local-pino:focus-visible { transform: scale(1.08); color: var(--navy); }
 .local-rotulo { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-suave, #5b6b8c); }
+
+/* Inscrição: modelos de documentos (comunicação oral e banner) */
+.modelo-doc { background: #eef1fb; border: 1px solid #dfe4f2; border-radius: 10px; padding: 1rem 1.1rem; }
+[data-bs-theme="dark"] .modelo-doc { background: #1f2a4a; border-color: #2d3a5a; }
