@@ -64,7 +64,15 @@
   }
   document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("[data-ir]"); if (a) { e.preventDefault(); irPara(a.dataset.ir); } });
   // No celular, a barra lateral recolhe ao escolher uma área
-  document.querySelectorAll(".painel-lateral [data-bs-toggle=pill]").forEach((b) => b.addEventListener("shown.bs.tab", () => window.scrollTo({ top: 0 })));
+  // Os itens ficam em listas separadas (Início, Evento, Administração): o Bootstrap só desmarca dentro da mesma
+  // lista, então aqui só o item escolhido fica destacado.
+  const linksLaterais = [...document.querySelectorAll(".painel-lateral [data-bs-toggle=pill]")];
+  linksLaterais.forEach((b) => b.addEventListener("shown.bs.tab", () => {
+    linksLaterais.forEach((x) => { const ativo = x === b; x.classList.toggle("active", ativo); x.setAttribute("aria-selected", String(ativo)); });
+    const alvo = b.getAttribute("data-bs-target").slice(1);
+    document.querySelectorAll(".painel-conteudo > .tab-content > .tab-pane").forEach((pane) => { if (pane.id !== alvo) pane.classList.remove("active", "show"); });
+    window.scrollTo({ top: 0 });
+  }));
 
   function desenharVisao() {
     const apresentados = trabalhos.filter((t) => t.apresentado).length;
