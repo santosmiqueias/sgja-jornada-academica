@@ -1,0 +1,192 @@
+/* =========================================================================
+   Efeitos 3D (CSS 3D transforms) — camada sobre o visual atual.
+   Tudo aqui é decorativo: sem JavaScript ou com "reduzir movimento" ativado
+   no aparelho, a página continua igual e sem animações.
+   ========================================================================= */
+
+:root {
+  --sombra-3d: 0 18px 40px -18px rgba(11, 42, 111, .45);
+  --borda-tecla: #082159;
+}
+[data-bs-theme="dark"] { --sombra-3d: 0 18px 40px -16px rgba(0, 0, 0, .7); --borda-tecla: #0b2e7a; }
+
+/* ---------- Cartões com inclinação 3D (segue o mouse) ---------- */
+.tilt-3d {
+  --rx: 0deg; --ry: 0deg; --gx: 50%; --gy: 50%; --brilho: 0;
+  transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.2, .8, .2, 1), box-shadow .4s ease;
+  will-change: transform;
+}
+.tilt-3d.tilt-ativo { transition: transform .08s linear, box-shadow .3s ease; box-shadow: var(--sombra-3d); }
+/* Reflexo de luz que acompanha o ponteiro */
+.tilt-3d::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%);
+  opacity: var(--brilho); transition: opacity .4s ease; mix-blend-mode: soft-light;
+}
+.tilt-3d:not(.card):not(.cartao-numero):not(.atalho):not(.ingresso) { position: relative; }
+/* Elementos que "saltam" para fora do cartão */
+.tilt-3d .passo, .tilt-3d .icone-redondo, .tilt-3d .cartao-numero-icone, .tilt-3d .atalho-icone, .tilt-3d .doacao-icone {
+  transform: translateZ(28px); transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+}
+.tilt-3d.tilt-ativo .passo, .tilt-3d.tilt-ativo .cartao-numero-icone, .tilt-3d.tilt-ativo .atalho-icone { transform: translateZ(46px); }
+.tilt-3d .passo-titulo, .tilt-3d .cartao-numero-valor, .tilt-3d h3 { transform: translateZ(16px); }
+
+/* ---------- Passos 1–4: moeda 3D que gira ---------- */
+.passo {
+  position: relative; transform-style: preserve-3d;
+  box-shadow: 0 0 0 3px var(--amarelo), 0 6px 0 3px var(--amarelo-escuro), 0 12px 18px rgba(0, 0, 0, .25);
+}
+.efeitos-3d .card:hover .passo { animation: moeda-3d 1s cubic-bezier(.3, .7, .3, 1) both; }
+@keyframes moeda-3d {
+  from { transform: translateZ(46px) rotateY(0); }
+  to { transform: translateZ(46px) rotateY(360deg); }
+}
+
+/* ---------- Botões com profundidade (tecla) ---------- */
+.btn-amarelo, .btn-primary {
+  position: relative; transform: translateY(0);
+  transition: transform .12s ease, box-shadow .12s ease, background-color .15s, border-color .15s, color .15s;
+}
+.btn-amarelo { box-shadow: 0 4px 0 var(--amarelo-escuro), 0 8px 16px -6px rgba(217, 169, 0, .6); }
+.btn-primary { box-shadow: 0 4px 0 var(--borda-tecla), 0 8px 16px -6px rgba(11, 42, 111, .55); }
+.btn-amarelo:hover, .btn-primary:hover { transform: translateY(-2px); }
+.btn-amarelo:hover { box-shadow: 0 6px 0 var(--amarelo-escuro), 0 12px 20px -6px rgba(217, 169, 0, .6); background: #ffd21f; color: var(--navy); }
+.btn-primary:hover { box-shadow: 0 6px 0 var(--borda-tecla), 0 12px 20px -6px rgba(11, 42, 111, .55); }
+.btn-amarelo:active, .btn-primary:active { transform: translateY(3px); }
+.btn-amarelo:active { box-shadow: 0 1px 0 var(--amarelo-escuro), 0 2px 6px -2px rgba(217, 169, 0, .6); }
+.btn-primary:active { box-shadow: 0 1px 0 var(--borda-tecla), 0 2px 6px -2px rgba(11, 42, 111, .55); }
+.btn-sm.btn-amarelo, .btn-sm.btn-primary { box-shadow: 0 3px 0 var(--borda-tecla); }
+.btn-sm.btn-amarelo { box-shadow: 0 3px 0 var(--amarelo-escuro); }
+.btn-amarelo:disabled, .btn-primary:disabled { transform: none; }
+
+/* ---------- Seletores (Aluno / Público externo, Submissão / Participante) ---------- */
+.seletor-publico { perspective: 600px; }
+.btn-check:checked + .seletor-publico-opcao {
+  transform: translateZ(10px); box-shadow: 0 4px 0 var(--borda-tecla), 0 10px 18px -8px rgba(11, 42, 111, .6);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .15s, color .15s;
+}
+
+/* ---------- Cubos 3D girando na faixa "Como funciona?" ---------- */
+.faixa-titulo { position: relative; overflow: hidden; }
+.faixa-titulo > .container { position: relative; }
+.cena-3d { display: none; }
+@media (min-width: 768px) {
+  .cena-3d { display: block; position: absolute; top: 50%; width: 110px; height: 110px; margin-top: -55px; perspective: 600px; pointer-events: none; }
+  .cena-3d.esquerda { left: 2%; }
+  .cena-3d.direita { right: 2%; }
+}
+.cena-3d-palco { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(-18deg) rotateY(-28deg); }
+.cubo-3d {
+  --lado: 50px; position: absolute; left: calc(50% - var(--lado) / 2); top: calc(50% - var(--lado) / 2);
+  width: var(--lado); height: var(--lado); transform-style: preserve-3d; animation: girar-cubo 18s linear infinite;
+}
+.cena-3d.direita .cubo-3d { animation-direction: reverse; animation-duration: 22s; }
+.cubo-3d span {
+  position: absolute; inset: 0; border: 2px solid rgba(245, 196, 0, .9); border-radius: 8px;
+  background: linear-gradient(135deg, rgba(23, 71, 181, .95), rgba(11, 42, 111, .95));
+  display: grid; place-items: center; color: var(--amarelo); font-weight: 800; font-size: 1.05rem;
+  box-shadow: inset 0 0 14px rgba(255, 255, 255, .15);
+}
+.cubo-3d span:nth-child(1) { transform: translateZ(calc(var(--lado) / 2)); }
+.cubo-3d span:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--lado) / 2)); }
+.cubo-3d span:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--lado) / 2)); }
+.cubo-3d span:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--lado) / 2)); }
+.cubo-3d span:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--lado) / 2)); background: linear-gradient(135deg, var(--amarelo), #ffdd55); color: var(--navy); }
+.cubo-3d span:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--lado) / 2)); }
+.cubo-3d span i { font-size: 1.15rem; }
+@keyframes girar-cubo { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(720deg); } }
+.anel-3d {
+  position: absolute; left: 50%; top: 50%; width: 100px; height: 100px; margin: -50px 0 0 -50px;
+  border-radius: 50%; border: 2px solid rgba(245, 196, 0, .65); transform-style: preserve-3d; animation: orbita 9s linear infinite;
+}
+.anel-3d::before { content: ""; position: absolute; top: -6px; left: calc(50% - 5px); width: 10px; height: 10px; border-radius: 50%; background: var(--amarelo); box-shadow: 0 0 10px rgba(245, 196, 0, .9); }
+@keyframes orbita { from { transform: rotateX(72deg) rotateZ(0); } to { transform: rotateX(72deg) rotateZ(360deg); } }
+
+/* ---------- Início: o título ganha profundidade ---------- */
+.hero h1.display-6 { text-shadow: 0 1px 0 rgba(11, 42, 111, .25), 0 2px 0 rgba(11, 42, 111, .18), 0 6px 14px rgba(11, 42, 111, .18); }
+[data-bs-theme="dark"] .hero h1.display-6 { text-shadow: 0 2px 0 rgba(0, 0, 0, .5), 0 6px 14px rgba(0, 0, 0, .5); }
+
+/* Cartão do local: o pino salta em 3D */
+.local-pino { transform: translateZ(0); transition: transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s; }
+.local-pino:hover, .local-pino:focus-visible { transform: perspective(300px) translateZ(30px) rotateY(18deg); box-shadow: 0 14px 24px rgba(0, 0, 0, .35); }
+.efeitos-3d .local-pino i { display: inline-block; animation: pino-quica 2.6s ease-in-out infinite; }
+@keyframes pino-quica { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(-6px); } 90% { transform: translateY(0); } 95% { transform: translateY(-2px); } }
+
+/* ---------- Títulos com volume ---------- */
+.faixa-titulo { perspective: 800px; }
+.faixa-titulo-texto {
+  text-shadow: 0 1px 0 #0a2563, 0 2px 0 #08205a, 0 3px 0 #071b4f, 0 4px 0 #061744, 0 8px 14px rgba(0, 0, 0, .35);
+}
+.efeitos-3d .faixa-titulo-texto { transform: rotateX(8deg); transform-origin: 50% 100%; }
+
+/* Logo do menu gira em 3D ao passar o mouse */
+.marca-logo { display: inline-block; perspective: 400px; }
+.marca-logo img { transition: transform .7s cubic-bezier(.2, .8, .2, 1); transform-style: preserve-3d; }
+.navbar-brand:hover .marca-logo img { transform: rotateY(360deg); }
+
+/* ---------- Programação e cronograma: itens como fichas ---------- */
+.timeline-dia { perspective: 900px; }
+.atividade { transform-origin: 0 50%; transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s; }
+.atividade:hover { transform: rotateY(-6deg) translateZ(14px); box-shadow: 10px 12px 24px -12px rgba(11, 42, 111, .45); }
+
+/* Doação: cesta que balança */
+.efeitos-3d .doacao-icone i { display: inline-block; animation: cesta 4s ease-in-out infinite; }
+@keyframes cesta { 0%, 100% { transform: perspective(200px) rotateY(0); } 50% { transform: perspective(200px) rotateY(180deg); } }
+
+/* FAQ: o acordeão abre "virando" */
+.accordion-item { transform-origin: 50% 0; transition: transform .3s ease; }
+.efeitos-3d .accordion-collapse.collapsing, .efeitos-3d .accordion-collapse.show { animation: abrir-3d .35s ease both; transform-origin: 50% 0; }
+@keyframes abrir-3d { from { transform: perspective(700px) rotateX(-20deg); opacity: .3; } to { transform: none; opacity: 1; } }
+
+/* ---------- Ingresso (QR Code): cartão holográfico ---------- */
+.ingresso { position: relative; }
+.ingresso.tilt-3d::after {
+  background: radial-gradient(circle at var(--gx) var(--gy), rgba(255, 255, 255, .5), transparent 45%),
+    linear-gradient(115deg, transparent 30%, rgba(245, 196, 0, .25) 45%, rgba(23, 71, 181, .2) 55%, transparent 70%);
+  mix-blend-mode: normal;
+}
+.ingresso img { transform: translateZ(30px); }
+
+/* ---------- Entrada das seções ao rolar a página ---------- */
+.efeitos-3d .revelar-3d {
+  opacity: 0; transform: perspective(1100px) rotateX(16deg) translateY(36px);
+  transform-origin: 50% 0;
+  transition: opacity .7s ease, transform .8s cubic-bezier(.2, .8, .2, 1);
+  transition-delay: var(--atraso, 0s);
+}
+.efeitos-3d .revelar-3d.revelado { opacity: 1; transform: none; }
+/* Depois de aparecer, devolve o controle ao efeito de inclinação */
+.efeitos-3d .revelar-3d.revelado.tilt-3d { transform: perspective(1000px) rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .5s cubic-bezier(.2, .8, .2, 1), box-shadow .4s ease; }
+.efeitos-3d .revelar-3d.revelado.tilt-3d.tilt-ativo { transition: transform .08s linear, box-shadow .3s ease; }
+
+/* ---------- Janelas (modais) entram em 3D ---------- */
+.modal.fade .modal-dialog { transform: perspective(1200px) rotateX(-14deg) translateY(-24px) scale(.96); transform-origin: 50% 0; transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.modal.show .modal-dialog { transform: none; }
+
+/* ---------- Painel da organização ---------- */
+.painel-lateral { perspective: 700px; }
+.lateral-link { transition: transform .25s cubic-bezier(.2, .8, .2, 1), background-color .15s, color .15s; transform-origin: 0 50%; }
+.lateral-link:hover { transform: translateZ(14px) rotateY(8deg); }
+.lateral-link.active { box-shadow: 0 4px 0 var(--amarelo-escuro), 0 10px 18px -8px rgba(0, 0, 0, .45); transform: translateZ(8px); }
+.checkin-cabeca-icone, .painel-topo-icone { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.card:hover .checkin-cabeca-icone, .painel-topo:hover .painel-topo-icone { transform: perspective(300px) rotateY(360deg); }
+.tabela-painel tbody tr { transition: transform .25s ease, box-shadow .25s ease; }
+.tabela-painel tbody tr:hover { transform: perspective(900px) translateZ(6px); box-shadow: 0 10px 22px -16px rgba(11, 42, 111, .6); position: relative; z-index: 1; }
+.btn-acao.destaque { box-shadow: 0 3px 0 var(--borda-tecla); transition: transform .12s, box-shadow .12s, background-color .15s; }
+.btn-acao.destaque:active, .btn-aprovar:active, .btn-negar:active { transform: translateY(2px); box-shadow: none; }
+.btn-aprovar { box-shadow: 0 3px 0 #135f35; transition: transform .12s, box-shadow .12s, background-color .15s; }
+
+/* ---------- Acessibilidade: sem movimento para quem pediu ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tilt-3d, .tilt-3d.tilt-ativo, .efeitos-3d .revelar-3d, .modal.fade .modal-dialog, .atividade:hover, .lateral-link:hover,
+  .tabela-painel tbody tr:hover, .navbar-brand:hover .marca-logo img, .local-pino:hover { transform: none !important; }
+  .cubo-3d, .anel-3d, .passo, .local-pino i, .doacao-icone i, .accordion-collapse { animation: none !important; }
+  .efeitos-3d .revelar-3d { opacity: 1; }
+  .tilt-3d::after { display: none; }
+}
+@media print {
+  .cena-3d { display: none !important; }
+  .tilt-3d, .revelar-3d { transform: none !important; opacity: 1 !important; }
+}
