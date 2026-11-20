@@ -43,11 +43,12 @@
   contar();
 
   // Arquivo: tipo e tamanho
+  const TXT_ARQUIVO = SUB.arquivo.descricao.charAt(0).toUpperCase() + SUB.arquivo.descricao.slice(1);
   const extensao = (nome) => String(nome || "").split(".").pop().toLowerCase();
   const tamanhoTexto = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
   $("arquivo").addEventListener("change", () => {
     const f = $("arquivo").files[0];
-    $("info-arquivo").textContent = f ? `${f.name} · ${tamanhoTexto(f.size)}` : "PDF, DOC ou DOCX, até 10 MB.";
+    $("info-arquivo").textContent = f ? `${f.name} · ${tamanhoTexto(f.size)}` : `${TXT_ARQUIVO}, até ${SUB.arquivo.maxMB} MB.`;
     validar("arquivo");
   });
 

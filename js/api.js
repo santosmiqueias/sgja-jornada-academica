@@ -207,7 +207,7 @@
       contarInscritos: () => S.contarInscritos(),
       async submeterTrabalho(dados, arquivo) {
         if (!arquivo) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
-        if (!extensaoOk(arquivo.name)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+        if (!extensaoOk(arquivo.name)) throw new ErroNegocio(`Envie o arquivo como ${CFG.submissao.arquivo.descricao}.`, "arquivo");
         if (arquivo.size > CFG.submissao.arquivo.maxMB * 1048576) throw new ErroNegocio(`O arquivo pode ter no máximo ${CFG.submissao.arquivo.maxMB} MB.`, "arquivo");
         const ref = C.gerarId("ARQ");
         await ARQ.guardar(ref, arquivo);

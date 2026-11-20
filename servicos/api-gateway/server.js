@@ -106,30 +106,47 @@ app.get("/api/v1/publico/resumo", rota(async (_req, res) => res.json({ inscritos
 /* ---------- Arquivos dos trabalhos ---------- */
 const DIR_ARQ = path.join(process.env.DADOS_DIR || path.join(__dirname, "dados"), "arquivos");
 fs.mkdirSync(DIR_ARQ, { recursive: true, mode: 0o700 });
+// Tipo conferido pelo CONTEÚDO, não só pela extensão.
+// DOC/PPT: arquivo composto da Microsoft (OLE). DOCX/PPTX: ZIP com a pasta word/ ou ppt/.
+// ODT/ODP: ZIP do OpenDocument, que começa com o arquivo "mimetype" dizendo o tipo.
+const ehZip = (b) => b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04;
+const ehOLE = (b) => b.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]));
+const temPasta = (b, nome) => b.includes(Buffer.from(nome, "latin1"));
+const odf = (b, tipo) => ehZip(b) && b.subarray(0, 120).toString("latin1").includes(`application/vnd.oasis.opendocument.${tipo}`);
 const TIPOS = {
   pdf: { mime: "application/pdf", confere: (b) => b.subarray(0, 5).toString("latin1") === "%PDF-" },
-  docx: { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", confere: (b) => b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04 },
-  doc: { mime: "application/msword", confere: (b) => b.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) }
+  doc: { mime: "application/msword", confere: ehOLE },
+  docx: { mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", confere: (b) => ehZip(b) && temPasta(b, "word/") },
+  odt: { mime: "application/vnd.oasis.opendocument.text", confere: (b) => odf(b, "text") },
+  ppt: { mime: "application/vnd.ms-powerpoint", confere: ehOLE },
+  pptx: { mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation", confere: (b) => ehZip(b) && temPasta(b, "ppt/") },
+  odp: { mime: "application/vnd.oasis.opendocument.presentation", confere: (b) => odf(b, "presentation") }
 };
 const MAX_ARQ = CFG.submissao.arquivo.maxMB * 1048576;
+// Usado por salvarArquivo e pelos testes: a extensão é aceita e o conteúdo confere com ela?
+function conferirTipoArquivo(nome, buf) {
+  const ext = String(nome || "").split(".").pop().toLowerCase();
+  const tipo = TIPOS[ext];
+  return { ext, tipo, extensaoOk: !!tipo && CFG.submissao.arquivo.extensoes.includes(ext), conteudoOk: !!tipo && tipo.confere(buf) };
+}
 
 // Confere extensão, tamanho e o conteúdo real do arquivo (assinatura), e grava com nome aleatório.
 function salvarArquivo(arq) {
   const nome = String((arq && arq.nome) || "").slice(0, 120);
   const ext = nome.split(".").pop().toLowerCase();
   const tipo = TIPOS[ext];
-  if (!tipo || !CFG.submissao.arquivo.extensoes.includes(ext)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+  if (!tipo || !CFG.submissao.arquivo.extensoes.includes(ext)) throw new ErroNegocio(`Envie o arquivo como ${CFG.submissao.arquivo.descricao}.`, "arquivo");
   const b64 = String((arq && arq.base64) || "");
   if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) throw new ErroNegocio("Arquivo ausente ou corrompido.", "arquivo");
   const buf = Buffer.from(b64, "base64");
   if (!buf.length || buf.length > MAX_ARQ) throw new ErroNegocio(`O arquivo pode ter no máximo ${CFG.submissao.arquivo.maxMB} MB.`, "arquivo");
-  if (!tipo.confere(buf)) throw new ErroNegocio("O conteúdo do arquivo não corresponde a um PDF, DOC ou DOCX.", "arquivo");
+  if (!tipo.confere(buf)) throw new ErroNegocio(`O conteúdo do arquivo não corresponde ao formato .${ext}.`, "arquivo");
   const ref = `${require("crypto").randomBytes(24).toString("hex")}.${ext}`;
   fs.writeFileSync(path.join(DIR_ARQ, ref), buf, { mode: 0o600 });
   return { nome: nome.replace(/[^\w.\- À-ÿ]/g, "_"), tipo: tipo.mime, tamanho: buf.length, ref };
 }
 const caminhoArquivo = (ref) => {
-  if (!/^[a-f0-9]{48}\.(pdf|docx?)$/.test(String(ref))) throw new ErroNegocio("Arquivo não encontrado.", null, 404);
+  if (!/^[a-f0-9]{48}\.(pdf|docx?|odt|pptx?|odp)$/.test(String(ref))) throw new ErroNegocio("Arquivo não encontrado.", null, 404);
   return path.join(DIR_ARQ, ref);
 };
 
@@ -353,3 +370,4 @@ if (require.main === module) {
   if (process.env.LEMBRETES_ATIVO !== "false") { lembretes.iniciar(); console.log("Agendador de lembretes WhatsApp ativo."); }
 }
 module.exports = app;
+module.exports.conferirTipoArquivo = conferirTipoArquivo;

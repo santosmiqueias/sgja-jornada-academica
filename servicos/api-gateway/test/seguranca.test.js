@@ -262,6 +262,28 @@ test("Submissão: representante aluno exige matrícula; público externo exige i
   assert.equal(c.publico, "externo"); assert.equal(c.instituicao, "UFPI"); assert.equal(c.matricula, "");
 });
 
+test("Arquivo: aceita documento (PDF, DOC, DOCX, ODT) e slides (PPT, PPTX, ODP) conferindo o conteúdo", async () => {
+  const pk = Buffer.from([0x50, 0x4b, 0x03, 0x04]), ole = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+  const zip = (...partes) => Buffer.concat([pk, Buffer.alloc(26), ...partes.map((t) => Buffer.from(t, "latin1"))]);
+  const verdadeiros = {
+    "t.pdf": Buffer.from("%PDF-1.4 teste"), "t.doc": Buffer.concat([ole, Buffer.alloc(64)]), "t.ppt": Buffer.concat([ole, Buffer.alloc(64)]),
+    "t.docx": zip("[Content_Types].xml", "word/document.xml"), "t.pptx": zip("[Content_Types].xml", "ppt/presentation.xml"),
+    "t.odt": zip("mimetypeapplication/vnd.oasis.opendocument.text"), "t.odp": zip("mimetypeapplication/vnd.oasis.opendocument.presentation")
+  };
+  for (const [nome, buf] of Object.entries(verdadeiros)) {
+    const r = app.conferirTipoArquivo(nome, buf);
+    assert.ok(r.extensaoOk && r.conteudoOk, nome);
+  }
+  // Extensão trocada ou formato fora da lista: recusado
+  assert.equal(app.conferirTipoArquivo("falso.pptx", verdadeiros["t.docx"]).conteudoOk, false);
+  assert.equal(app.conferirTipoArquivo("falso.odp", verdadeiros["t.odt"]).conteudoOk, false);
+  assert.equal(app.conferirTipoArquivo("falso.pdf", Buffer.from("MZ executavel")).conteudoOk, false);
+  assert.equal(app.conferirTipoArquivo("t.txt", Buffer.from("texto")).extensaoOk, false);
+  // Pela rota: slides com conteúdo falso não são gravados
+  const r = await chamar("POST", "/publico/submissoes", submissao({ titulo: "Teste de slides falsos", arquivo: { nome: "apresentacao.pptx", base64: Buffer.from("MZ executavel").toString("base64") } }));
+  assert.equal(r.status, 400); assert.equal(r.dados.campo, "arquivo");
+});
+
 test("limite de submissões por minuto contra robôs", async () => {
   let ultimo;
   for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });
@@ -422,4 +444,5 @@ test("Certificados: antes da data de liberação o participante não emite nem r
     assert.equal((await chamar("POST", "/publico/participante", cred)).status, 200);
   } finally { process.env.CERTIFICADOS_A_PARTIR_DE = antes; }
 });
+
 

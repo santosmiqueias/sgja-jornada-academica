@@ -36,7 +36,7 @@ Auditoria feita em 11/11/2026. Cada falha foi primeiro **comprovada com um ataqu
 
 ### Arquivos dos trabalhos
 
-- Aceita só PDF, DOC e DOCX, de até 10 MB. O tipo é conferido pelo **conteúdo** do arquivo (assinatura), não só pela extensão: um `.exe` renomeado para `.pdf` é recusado.
+- Aceita só documento (PDF, DOC, DOCX ou ODT) ou slides (PPT, PPTX ou ODP), de até 10 MB. O tipo é conferido pelo **conteúdo** do arquivo (assinatura), não só pela extensão: um `.exe` renomeado para `.pdf` é recusado.
 - O arquivo é gravado com nome aleatório numa pasta do servidor com permissão só do dono e **nunca fica público**. Só a organização logada baixa, sempre como anexo.
 - Submissão recusada não deixa arquivo no servidor.
 

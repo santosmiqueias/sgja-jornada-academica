@@ -188,7 +188,7 @@
           if (resumo.length > SUB.maxCaracteresResumo * 2) throw new ErroNegocio("O resumo tem espaços ou quebras de linha demais.", "resumo");
           if (!arquivo || !arquivo.ref) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
           const ext = String(arquivo.nome || "").split(".").pop().toLowerCase();
-          if (!SUB.arquivo.extensoes.includes(ext)) throw new ErroNegocio("Envie o arquivo em PDF, DOC ou DOCX.", "arquivo");
+          if (!SUB.arquivo.extensoes.includes(ext)) throw new ErroNegocio(`Envie o arquivo como ${SUB.arquivo.descricao}.`, "arquivo");
           if (!(arquivo.tamanho > 0) || arquivo.tamanho > SUB.arquivo.maxMB * 1048576) throw new ErroNegocio(`O arquivo pode ter no máximo ${SUB.arquivo.maxMB} MB.`, "arquivo");
           if (dados.consentimentoLGPD !== true) throw new ErroNegocio("É preciso aceitar o termo de uso de dados.", "lgpd");
 

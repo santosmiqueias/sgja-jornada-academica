@@ -68,7 +68,7 @@ window.SGJA_CONFIG = {
     maxCaracteresResumo: 1500, minCaracteresResumo: 200,
     maxParticipantes: 10,
     maxOrientadores: 5,
-    arquivo: { maxMB: 10, extensoes: ["pdf", "doc", "docx"] },
+    arquivo: { maxMB: 10, extensoes: ["pdf", "doc", "docx", "odt", "ppt", "pptx", "odp"], descricao: "documento (PDF, DOC, DOCX ou ODT) ou slides (PPT, PPTX ou ODP)" },
     edital: "assets/docs/edital-6-jornada-academica-2026.pdf",
     modalidades: { banner: "Pôster/Banner", oral: "Comunicação oral" },
     // Vínculo do trabalho. APIExt I, III e V: banner obrigatório. APIExt II, IV e VI: comunicação oral obrigatória.
