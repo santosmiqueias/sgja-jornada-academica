@@ -284,6 +284,19 @@ test("Arquivo: aceita documento (PDF, DOC, DOCX, ODT) e slides (PPT, PPTX, ODP) 
   assert.equal(r.status, 400); assert.equal(r.dados.campo, "arquivo");
 });
 
+test("Organização: faz check-in e chamada pelo painel (como \"Organização\"); sem login ou com token da comissão é recusado", async () => {
+  assert.equal((await chamar("GET", "/professor/chamada?eventoId=EV02")).status, 401);
+  assert.equal((await chamar("POST", "/professor/checkin", { cpf: alunoBase(0).cpf, eventoId: "EV02" }, tokenCom)).status, 401);
+  const ok = await chamar("POST", "/professor/checkin", { cpf: alunoBase(0).cpf, eventoId: "EV02" }, tokenProf);
+  assert.equal(ok.status, 200); assert.equal(ok.dados.novo, true);
+  const ch = (await chamar("GET", "/professor/chamada?eventoId=EV02", undefined, tokenProf)).dados;
+  assert.equal(ch.frequencias.find((f) => f.alunoId === ok.dados.aluno.id).registradoPorNome, "Organização");
+  assert.ok(!("email" in ch.alunos[0]) && !("cpf" in ch.alunos[0]), "chamada não expõe e-mail nem CPF completo");
+  assert.equal((await chamar("POST", "/professor/checkin/remover", { alunoId: ok.dados.aluno.id, eventoId: "EV02" }, tokenProf)).status, 200);
+  const depois = (await chamar("GET", "/professor/chamada?eventoId=EV02", undefined, tokenProf)).dados;
+  assert.ok(!depois.frequencias.some((f) => f.alunoId === ok.dados.aluno.id));
+});
+
 test("limite de submissões por minuto contra robôs", async () => {
   let ultimo;
   for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });

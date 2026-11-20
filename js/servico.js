@@ -85,7 +85,11 @@
       return a;
     }
 
+    // A organização (login do painel) também registra presença; quem chama é sempre o servidor,
+    // que só usa este id em rotas do perfil "professor" (o id nunca vem do navegador).
+    const ID_ORGANIZACAO = "__organizacao__";
     async function membroAtivo(membroId) {
+      if (membroId === ID_ORGANIZACAO) return { id: "", nome: "Organização" };
       const m = (await store.list(ENT.membro)).find((x) => x.id === membroId);
       if (!m || m.status !== "ativo") throw new ErroNegocio("Seu acesso ao check-in foi bloqueado ou removido. Fale com a coordenação.", null, 403);
       return m;
@@ -109,6 +113,7 @@
 
     const S = {
       ErroNegocio,
+      ID_ORGANIZACAO,
 
       /* ---------- Público ---------- */
       async contarInscritos() { return (await store.list(ENT.aluno)).length; },

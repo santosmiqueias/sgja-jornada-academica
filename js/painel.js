@@ -40,6 +40,7 @@
   });
 
   $("btn-sair").addEventListener("click", () => { API.sairProfessor(); location.reload(); });
+  if ($("btn-sair-topo")) $("btn-sair-topo").addEventListener("click", () => { API.sairProfessor(); location.reload(); });
 
   /* ---------------- Estado ---------------- */
   let alunos = [], frequencias = [], certificados = [], membros = [], trabalhos = [];
@@ -70,6 +71,19 @@
   linksLaterais.forEach((b) => b.addEventListener("shown.bs.tab", () => {
     linksLaterais.forEach((x) => { const ativo = x === b; x.classList.toggle("active", ativo); x.setAttribute("aria-selected", String(ativo)); });
     const alvo = b.getAttribute("data-bs-target").slice(1);
+    // Título do topo conforme a área
+    const TOPO = {
+      "aba-visao": ["grid-1x2", "Olá, organização!", "Você gerencia inscrições, avaliação dos trabalhos, participantes, comissão e certificados."],
+      "aba-submissoes": ["clipboard-check", "Inscrições", "Submissões, avaliação da banca e apresentações."],
+      "aba-inscritos": ["people", "Participantes", "Todos os inscritos, com presença e situação do certificado."],
+      "aba-checkin": ["qr-code-scan", "Check-in por QR Code", "Escolha a atividade e leia o QR Code do ingresso. Nome, dia, horário e status ficam registrados."],
+      "aba-chamada": ["calendar-check", "Chamada", "Marque a presença por atividade, pela lista de nomes."],
+      "aba-lembretes": ["whatsapp", "Lembretes", "Lembretes por WhatsApp antes de cada apresentação."],
+      "aba-certificados": ["award", "Certificados", "Emissão, envio por e-mail e conferência."],
+      "aba-comissao": ["person-gear", "Usuários e perfis", "Libere ou bloqueie o acesso da comissão ao check-in."],
+      "aba-config": ["gear", "Configurações e dados", "Configuração atual e dados de demonstração."]
+    }[alvo];
+    if (TOPO) { $("topo-icone").className = `bi bi-${TOPO[0]}`; $("topo-titulo").textContent = TOPO[1]; $("topo-sub").textContent = TOPO[2]; }
     document.querySelectorAll(".painel-conteudo > .tab-content > .tab-pane").forEach((pane) => { if (pane.id !== alvo) pane.classList.remove("active", "show"); });
     window.scrollTo({ top: 0 });
   }));

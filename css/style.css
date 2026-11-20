@@ -327,3 +327,36 @@ body.modo-painel .aviso-demo, body.modo-painel main > .alert { margin-left: 0; }
 [data-bs-theme="dark"] .painel-lateral { background: #0f1d47; }
 [data-bs-theme="dark"] .lista-atencao li { border-color: #2d3a5a; }
 .painel-conteudo { min-width: 0; } .painel-conteudo > .tab-content > .tab-pane > .row { --bs-gutter-x: 1rem; }
+
+/* Painel: barra superior */
+.painel-barra { display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: var(--navy); border-bottom: 4px solid var(--amarelo); border-radius: 14px; padding: .55rem .9rem; margin-bottom: 1.5rem; }
+.painel-barra-marca { display: inline-grid; place-items: center; background: #fff; border-radius: 8px; padding: 3px 6px; }
+.painel-barra-marca img { height: 40px; width: auto; display: block; }
+.painel-barra-link { color: rgba(255, 255, 255, .88); font-weight: 600; font-size: .92rem; text-decoration: none; padding: .45rem .6rem; }
+.painel-barra-link:hover { color: #fff; }
+.painel-barra-sair { color: #fff; font-weight: 600; font-size: .92rem; background: transparent; border: 1.5px solid rgba(255, 255, 255, .6); border-radius: 10px; padding: .45rem .9rem; }
+.painel-barra-sair:hover { background: rgba(255, 255, 255, .1); border-color: #fff; }
+/* Painel: check-in por QR Code */
+.cartao-checkin { border: 0; }
+.checkin-cabeca { display: flex; align-items: center; gap: .9rem; background: var(--navy); color: #fff; padding: 1rem 1.25rem; border-bottom: 4px solid var(--amarelo); flex-wrap: wrap; }
+.checkin-cabeca p { color: rgba(255, 255, 255, .78); }
+.checkin-cabeca-icone { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: rgba(255, 255, 255, .1); color: var(--amarelo); font-size: 1.2rem; flex-shrink: 0; }
+.checkin-contador { background: var(--amarelo); color: var(--navy); font-size: .8rem; font-weight: 700; border-radius: 999px; padding: .25rem .75rem; white-space: nowrap; }
+.checkin-modos { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; align-items: stretch; }
+.checkin-modo { display: flex; flex-direction: column; background: #f3f6fd; border: 1px solid #dfe4f2; border-radius: 12px; padding: 1.1rem; }
+.checkin-passo { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: var(--amarelo); font-size: .8rem; font-weight: 700; margin-right: .5rem; }
+.checkin-ou { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.checkin-ou::before, .checkin-ou::after { content: ""; flex: 1; width: 1px; background: #dfe4f2; }
+.checkin-ou span { border: 1px solid #dfe4f2; border-radius: 999px; padding: .2rem .6rem; font-size: .75rem; font-weight: 700; color: #5b6b8c; text-transform: uppercase; margin: .4rem 0; background: #fff; }
+#ck-leitor { max-width: 360px; margin-inline: auto; width: 100%; }
+#ck-leitor:empty { display: none; }
+.tabela-painel thead th { background: var(--navy); color: #fff; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 3px solid var(--amarelo); padding: .75rem 1rem; }
+.tabela-painel td { padding: .75rem 1rem; }
+@media (max-width: 767.98px) {
+  .checkin-modos { grid-template-columns: 1fr; }
+  .checkin-ou { flex-direction: row; } .checkin-ou::before, .checkin-ou::after { width: auto; height: 1px; } .checkin-ou span { margin: 0 .5rem; }
+  .painel-barra-link { display: none; }
+}
+[data-bs-theme="dark"] .checkin-modo { background: #1f2a4a; border-color: #2d3a5a; }
+[data-bs-theme="dark"] .checkin-ou span { background: #1a2440; border-color: #2d3a5a; color: #a3b0cc; }
+[data-bs-theme="dark"] .checkin-ou::before, [data-bs-theme="dark"] .checkin-ou::after { background: #2d3a5a; }

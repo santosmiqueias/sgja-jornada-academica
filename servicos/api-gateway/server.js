@@ -280,6 +280,21 @@ app.post("/api/v1/professor/login", auth.limitador(10, 60000, "login-professor")
 }));
 
 const professor = auth.exigir("professor");
+// Check-in e chamada pelo painel da organização (registrado como "Organização")
+const ORG = servico.ID_ORGANIZACAO;
+app.get("/api/v1/professor/chamada", professor, rota(async (req, res) => res.json(await servico.chamada(ORG, campo(req.query.eventoId, 10)))));
+app.post("/api/v1/professor/checkin", professor, jsonPequeno, rota(async (req, res) => {
+  const b = req.body || {}, ev = campo(b.eventoId, 10);
+  let r;
+  if (b.qr) r = await servico.checkinPorQR(ORG, campo(b.qr, 200), ev);
+  else if (b.cpf) r = await servico.checkinPorCPF(ORG, campo(b.cpf, 20), ev);
+  else r = await servico.registrarCheckin(ORG, campo(b.alunoId, 40), ev, campo(b.origem, 10));
+  res.json(r);
+}));
+app.post("/api/v1/professor/checkin/remover", professor, jsonPequeno, rota(async (req, res) => {
+  await servico.removerCheckin(ORG, campo(req.body && req.body.alunoId, 40), campo(req.body && req.body.eventoId, 10));
+  res.json({ ok: true });
+}));
 app.get("/api/v1/professor/dados", professor, rota(async (_req, res) => res.json(await servico.dadosPainel())));
 
 app.put("/api/v1/professor/membros/:id", professor, jsonPequeno, rota(async (req, res) => {

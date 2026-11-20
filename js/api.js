@@ -117,6 +117,9 @@
         sessao.gravar("sgja_sessao_professor", { token: r.token, expira: Date.now() + CFG.painel.sessaoMinutos * 60000 });
       },
       async dadosPainel() { return req("GET", "/professor/dados", null, "professor"); },
+      async chamadaOrg(eventoId) { return req("GET", `/professor/chamada?eventoId=${encodeURIComponent(eventoId)}`, null, "professor"); },
+      async checkinOrg(dados) { return req("POST", "/professor/checkin", dados, "professor"); },
+      async removerCheckinOrg(alunoId, eventoId) { return req("POST", "/professor/checkin/remover", { alunoId, eventoId }, "professor"); },
       async definirStatusMembro(id, status) { return (await req("PUT", `/professor/membros/${encodeURIComponent(id)}`, { status }, "professor")).membro; },
       async avaliarTrabalho(id, dados) { return (await req("PUT", `/professor/trabalhos/${encodeURIComponent(id)}`, dados, "professor")).trabalho; },
       async baixarArquivoTrabalho(trabalho) {
@@ -245,6 +248,14 @@
         sessao.gravar("sgja_sessao_professor", { expira: Date.now() + CFG.painel.sessaoMinutos * 60000 });
       },
       async dadosPainel() { exigirProfessor(); return S.dadosPainel(); },
+      async chamadaOrg(eventoId) { exigirProfessor(); return S.chamada(S.ID_ORGANIZACAO, eventoId); },
+      async checkinOrg(d) {
+        exigirProfessor();
+        if (d.qr) return S.checkinPorQR(S.ID_ORGANIZACAO, d.qr, d.eventoId);
+        if (d.cpf) return S.checkinPorCPF(S.ID_ORGANIZACAO, d.cpf, d.eventoId);
+        return S.registrarCheckin(S.ID_ORGANIZACAO, d.alunoId, d.eventoId, d.origem);
+      },
+      async removerCheckinOrg(alunoId, eventoId) { exigirProfessor(); return S.removerCheckin(S.ID_ORGANIZACAO, alunoId, eventoId); },
       async definirStatusMembro(id, status) { exigirProfessor(); return S.definirStatusMembro(id, status); },
       async avaliarTrabalho(id, dados) { exigirProfessor(); return S.avaliarTrabalho(id, dados); },
       async baixarArquivoTrabalho(trabalho) {

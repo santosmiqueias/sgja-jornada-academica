@@ -7,13 +7,13 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Organização · VI Jornada Acadêmica</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=202611201258">
+  <link rel="icon" href="assets/img/favicon.png?v=202611201305">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611201258"></script>
+  <script src="js/tema.js?v=202611201305"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611201258">
+  <link rel="stylesheet" href="css/style.css?v=202611201305">
 </head>
 <body>
   <div id="menu"></div>
@@ -48,6 +48,13 @@
 
     <!-- Painel -->
     <div class="d-none" id="tela-painel">
+     <div class="painel-barra">
+       <a class="painel-barra-marca" href="index.html"><img src="assets/img/logo-menu.jpg?v=202611201305" alt="VI Jornada Acadêmica — início do site" width="80" height="45"></a>
+       <div class="d-flex align-items-center gap-2">
+         <a class="painel-barra-link" href="index.html"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Ver o site</a>
+         <button type="button" class="painel-barra-sair" id="btn-sair-topo"><i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Sair</button>
+       </div>
+     </div>
      <div class="painel-layout">
       <aside class="painel-lateral" aria-label="Menu da organização">
         <div class="lateral-usuario">
@@ -63,8 +70,8 @@
           <ul class="nav flex-column" role="tablist">
             <li><button class="nav-link lateral-link" data-bs-toggle="pill" data-bs-target="#aba-submissoes" type="button" role="tab" aria-controls="aba-submissoes"><i class="bi bi-clipboard-check" aria-hidden="true"></i><span>Inscrições</span> <span class="lateral-badge d-none" id="badge-analise">0</span></button></li>
             <li><button class="nav-link lateral-link" data-bs-toggle="pill" data-bs-target="#aba-inscritos" type="button" role="tab" aria-controls="aba-inscritos"><i class="bi bi-people" aria-hidden="true"></i><span>Participantes</span></button></li>
-            <li><a class="nav-link lateral-link" href="checkin.html"><i class="bi bi-qr-code-scan" aria-hidden="true"></i><span>Check-in por QR</span></a></li>
-            <li><a class="nav-link lateral-link" href="checkin.html"><i class="bi bi-calendar-check" aria-hidden="true"></i><span>Chamada</span></a></li>
+            <li><button class="nav-link lateral-link" data-bs-toggle="pill" data-bs-target="#aba-checkin" type="button" role="tab" aria-controls="aba-checkin"><i class="bi bi-qr-code-scan" aria-hidden="true"></i><span>Check-in por QR</span></button></li>
+            <li><button class="nav-link lateral-link" data-bs-toggle="pill" data-bs-target="#aba-chamada" type="button" role="tab" aria-controls="aba-chamada"><i class="bi bi-calendar-check" aria-hidden="true"></i><span>Chamada</span></button></li>
             <li><button class="nav-link lateral-link" data-bs-toggle="pill" data-bs-target="#aba-lembretes" type="button" role="tab" aria-controls="aba-lembretes"><i class="bi bi-whatsapp" aria-hidden="true"></i><span>Lembretes</span></button></li>
           </ul>
           <p class="lateral-grupo">Administração</p>
@@ -82,10 +89,10 @@
 
       <div class="painel-conteudo">
         <header class="painel-topo">
-          <span class="painel-topo-icone" aria-hidden="true"><i class="bi bi-grid-1x2"></i></span>
+          <span class="painel-topo-icone" aria-hidden="true"><i class="bi bi-grid-1x2" id="topo-icone"></i></span>
           <div class="flex-grow-1">
-            <h1 class="painel-titulo">Olá, organização!</h1>
-            <p class="painel-sub mb-0">Você gerencia inscrições, avaliação dos trabalhos, participantes, comissão e certificados.</p>
+            <h1 class="painel-titulo" id="topo-titulo">Olá, organização!</h1>
+            <p class="painel-sub mb-0" id="topo-sub">Você gerencia inscrições, avaliação dos trabalhos, participantes, comissão e certificados.</p>
           </div>
           <span class="painel-perfil">Perfil: Administrador</span>
         </header>
@@ -114,12 +121,67 @@
                 <p class="small text-muted mb-3">As áreas da organização.</p>
                 <div class="d-grid gap-2">
                   <button type="button" class="atalho" data-ir="aba-submissoes"><span class="atalho-icone"><i class="bi bi-clipboard-check" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Inscrições</strong><span>Submissões, avaliação da banca e apresentações.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
-                  <a class="atalho" href="checkin.html"><span class="atalho-icone"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Check-in por QR</strong><span>Leia o QR Code do ingresso e registre a presença.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-                  <a class="atalho" href="checkin.html"><span class="atalho-icone"><i class="bi bi-calendar-check" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Chamada</strong><span>Marque a presença por atividade, pela lista de nomes.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                  <button type="button" class="atalho" data-ir="aba-checkin"><span class="atalho-icone"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Check-in por QR</strong><span>Leia o QR Code do ingresso e registre a presença.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                  <button type="button" class="atalho" data-ir="aba-chamada"><span class="atalho-icone"><i class="bi bi-calendar-check" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Chamada</strong><span>Marque a presença por atividade, pela lista de nomes.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
                   <button type="button" class="atalho" data-ir="aba-certificados"><span class="atalho-icone"><i class="bi bi-award" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Certificados</strong><span>Emissão, envio por e-mail e conferência.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
                   <button type="button" class="atalho" data-ir="aba-comissao"><span class="atalho-icone"><i class="bi bi-person-gear" aria-hidden="true"></i></span><span class="atalho-texto"><strong>Usuários e perfis</strong><span>Libere ou bloqueie o acesso da comissão ao check-in.</span></span><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-pane fade" id="aba-checkin" role="tabpanel" aria-label="Check-in por QR Code">
+          <div class="card cartao-checkin overflow-hidden mb-4">
+            <div class="checkin-cabeca">
+              <span class="checkin-cabeca-icone" aria-hidden="true"><i class="bi bi-qr-code-scan"></i></span>
+              <div class="flex-grow-1"><h2 class="h6 fw-bold mb-0">Registrar presença</h2><p class="small mb-0">Escolha a atividade e leia o QR Code do ingresso, ou digite o CPF.</p></div>
+              <span class="checkin-contador" id="ck-contador">0 presença(s) nesta atividade</span>
+            </div>
+            <div class="p-4">
+              <label for="ck-atividade" class="form-label">Atividade</label>
+              <select class="form-select form-select-lg mb-4" id="ck-atividade"></select>
+              <div class="checkin-modos">
+                <div class="checkin-modo">
+                  <h3 class="h6 fw-bold text-navy"><span class="checkin-passo">1</span>Pela câmera</h3>
+                  <p class="small text-muted">Aponte para o QR Code do ingresso. A câmera fecha sozinha após registrar.</p>
+                  <div id="ck-leitor" class="mb-3"></div>
+                  <button type="button" class="btn btn-primary w-100 mt-auto" id="ck-camera"><i class="bi bi-camera me-1" aria-hidden="true"></i>Ler QR Code com a câmera</button>
+                </div>
+                <div class="checkin-ou" aria-hidden="true"><span>ou</span></div>
+                <form class="checkin-modo" id="ck-form-cpf" novalidate>
+                  <h3 class="h6 fw-bold text-navy"><span class="checkin-passo">2</span>Pelo CPF</h3>
+                  <label for="ck-cpf" class="form-label">CPF do participante:</label>
+                  <input type="text" class="form-control form-control-lg mb-3" id="ck-cpf" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off">
+                  <button class="btn btn-amarelo w-100 mt-auto" id="ck-registrar"><i class="bi bi-person-check me-1" aria-hidden="true"></i>Registrar presença</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <h2 class="h5 fw-bold text-navy">Presenças registradas (<span id="ck-total">0</span>)</h2>
+          <div class="card overflow-hidden">
+            <div class="table-responsive">
+              <table class="table tabela-painel align-middle mb-0">
+                <thead><tr><th>Participante</th><th>Dia</th><th>Horário</th><th>Status</th><th>Registrado por</th></tr></thead>
+                <tbody id="ck-lista"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="tab-pane fade" id="aba-chamada" role="tabpanel" aria-label="Chamada">
+          <div class="card p-4 mb-3">
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-6"><label for="ch-atividade" class="form-label">Atividade</label><select class="form-select" id="ch-atividade"></select></div>
+              <div class="col-lg-6"><label for="ch-busca" class="form-label">Buscar</label><input type="search" class="form-control" id="ch-busca" placeholder="Nome ou CPF"></div>
+            </div>
+          </div>
+          <div class="card overflow-hidden">
+            <div class="table-responsive">
+              <table class="table tabela-painel align-middle mb-0 lista-chamada">
+                <thead><tr><th style="width:90px">Presente</th><th>Participante</th><th class="d-none d-md-table-cell">Curso</th><th>CPF</th><th class="d-none d-lg-table-cell">Registrado por</th></tr></thead>
+                <tbody id="ch-lista"></tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -337,15 +399,17 @@
 
   <script src="vendor/bootstrap/bootstrap.bundle.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
+  <script src="vendor/html5-qrcode.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/emailjs.min.js"></script>
-  <script src="js/config.js?v=202611201258"></script>
-  <script src="js/core.js?v=202611201258"></script>
-  <script src="js/servico.js?v=202611201258"></script>
-  <script src="js/api.js?v=202611201258"></script>
-  <script src="js/ui.js?v=202611201258"></script>
-  <script src="js/certificado-base64.js?v=202611201258"></script>
-  <script src="js/certificado-pdf.js?v=202611201258"></script>
-  <script src="js/painel.js?v=202611201258"></script>
+  <script src="js/config.js?v=202611201305"></script>
+  <script src="js/core.js?v=202611201305"></script>
+  <script src="js/servico.js?v=202611201305"></script>
+  <script src="js/api.js?v=202611201305"></script>
+  <script src="js/ui.js?v=202611201305"></script>
+  <script src="js/certificado-base64.js?v=202611201305"></script>
+  <script src="js/certificado-pdf.js?v=202611201305"></script>
+  <script src="js/painel.js?v=202611201305"></script>
+  <script src="js/painel-checkin.js?v=202611201305"></script>
 </body>
 </html>
