@@ -85,6 +85,33 @@
       return a;
     }
 
+    // Valida título, vínculo, formato, curso, orientadores e resumo (usado na submissão e na edição pela organização).
+    function dadosDoTrabalho(dados) {
+      const titulo = texto(dados.titulo, 200).replace(/\s+/g, " ");
+      const vinculo = SUB.vinculos.find((v) => v.id === dados.vinculo);
+      const curso = texto(dados.curso, 80);
+      // Orientadores: pelo menos 1 (obrigatório). Aceita títulos como "Prof.", "Profª", "Dr.", "Drª".
+      const semTitulo = (n) => n.replace(/^(prof(ª|a|essora|essor)?\.?\s+)?(dr(ª|a)?\.?\s+|me\.?\s+|ma\.?\s+|esp\.?\s+)?/i, "");
+      const listaOri = Array.isArray(dados.orientadores) ? dados.orientadores : (dados.orientador ? [dados.orientador] : []);
+      const orientadores = listaOri.map((n) => C.normalizarNome(texto(n, 100))).filter(Boolean);
+      const resumo = String(dados.resumo == null ? "" : dados.resumo).replace(/\r\n/g, "\n").trim();
+      if (titulo.length < 5) throw new ErroNegocio("Informe o título do trabalho.", "titulo");
+      if (!vinculo) throw new ErroNegocio("Selecione o vínculo do trabalho.", "vinculo");
+      const modalidade = vinculo.modalidade || dados.modalidade;
+      if (!SUB.modalidades[modalidade]) throw new ErroNegocio("Escolha o formato de apresentação.", "modalidade");
+      if (!CFG.cursos.includes(curso)) throw new ErroNegocio("Selecione o curso.", "curso");
+      const maxOri = SUB.maxOrientadores || 5;
+      if (!orientadores.length) throw new ErroNegocio("Informe o professor orientador.", "orientadores");
+      if (orientadores.length > maxOri) throw new ErroNegocio(`No máximo ${maxOri} orientadores.`, "orientadores");
+      if (orientadores.some((n) => !C.validarNome(semTitulo(n)))) throw new ErroNegocio("Informe nome e sobrenome de cada orientador.", "orientadores");
+      if (new Set(orientadores.map((n) => n.toLowerCase())).size !== orientadores.length) throw new ErroNegocio("O mesmo orientador foi informado mais de uma vez.", "orientadores");
+      const letras = C.contarSemEspacos(resumo);
+      if (letras < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres, sem contar os espaços.`, "resumo");
+      if (letras > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} caracteres, sem contar os espaços.`, "resumo");
+      if (resumo.length > SUB.maxCaracteresResumo * 2) throw new ErroNegocio("O resumo tem espaços ou quebras de linha demais.", "resumo");
+      return { titulo, vinculo, modalidade, curso, orientadores, resumo };
+    }
+
     // A organização (login do painel) também registra presença; quem chama é sempre o servidor,
     // que só usa este id em rotas do perfil "professor" (o id nunca vem do navegador).
     const ID_ORGANIZACAO = "__organizacao__";
@@ -169,28 +196,7 @@
             const hoje = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10); // horário de Teresina
             if (hoje < SUB.inicio || hoje > SUB.fim) throw new ErroNegocio("Fora do período de submissão de trabalhos (16 a 30/11/2026).", null, 403);
           }
-          const titulo = texto(dados.titulo, 200).replace(/\s+/g, " ");
-          const vinculo = SUB.vinculos.find((v) => v.id === dados.vinculo);
-          const curso = texto(dados.curso, 80);
-          // Orientadores: pelo menos 1 (obrigatório). Aceita títulos como "Prof.", "Profª", "Dr.", "Drª".
-          const semTitulo = (n) => n.replace(/^(prof(ª|a|essora|essor)?\.?\s+)?(dr(ª|a)?\.?\s+|me\.?\s+|ma\.?\s+|esp\.?\s+)?/i, "");
-          const listaOri = Array.isArray(dados.orientadores) ? dados.orientadores : (dados.orientador ? [dados.orientador] : []);
-          const orientadores = listaOri.map((n) => C.normalizarNome(texto(n, 100))).filter(Boolean);
-          const resumo = String(dados.resumo == null ? "" : dados.resumo).replace(/\r\n/g, "\n").trim();
-          if (titulo.length < 5) throw new ErroNegocio("Informe o título do trabalho.", "titulo");
-          if (!vinculo) throw new ErroNegocio("Selecione o vínculo do trabalho.", "vinculo");
-          const modalidade = vinculo.modalidade || dados.modalidade;
-          if (!SUB.modalidades[modalidade]) throw new ErroNegocio("Escolha o formato de apresentação.", "modalidade");
-          if (!CFG.cursos.includes(curso)) throw new ErroNegocio("Selecione o curso.", "curso");
-          const maxOri = SUB.maxOrientadores || 5;
-          if (!orientadores.length) throw new ErroNegocio("Informe o professor orientador.", "orientadores");
-          if (orientadores.length > maxOri) throw new ErroNegocio(`No máximo ${maxOri} orientadores.`, "orientadores");
-          if (orientadores.some((n) => !C.validarNome(semTitulo(n)))) throw new ErroNegocio("Informe nome e sobrenome de cada orientador.", "orientadores");
-          if (new Set(orientadores.map((n) => n.toLowerCase())).size !== orientadores.length) throw new ErroNegocio("O mesmo orientador foi informado mais de uma vez.", "orientadores");
-          const letras = C.contarSemEspacos(resumo);
-          if (letras < SUB.minCaracteresResumo) throw new ErroNegocio(`O resumo precisa de pelo menos ${SUB.minCaracteresResumo} caracteres, sem contar os espaços.`, "resumo");
-          if (letras > SUB.maxCaracteresResumo) throw new ErroNegocio(`O resumo pode ter no máximo ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} caracteres, sem contar os espaços.`, "resumo");
-          if (resumo.length > SUB.maxCaracteresResumo * 2) throw new ErroNegocio("O resumo tem espaços ou quebras de linha demais.", "resumo");
+          const { titulo, vinculo, modalidade, curso, orientadores, resumo } = dadosDoTrabalho(dados);
           if (!arquivo || !arquivo.ref) throw new ErroNegocio("Anexe o arquivo do trabalho.", "arquivo");
           const ext = String(arquivo.nome || "").split(".").pop().toLowerCase();
           if (!SUB.arquivo.extensoes.includes(ext)) throw new ErroNegocio(`Envie o arquivo como ${SUB.arquivo.descricao}.`, "arquivo");
@@ -487,6 +493,20 @@
         }
         if (dados.horarioApresentacao !== undefined) patch.horarioApresentacao = texto(dados.horarioApresentacao, 20);
         if (dados.apresentado !== undefined) patch.apresentado = dados.apresentado === true;
+        // Edição dos dados do trabalho pela organização (mesmas regras da submissão)
+        const CAMPOS = ["titulo", "vinculo", "modalidade", "curso", "orientadores", "resumo"];
+        if (CAMPOS.some((k) => dados[k] !== undefined)) {
+          const base = { titulo: t.titulo, vinculo: t.vinculo, modalidade: t.modalidade, curso: t.curso, orientadores: t.orientadores || [], resumo: t.resumo };
+          CAMPOS.forEach((k) => { if (dados[k] !== undefined) base[k] = dados[k]; });
+          const d = dadosDoTrabalho(base);
+          Object.assign(patch, { titulo: d.titulo, vinculo: d.vinculo.id, vinculoNome: d.vinculo.nome, modalidade: d.modalidade, curso: d.curso, orientadores: d.orientadores, resumo: d.resumo });
+        }
+        const statusFinal = patch.status !== undefined ? patch.status : t.status;
+        if (statusFinal !== "aprovado") {
+          if (patch.apresentado === true) throw new ErroNegocio("Só trabalhos aprovados podem ser marcados como apresentados.");
+          if (patch.sessao) throw new ErroNegocio("Só trabalhos aprovados recebem sessão de apresentação.");
+          patch.apresentado = false;
+        }
         const novo = await store.update(ENT.trabalho, t.id, patch);
         // Lembrete de WhatsApp: a sessão da apresentação entra nas atividades dos participantes
         // (só enquanto o trabalho estiver aprovado).

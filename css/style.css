@@ -360,3 +360,20 @@ body.modo-painel .aviso-demo, body.modo-painel main > .alert { margin-left: 0; }
 [data-bs-theme="dark"] .checkin-modo { background: #1f2a4a; border-color: #2d3a5a; }
 [data-bs-theme="dark"] .checkin-ou span { background: #1a2440; border-color: #2d3a5a; color: #a3b0cc; }
 [data-bs-theme="dark"] .checkin-ou::before, [data-bs-theme="dark"] .checkin-ou::after { background: #2d3a5a; }
+
+/* Painel: Inscrições (submissões e participantes) */
+.seletor-inscricoes { box-shadow: 0 4px 14px rgba(11, 42, 111, .08); }
+.campo-busca { position: relative; }
+.campo-busca > i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #5b6b8c; }
+.campo-busca .form-control { padding-left: 2.6rem; }
+.tabela-trabalhos td { padding: 1rem; border-color: #e3e8f4; }
+.tabela-trabalhos .col-trab { min-width: 260px; }
+.trab-titulo { font-weight: 800; text-transform: uppercase; color: var(--navy); line-height: 1.3; margin-bottom: .35rem; }
+.trab-autor { font-weight: 700; text-transform: uppercase; font-size: .88rem; }
+.col-acoes { min-width: 220px; }
+.acoes-trab { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.acoes-trab .acao-larga { grid-column: 1 / -1; }
+.selo-cinza { background: #eef1f8; color: #5b6b8c; }
+[data-bs-theme="dark"] .trab-titulo { color: var(--destaque); }
+[data-bs-theme="dark"] .selo-cinza { background: #26335a; color: #a3b0cc; }
+[data-bs-theme="dark"] .tabela-trabalhos td { border-color: #2d3a5a; }

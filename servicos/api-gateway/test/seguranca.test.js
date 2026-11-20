@@ -297,6 +297,21 @@ test("Organização: faz check-in e chamada pelo painel (como \"Organização\")
   assert.ok(!depois.frequencias.some((f) => f.alunoId === ok.dados.aluno.id));
 });
 
+test("Organização: edita dados do trabalho com as regras da submissão; só aprovado pode ser marcado como apresentado", async () => {
+  const lista = (await chamar("GET", "/professor/dados", undefined, tokenProf)).dados.trabalhos;
+  const t = lista[0];
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { titulo: "Título editado pela organização" })).status, 401);
+  const ok = await chamar("PUT", `/professor/trabalhos/${t.id}`, { titulo: "Título editado pela organização", curso: "Psicologia" }, tokenProf);
+  assert.equal(ok.status, 200); assert.equal(ok.dados.trabalho.titulo, "Título editado pela organização"); assert.equal(ok.dados.trabalho.curso, "Psicologia");
+  assert.equal(ok.dados.trabalho.resumo, t.resumo, "o que não foi enviado continua igual");
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { resumo: "curto" }, tokenProf)).dados.campo, "resumo");
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { curso: "Curso inventado" }, tokenProf)).dados.campo, "curso");
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { status: "reprovado" }, tokenProf)).dados.trabalho.apresentado, false);
+  assert.equal((await chamar("PUT", `/professor/trabalhos/${t.id}`, { apresentado: true }, tokenProf)).status, 400);
+  const ap = await chamar("PUT", `/professor/trabalhos/${t.id}`, { status: "aprovado", apresentado: true }, tokenProf);
+  assert.equal(ap.status, 200); assert.equal(ap.dados.trabalho.apresentado, true);
+});
+
 test("limite de submissões por minuto contra robôs", async () => {
   let ultimo;
   for (let i = 0; i < 25; i++) ultimo = await chamar("POST", "/publico/submissoes", { titulo: "x" });

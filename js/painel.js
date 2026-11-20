@@ -74,8 +74,7 @@
     // Título do topo conforme a área
     const TOPO = {
       "aba-visao": ["grid-1x2", "Olá, organização!", "Você gerencia inscrições, avaliação dos trabalhos, participantes, comissão e certificados."],
-      "aba-submissoes": ["clipboard-check", "Inscrições", "Submissões, avaliação da banca e apresentações."],
-      "aba-inscritos": ["people", "Participantes", "Todos os inscritos, com presença e situação do certificado."],
+      "aba-submissoes": ["clipboard-check", "Inscrições", "Em Submissões, abra cada trabalho (dados, resumo e arquivo), aprove ou negue, e marque quem apresentou. Use o filtro por área para ver só os trabalhos de um curso."],
       "aba-checkin": ["qr-code-scan", "Check-in por QR Code", "Escolha a atividade e leia o QR Code do ingresso. Nome, dia, horário e status ficam registrados."],
       "aba-chamada": ["calendar-check", "Chamada", "Marque a presença por atividade, pela lista de nomes."],
       "aba-lembretes": ["whatsapp", "Lembretes", "Lembretes por WhatsApp antes de cada apresentação."],
@@ -282,34 +281,101 @@
   CFG.eventos.filter((e) => /Apresenta/i.test(e.titulo)).forEach((e) =>
     $("mt-sessao").add(new Option(`${UI.formatarData(e.data)} · ${e.turno} · ${e.horario}`, e.id)));
 
+  // Seletor Submissões / Participantes (mesma área "Inscrições")
+  document.querySelectorAll('input[name="sub-insc"]').forEach((r) => r.addEventListener("change", () => {
+    const trab = $("sub-trabalhos").checked;
+    $("painel-trabalhos").hidden = !trab; $("painel-participantes").hidden = trab;
+  }));
+
+  // Selects de edição
+  SUB.vinculos.forEach((v) => $("ed-vinculo").add(new Option(v.nome, v.id)));
+  CFG.cursos.forEach((c) => $("ed-curso").add(new Option(c, c)));
+  function travarModalidadeEdicao() {
+    const v = SUB.vinculos.find((x) => x.id === $("ed-vinculo").value);
+    [...$("ed-modalidade").options].forEach((o) => { o.disabled = !!(v && v.modalidade && o.value !== v.modalidade); });
+    if (v && v.modalidade) $("ed-modalidade").value = v.modalidade;
+  }
+  $("ed-vinculo").addEventListener("change", travarModalidadeEdicao);
+  const contarResumo = () => { $("ed-contador").textContent = `(${C.contarSemEspacos($("ed-resumo").value).toLocaleString("pt-BR")} / ${SUB.maxCaracteresResumo.toLocaleString("pt-BR")} sem espaços)`; };
+  $("ed-resumo").addEventListener("input", contarResumo);
+
+  const aluno = (id) => alunos.find((x) => x.id === id);
+  function opcoesFiltro(sel, itens, rotuloTodos) {
+    const atual = sel.value;
+    sel.innerHTML = `<option value="">${rotuloTodos} (${trabalhos.length})</option>` + itens.map(([v, r, n]) => `<option value="${esc(v)}">${esc(r)} (${n})</option>`).join("");
+    if ([...sel.options].some((o) => o.value === atual)) sel.value = atual;
+  }
+
   function desenharTrabalhos() {
     const conta = (st) => trabalhos.filter((t) => t.status === st).length;
-    $("st-trab-total").textContent = trabalhos.length;
-    $("st-trab-analise").textContent = conta("em_analise");
-    $("st-trab-aprovados").textContent = conta("aprovado");
-    $("st-trab-reprovados").textContent = conta("reprovado");
     $("badge-analise").textContent = conta("em_analise");
     $("badge-analise").classList.toggle("d-none", !conta("em_analise"));
-    const filtro = $("filtro-trabalhos").value, termo = $("busca-trabalhos").value.trim().toLowerCase();
-    const lista = trabalhos.filter((t) => (!filtro || t.status === filtro) &&
-      (!termo || t.titulo.toLowerCase().includes(termo) || t.protocolo.toLowerCase().includes(termo) || (t.autoresIds || []).some((id) => nomePessoa(id).toLowerCase().includes(termo))));
+    $("cont-trabalhos").textContent = trabalhos.length;
+    $("cont-participantes").textContent = alunos.length;
+    const cursos = [...new Set(trabalhos.map((t) => t.curso))].sort((x, y) => x.localeCompare(y, "pt-BR"));
+    opcoesFiltro($("filtro-area"), cursos.map((c) => [c, c, trabalhos.filter((t) => t.curso === c).length]), "Todas as áreas");
+    opcoesFiltro($("filtro-trabalhos"), Object.entries(STATUS).map(([k, [r]]) => [k, r, conta(k)]), "Todas");
+    const area = $("filtro-area").value, filtro = $("filtro-trabalhos").value;
+    const termo = $("busca-trabalhos").value.trim().toLowerCase(), dig = C.soDigitos(termo);
+    const lista = trabalhos.filter((t) => {
+      if (area && t.curso !== area) return false;
+      if (filtro && t.status !== filtro) return false;
+      if (!termo) return true;
+      const pessoas = (t.autoresIds || []).map(aluno).filter(Boolean);
+      return t.titulo.toLowerCase().includes(termo) || t.protocolo.toLowerCase().includes(termo) || String(t.curso).toLowerCase().includes(termo)
+        || pessoas.some((p) => p.nome.toLowerCase().includes(termo) || String(p.email).toLowerCase().includes(termo) || (dig.length >= 3 && (String(p.cpf).includes(dig) || String(p.matricula || "").includes(dig))));
+    });
     $("tb-trabalhos").innerHTML = lista.length ? lista.map((t) => {
+      const rep = aluno(t.representanteId) || { nome: "—", email: "" };
       const [rotulo, cor] = STATUS[t.status] || [t.status, "text-bg-light"];
+      const s = rep.id ? situacaoDe(rep) : { feitas: 0, dias: 0 };
+      const pct = CFG.eventos.length ? Math.round((s.feitas / CFG.eventos.length) * 100) : 0;
+      const cert = rep.id && certificados.some((c) => c.alunoId === rep.id);
+      const pres = cert ? '<span class="badge badge-ok">Certificado emitido</span>' : s.feitas ? `<span class="badge badge-ok">Presente · ${s.dias} dia(s)</span>` : '<span class="badge selo-cinza">Presença pendente</span>';
+      const aprovado = t.status === "aprovado";
       return `<tr>
-        <td><div class="fw-semibold small">${esc(t.titulo)}</div><div class="small text-muted">${esc(t.protocolo)} · ${esc(nomePessoa(t.representanteId))}${t.autoresIds.length > 1 ? ` + ${t.autoresIds.length - 1}` : ""}</div></td>
-        <td class="small d-none d-md-table-cell">${esc(t.vinculoNome)}<br><span class="text-muted">${esc(SUB.modalidades[t.modalidade] || t.modalidade)}</span></td>
-        <td><span class="badge ${cor}">${rotulo}</span>${t.apresentado ? '<br><span class="badge badge-ok mt-1">apresentado</span>' : ""}</td>
-        <td class="small d-none d-lg-table-cell">${esc(sessaoTexto(t)) || '<span class="text-muted">—</span>'}</td>
-        <td class="text-end"><button class="btn btn-sm btn-primary btn-avaliar" data-id="${esc(t.id)}">Avaliar</button></td></tr>`;
-    }).join("") : `<tr><td colspan="5" class="text-center text-muted py-4">${trabalhos.length ? "Nenhum trabalho com esse filtro." : "Nenhum trabalho submetido ainda."}</td></tr>`;
+        <td class="col-trab"><div class="trab-titulo">${esc(t.titulo)}</div><div class="trab-autor">${esc(rep.nome)}${t.autoresIds.length > 1 ? ` <span class="text-muted fw-normal">+ ${t.autoresIds.length - 1}</span>` : ""}</div><div class="small text-muted">${esc(rep.email)} · ${esc(t.protocolo)}</div></td>
+        <td class="small"><div class="fw-semibold">${esc(t.curso)}</div><div class="text-muted">${esc(t.vinculoNome)}</div><div class="text-muted">${esc(SUB.modalidades[t.modalidade] || t.modalidade)}</div>${t.sessao ? `<div class="text-muted"><i class="bi bi-calendar-event me-1" aria-hidden="true"></i>${esc(sessaoTexto(t))}</div>` : ""}</td>
+        <td class="small"><div>${s.feitas} sessão(ões) · ${pct}%</div>${pres}</td>
+        <td class="col-acoes">
+          <div class="mb-2"><span class="badge ${cor}">${rotulo}</span>${t.apresentado ? ' <span class="badge badge-ok">Apresentou</span>' : ""}</div>
+          <div class="acoes-trab">
+            <button class="btn btn-sm ${t.status === "aprovado" ? "btn-success" : "btn-outline-success"}" data-acao="aprovar" data-id="${esc(t.id)}" aria-pressed="${t.status === "aprovado"}"><i class="bi bi-hand-thumbs-up me-1" aria-hidden="true"></i>Aprovar</button>
+            <button class="btn btn-sm ${t.status === "reprovado" ? "btn-danger" : "btn-outline-danger"}" data-acao="negar" data-id="${esc(t.id)}" aria-pressed="${t.status === "reprovado"}"><i class="bi bi-hand-thumbs-down me-1" aria-hidden="true"></i>Negar</button>
+            <button class="btn btn-sm btn-primary acao-larga" data-acao="ver" data-id="${esc(t.id)}"><i class="bi bi-eye me-1" aria-hidden="true"></i>Ver trabalho</button>
+            <button class="btn btn-sm ${t.apresentado ? "btn-success" : "btn-outline-primary"} acao-larga" data-acao="apresentou" data-id="${esc(t.id)}" ${aprovado ? "" : 'disabled title="Disponível depois de aprovar"'}><i class="bi bi-easel me-1" aria-hidden="true"></i>${t.apresentado ? "Apresentado ✓" : "Marcar apresentação"}</button>
+            <button class="btn btn-sm btn-outline-secondary acao-larga" data-acao="editar" data-id="${esc(t.id)}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>
+          </div>
+        </td></tr>`;
+    }).join("") : `<tr><td colspan="4" class="text-center text-muted py-4">${trabalhos.length ? "Nenhum trabalho com esse filtro." : "Nenhum trabalho submetido ainda."}</td></tr>`;
   }
   $("busca-trabalhos").addEventListener("input", desenharTrabalhos);
   $("filtro-trabalhos").addEventListener("change", desenharTrabalhos);
+  $("filtro-area").addEventListener("change", desenharTrabalhos);
 
-  $("tb-trabalhos").addEventListener("click", (e) => {
-    const b = e.target.closest(".btn-avaliar");
+  async function salvarRapido(b, t, dados, msg) {
+    b.disabled = true;
+    try { await API.avaliarTrabalho(t.id, dados); await recarregar(); UI.aviso(msg, "sucesso"); }
+    catch (err) { UI.aviso(err.message, "erro"); b.disabled = false; }
+  }
+
+  $("tb-trabalhos").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-acao]");
     if (!b) return;
     const t = trabalhos.find((x) => x.id === b.dataset.id);
+    if (!t) return;
+    const acao = b.dataset.acao;
+    if (acao === "aprovar") return salvarRapido(b, t, { status: t.status === "aprovado" ? "em_analise" : "aprovado" }, t.status === "aprovado" ? "Trabalho voltou para análise." : "Trabalho aprovado.");
+    if (acao === "negar") {
+      if (t.status === "reprovado") return salvarRapido(b, t, { status: "em_analise" }, "Trabalho voltou para análise.");
+      if (!(await UI.confirmar(`Negar o trabalho “${t.titulo}”? O participante verá a situação “Não aprovado”.`, { titulo: "Negar trabalho", botao: "Negar", perigo: true }))) return;
+      return salvarRapido(b, t, { status: "reprovado", sessao: "" }, "Trabalho negado.");
+    }
+    if (acao === "apresentou") return salvarRapido(b, t, { apresentado: !t.apresentado }, t.apresentado ? "Marcação de apresentação removida." : "Apresentação marcada.");
+    abrirTrabalho(t, acao === "editar");
+  });
+
+  function abrirTrabalho(t, editar) {
     emEdicao = t;
     $("mt-protocolo").textContent = `${t.protocolo} · enviado em ${UI.formatarDataHora(t.created_date)}`;
     $("mt-titulo").textContent = t.titulo;
@@ -317,7 +383,7 @@
     $("mt-dados").innerHTML =
       linha("Vínculo", esc(t.vinculoNome)) + linha("Formato", esc(SUB.modalidades[t.modalidade] || t.modalidade)) + linha("Curso", esc(t.curso)) +
       (() => { const o = t.orientadores || (t.orientador ? [t.orientador] : []); return o.length ? linha(o.length > 1 ? "Orientadores" : "Orientador", o.map(esc).join("<br>")) : ""; })() +
-      linha("Participantes", (t.autoresIds || []).map((id) => { const a = alunos.find((x) => x.id === id); return a ? `${esc(a.nome)} <span class="text-muted">· ${esc(a.email)}</span>${id === t.representanteId ? " <span class=\"badge text-bg-light\">representante</span>" : ""}` : "—"; }).join("<br>")) +
+      linha("Participantes", (t.autoresIds || []).map((id) => { const a = aluno(id); return a ? `${esc(a.nome)} <span class="text-muted">· ${esc(a.email)}</span>${id === t.representanteId ? " <span class=\"badge text-bg-light\">representante</span>" : ""}` : "—"; }).join("<br>")) +
       linha("Arquivo", t.arquivo ? `${esc(t.arquivo.nome)} <span class="text-muted">· ${Math.max(1, Math.round(t.arquivo.tamanho / 1024))} KB</span>` : "—");
     $("mt-resumo").textContent = t.resumo;
     $("mt-status").value = t.status;
@@ -325,8 +391,18 @@
     $("mt-horario").value = t.horarioApresentacao || "";
     $("mt-apresentado").checked = !!t.apresentado;
     $("mt-parecer").value = t.parecer || "";
+    $("ed-titulo").value = t.titulo; $("ed-vinculo").value = t.vinculo; $("ed-curso").value = t.curso;
+    $("ed-modalidade").value = t.modalidade; travarModalidadeEdicao();
+    $("ed-orientadores").value = (t.orientadores || []).join("\n"); $("ed-resumo").value = t.resumo; contarResumo();
+    modoEdicao(editar);
     modalTrab.show();
-  });
+  }
+  function modoEdicao(on) {
+    $("mt-edicao").hidden = !on;
+    $("mt-dados").hidden = on; $("mt-resumo").hidden = on; $("mt-resumo").previousElementSibling.hidden = on;
+    $("mt-editar").hidden = on;
+  }
+  $("mt-editar").addEventListener("click", () => { modoEdicao(true); $("ed-titulo").focus(); });
 
   $("mt-arquivo").addEventListener("click", async (e) => {
     const b = e.currentTarget;
@@ -341,12 +417,17 @@
     const status = $("mt-status").value;
     if ($("mt-sessao").value && status !== "aprovado") { UI.aviso("Só trabalhos aprovados recebem sessão de apresentação.", "alerta"); return; }
     if ($("mt-apresentado").checked && status !== "aprovado") { UI.aviso("Só trabalhos aprovados podem ser marcados como apresentados.", "alerta"); return; }
+    const dados = { status, parecer: $("mt-parecer").value, sessao: $("mt-sessao").value || "", horarioApresentacao: $("mt-horario").value, apresentado: $("mt-apresentado").checked };
+    if (!$("mt-edicao").hidden) Object.assign(dados, {
+      titulo: $("ed-titulo").value, vinculo: $("ed-vinculo").value, modalidade: $("ed-modalidade").value, curso: $("ed-curso").value,
+      orientadores: $("ed-orientadores").value.split("\n").map((x) => x.trim()).filter(Boolean), resumo: $("ed-resumo").value
+    });
     UI.carregando(b, true, "Salvando...");
     try {
-      await API.avaliarTrabalho(emEdicao.id, { status, parecer: $("mt-parecer").value, sessao: $("mt-sessao").value || null, horarioApresentacao: $("mt-horario").value, apresentado: $("mt-apresentado").checked });
+      await API.avaliarTrabalho(emEdicao.id, dados);
       modalTrab.hide();
       await recarregar();
-      UI.aviso("Avaliação salva.", "sucesso");
+      UI.aviso("Trabalho salvo.", "sucesso");
     } catch (err) { UI.aviso(err.message, "erro"); }
     finally { UI.carregando(b, false); }
   });
