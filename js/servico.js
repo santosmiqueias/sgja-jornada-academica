@@ -522,6 +522,36 @@
         return novo;
       },
 
+      // Correção dos dados de contato de um inscrito pela organização (CPF e matrícula não mudam).
+      async atualizarInscrito(id, dados) {
+        dados = dados || {};
+        const a = await buscarAluno(String(id));
+        if (!a) throw new ErroNegocio("Inscrito não encontrado.", null, 404);
+        const patch = {};
+        if (dados.nome !== undefined) {
+          patch.nome = C.capitalizarNome(texto(dados.nome, 100));
+          if (!C.validarNome(patch.nome)) throw new ErroNegocio("Informe nome e sobrenome válidos.", "ei-nome");
+        }
+        if (dados.email !== undefined) {
+          patch.email = C.normalizarEmail(texto(dados.email, 120));
+          if (!C.validarEmail(patch.email)) throw new ErroNegocio("E-mail inválido.", "ei-email");
+        }
+        if (dados.telefone !== undefined) {
+          patch.telefone = C.soDigitos(texto(dados.telefone, 20));
+          if (!C.validarTelefone(patch.telefone)) throw new ErroNegocio("Telefone inválido.", "ei-telefone");
+        }
+        if (dados.curso !== undefined) {
+          patch.curso = texto(dados.curso, 80);
+          if (patch.curso && !CFG.cursos.includes(patch.curso)) throw new ErroNegocio("Selecione um curso da lista.", "ei-curso");
+        }
+        if (dados.instituicao !== undefined && a.publico === "externo") {
+          patch.instituicao = texto(dados.instituicao, 150);
+          if (!patch.instituicao) throw new ErroNegocio("Informe a instituição.", "ei-instituicao");
+        }
+        if (!Object.keys(patch).length) return a;
+        return store.update(ENT.aluno, a.id, patch);
+      },
+
       async arquivoDoTrabalho(id) {
         const t = (await store.list(ENT.trabalho)).find((x) => x.id === String(id));
         if (!t || !t.arquivo) throw new ErroNegocio("Arquivo não encontrado.", null, 404);

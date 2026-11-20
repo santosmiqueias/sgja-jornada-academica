@@ -121,6 +121,7 @@
       async checkinOrg(dados) { return req("POST", "/professor/checkin", dados, "professor"); },
       async removerCheckinOrg(alunoId, eventoId) { return req("POST", "/professor/checkin/remover", { alunoId, eventoId }, "professor"); },
       async definirStatusMembro(id, status) { return (await req("PUT", `/professor/membros/${encodeURIComponent(id)}`, { status }, "professor")).membro; },
+      async atualizarInscrito(id, dados) { return (await req("PUT", `/professor/alunos/${encodeURIComponent(id)}`, dados, "professor")).aluno; },
       async avaliarTrabalho(id, dados) { return (await req("PUT", `/professor/trabalhos/${encodeURIComponent(id)}`, dados, "professor")).trabalho; },
       async baixarArquivoTrabalho(trabalho) {
         const s = valida(sessao.ler("sgja_sessao_professor"));
@@ -257,6 +258,7 @@
       },
       async removerCheckinOrg(alunoId, eventoId) { exigirProfessor(); return S.removerCheckin(S.ID_ORGANIZACAO, alunoId, eventoId); },
       async definirStatusMembro(id, status) { exigirProfessor(); return S.definirStatusMembro(id, status); },
+      async atualizarInscrito(id, dados) { exigirProfessor(); return S.atualizarInscrito(id, dados); },
       async avaliarTrabalho(id, dados) { exigirProfessor(); return S.avaliarTrabalho(id, dados); },
       async baixarArquivoTrabalho(trabalho) {
         exigirProfessor();

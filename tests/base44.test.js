@@ -172,3 +172,22 @@ test("Resumo: 1.500 caracteres sem contar os espaços é aceito; 1.501 é recusa
   assert.match(ok.trabalho.protocolo, /^TR-/);
   await assert.rejects(() => S.submeterTrabalho(dados("Resumo acima", palavras + " a"), arq), /sem contar os espaços/);
 });
+
+test("Organização corrige dados de contato do inscrito; CPF não muda e campos inválidos são recusados", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sgja-editar-"));
+  const ctx = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(RAIZ, "js", "config.js"), "utf8"), ctx);
+  const C = require("../js/core.js");
+  const { criarServico } = require("../js/servico.js");
+  const { ArquivoStore } = require("../servicos/api-gateway/store.js");
+  const S = criarServico({ store: new ArquivoStore(dir), config: ctx.window.SGJA_CONFIG, core: C, segredo: "segredo-de-teste-com-tamanho-ok" });
+  const { aluno } = await S.inscreverParticipante({ nome: "Patrícia Gomes Viana", cpf: "52998224725", email: "patricia@exemplo.com", telefone: "86999993333", consentimentoLGPD: true });
+  const novo = await S.atualizarInscrito(aluno.id, { nome: "patrícia gomes viana neta", email: "NOVO@Exemplo.com", telefone: "(86) 98888-7777", cpf: "11144477735" });
+  assert.equal(novo.nome, "Patrícia Gomes Viana Neta");
+  assert.equal(novo.email, "novo@exemplo.com");
+  assert.equal(novo.telefone, "86988887777");
+  assert.equal(novo.cpf, "52998224725");
+  await assert.rejects(() => S.atualizarInscrito(aluno.id, { email: "sem-arroba" }), /E-mail inválido/);
+  await assert.rejects(() => S.atualizarInscrito(aluno.id, { curso: "Curso inventado" }), /curso da lista/);
+  await assert.rejects(() => S.atualizarInscrito("nao-existe", { nome: "Fulano de Tal" }), /não encontrado/);
+});

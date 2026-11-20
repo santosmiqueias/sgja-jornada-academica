@@ -305,6 +305,11 @@ app.put("/api/v1/professor/trabalhos/:id", professor, jsonPequeno, rota(async (r
   res.json({ trabalho: await servico.avaliarTrabalho(campo(req.params.id, 40), req.body) });
 }));
 
+app.put("/api/v1/professor/alunos/:id", professor, jsonPequeno, rota(async (req, res) => {
+  const a = await servico.atualizarInscrito(campo(req.params.id, 40), req.body);
+  res.json({ aluno: { id: a.id, nome: a.nome, email: a.email, telefone: a.telefone, curso: a.curso, instituicao: a.instituicao || "" } });
+}));
+
 app.get("/api/v1/professor/trabalhos/:id/arquivo", professor, rota(async (req, res) => {
   const arq = await servico.arquivoDoTrabalho(campo(req.params.id, 40));
   const caminho = caminhoArquivo(arq.ref);

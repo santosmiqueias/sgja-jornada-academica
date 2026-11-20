@@ -7,13 +7,13 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Organização · VI Jornada Acadêmica</title>
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=202611201317">
+  <link rel="icon" href="assets/img/favicon.png?v=202611201330">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light dark">
-  <script src="js/tema.js?v=202611201317"></script>
+  <script src="js/tema.js?v=202611201330"></script>
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="vendor/bootstrap-icons/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="css/style.css?v=202611201317">
+  <link rel="stylesheet" href="css/style.css?v=202611201330">
 </head>
 <body>
   <div id="menu"></div>
@@ -49,7 +49,7 @@
     <!-- Painel -->
     <div class="d-none" id="tela-painel">
      <div class="painel-barra">
-       <a class="painel-barra-marca" href="index.html"><img src="assets/img/logo-menu.jpg?v=202611201317" alt="VI Jornada Acadêmica — início do site" width="80" height="45"></a>
+       <a class="painel-barra-marca" href="index.html"><img src="assets/img/logo-menu.jpg?v=202611201330" alt="VI Jornada Acadêmica — início do site" width="80" height="45"></a>
        <div class="d-flex align-items-center gap-2">
          <a class="painel-barra-link" href="index.html"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Ver o site</a>
          <button type="button" class="painel-barra-sair" id="btn-sair-topo"><i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Sair</button>
@@ -205,11 +205,14 @@
                   <div class="col-md-6"><label for="filtro-area" class="form-label"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Área (curso):</label><select id="filtro-area" class="form-select form-select-lg"></select></div>
                   <div class="col-md-6"><label for="filtro-trabalhos" class="form-label">Situação da avaliação:</label><select id="filtro-trabalhos" class="form-select form-select-lg"></select></div>
                 </div>
+                <button type="button" class="btn btn-link link-limpar px-0 mt-2" id="limpar-filtros" hidden><i class="bi bi-x-lg me-1" aria-hidden="true"></i>Limpar filtros</button>
               </div>
             </div>
             <div class="card overflow-hidden">
-              <div class="table-responsive">
+              <ul class="lista-cartoes d-xl-none" id="lista-trabalhos"></ul>
+              <div class="d-none d-xl-block">
                 <table class="table tabela-painel tabela-trabalhos align-top mb-0">
+                  <colgroup><col><col style="width:22%"><col style="width:12rem"><col style="width:16rem"></colgroup>
                   <thead><tr><th>Trabalho e apresentador</th><th>Curso e disciplina</th><th>Presença e certificado</th><th>Avaliação e ações</th></tr></thead>
                   <tbody id="tb-trabalhos"></tbody>
                 </table>
@@ -218,18 +221,26 @@
           </div>
 
           <div id="painel-participantes" hidden>
-            <div class="card p-3">
-            <div class="d-flex flex-wrap gap-2 mb-3">
-              <input type="search" id="busca-inscritos" class="form-control" style="max-width: 360px" placeholder="Buscar inscrito" aria-label="Buscar inscrito">
-              <button class="btn btn-outline-primary ms-auto" id="btn-csv"><i class="bi bi-filetype-csv me-1"></i>Exportar CSV</button>
+            <div class="card overflow-hidden mb-4">
+              <div class="checkin-cabeca">
+                <span class="checkin-cabeca-icone" aria-hidden="true"><i class="bi bi-search"></i></span>
+                <h2 class="h6 fw-bold mb-0 flex-grow-1">Buscar participante</h2>
+                <button type="button" class="btn btn-sm btn-amarelo" id="btn-csv"><i class="bi bi-filetype-csv me-1" aria-hidden="true"></i>Exportar CSV</button>
+              </div>
+              <div class="p-4">
+                <div class="campo-busca"><i class="bi bi-search" aria-hidden="true"></i><input type="search" id="busca-inscritos" class="form-control form-control-lg" placeholder="Nome, e-mail ou CPF" aria-label="Buscar participante"></div>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>Nome</th><th>Curso</th><th>CPF</th><th>Matrícula</th><th>Inscrito em</th><th>Check-ins</th><th>Situação</th><th title="Lembrete WhatsApp"><i class="bi bi-whatsapp" aria-label="Lembrete WhatsApp"></i></th></tr></thead>
-                <tbody id="tb-inscritos"></tbody>
-              </table>
+            <div class="card overflow-hidden">
+              <ul class="lista-cartoes d-xl-none" id="lista-inscritos"></ul>
+              <div class="d-none d-xl-block">
+                <table class="table tabela-painel tabela-trabalhos align-top mb-0">
+                  <colgroup><col><col style="width:13rem"><col style="width:12rem"><col style="width:9rem"></colgroup>
+                  <thead><tr><th>Participante</th><th>Telefone e CPF</th><th>Presença e certificado</th><th>Ações</th></tr></thead>
+                  <tbody id="tb-inscritos"></tbody>
+                </table>
+              </div>
             </div>
-          </div>
           </div>
         </section>
 
@@ -354,23 +365,52 @@
      </div><!-- /painel-layout -->
     </div>
     <div class="modal fade" id="modal-trabalho" tabindex="-1" aria-labelledby="mt-titulo">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <div>
-              <div class="small text-muted" id="mt-protocolo"></div>
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content modal-trabalho">
+          <div class="modal-header mt-cabeca">
+            <div class="min-w-0">
               <h2 class="modal-title h5" id="mt-titulo"></h2>
+              <div class="mt-chips" id="mt-chips"></div>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
           <div class="modal-body">
-            <dl class="row small mb-2" id="mt-dados"></dl>
-            <h3 class="h6 fw-bold">Resumo</h3>
-            <p class="small resumo-trabalho" id="mt-resumo"></p>
-            <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="mt-arquivo"><i class="bi bi-download me-1" aria-hidden="true"></i>Baixar arquivo</button>
-            <hr>
+            <div id="mt-ver">
+              <h3 class="mt-secao">Arquivo do trabalho</h3>
+              <div class="mt-arquivo mb-4" id="mt-arquivo-box">
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                <span class="flex-grow-1 min-w-0"><span class="mt-arquivo-nome" id="mt-arquivo-nome"></span><span class="mt-arquivo-tam" id="mt-arquivo-tam"></span></span>
+                <button type="button" class="btn btn-primary" id="mt-arquivo"><i class="bi bi-download me-1" aria-hidden="true"></i>Abrir / baixar</button>
+              </div>
+              <p class="mt-sem-arquivo mb-4" id="mt-sem-arquivo" hidden>Nenhum arquivo enviado.</p>
+              <h3 class="mt-secao">Resumo</h3>
+              <p class="mt-resumo mb-4" id="mt-resumo"></p>
+              <div class="row g-3 align-items-start">
+                <div class="col-lg-5">
+                  <section class="mt-cartao">
+                    <h3><i class="bi bi-people" aria-hidden="true"></i>Autoria</h3>
+                    <div class="p-3" id="mt-autoria"></div>
+                  </section>
+                </div>
+                <div class="col-lg-7">
+                  <section class="mt-cartao">
+                    <h3><i class="bi bi-clipboard-check" aria-hidden="true"></i>Inscrição e contato</h3>
+                    <dl class="mt-dados p-3 mb-0" id="mt-contato"></dl>
+                  </section>
+                </div>
+              </div>
+              <p class="small text-muted mt-3 mb-0" id="mt-protocolo"></p>
+            </div>
+
             <div id="mt-edicao" hidden>
-              <h3 class="h6 fw-bold">Dados do trabalho</h3>
+              <h3 class="mt-secao">Apresentador</h3>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6"><label for="ed-nome" class="form-label">Nome completo</label><input id="ed-nome" class="form-control" maxlength="100" autocomplete="off"></div>
+                <div class="col-md-6"><label for="ed-email" class="form-label">E-mail</label><input id="ed-email" type="email" class="form-control" maxlength="120" autocomplete="off"></div>
+                <div class="col-md-6"><label for="ed-telefone" class="form-label">Telefone</label><input id="ed-telefone" class="form-control" maxlength="16" inputmode="tel" autocomplete="off"></div>
+                <div class="col-md-6"><label for="ed-instituicao" class="form-label">Instituição</label><input id="ed-instituicao" class="form-control" maxlength="150" autocomplete="off"><div class="form-text" id="ed-instituicao-dica"></div></div>
+              </div>
+              <h3 class="mt-secao">Dados do trabalho</h3>
               <div class="row g-3 mb-3">
                 <div class="col-12"><label for="ed-titulo" class="form-label">Título</label><input id="ed-titulo" class="form-control" maxlength="200"></div>
                 <div class="col-md-6"><label for="ed-vinculo" class="form-label">Vínculo / disciplina</label><select id="ed-vinculo" class="form-select"></select></div>
@@ -379,10 +419,7 @@
                 <div class="col-md-6"><label for="ed-orientadores" class="form-label">Orientador(es) <span class="text-muted fw-normal">(um por linha)</span></label><textarea id="ed-orientadores" class="form-control" rows="2"></textarea></div>
                 <div class="col-12"><label for="ed-resumo" class="form-label">Resumo <span class="text-muted fw-normal" id="ed-contador"></span></label><textarea id="ed-resumo" class="form-control" rows="7"></textarea></div>
               </div>
-              <hr>
-            </div>
-            <div id="mt-avaliacao">
-            <h3 class="h6 fw-bold">Avaliação da banca</h3>
+              <h3 class="mt-secao">Sessão e parecer da banca</h3>
             <form id="form-avaliacao" class="row g-3" novalidate>
               <div class="col-md-6">
                 <label for="mt-status" class="form-label">Situação</label>
@@ -409,12 +446,65 @@
             </form>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <div class="modal-footer mt-rodape">
+            <div class="me-auto" id="mt-rodape-avaliacao">
+              <p class="mt-rotulo">Avaliação do trabalho:</p>
+              <div id="mt-avaliar" class="mt-avaliar"></div>
+            </div>
             <button type="button" class="btn btn-outline-primary" id="mt-editar"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</button>
-            <button type="button" class="btn btn-primary" id="mt-salvar">Salvar</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="mt-fechar">Fechar</button>
+            <button type="button" class="btn btn-primary" id="mt-salvar" hidden>Salvar alterações</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modal-negar" tabindex="-1" aria-labelledby="ng-titulo">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title h5" id="ng-titulo">Negar submissão</h2>
+              <p class="small text-muted mb-0" id="ng-descricao"></p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <label for="ng-motivo" class="form-label">Motivo (opcional):</label>
+            <textarea id="ng-motivo" class="form-control" rows="4" maxlength="500" placeholder="Ex.: o resumo não segue o modelo do edital."></textarea>
+            <div class="form-text text-end" id="ng-contador">0/500</div>
+            <p class="small text-muted mb-0">O participante vê este motivo na consulta da inscrição.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="ng-confirmar"><i class="bi bi-hand-thumbs-down me-1" aria-hidden="true"></i>Confirmar negação</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modal-inscrito" tabindex="-1" aria-labelledby="ei-titulo">
+      <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content" id="form-inscrito" novalidate>
+          <div class="modal-header">
+            <h2 class="modal-title h5" id="ei-titulo">Editar participante</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-12"><label for="ei-nome" class="form-label">Nome completo</label><input id="ei-nome" class="form-control" maxlength="100" autocomplete="off"></div>
+              <div class="col-12"><label for="ei-email" class="form-label">E-mail</label><input id="ei-email" type="email" class="form-control" maxlength="120" autocomplete="off"></div>
+              <div class="col-md-6"><label for="ei-telefone" class="form-label">Telefone</label><input id="ei-telefone" class="form-control" maxlength="16" inputmode="tel" autocomplete="off"></div>
+              <div class="col-md-6"><label for="ei-curso" class="form-label">Curso</label><select id="ei-curso" class="form-select"><option value="">Não informado</option></select></div>
+              <div class="col-12"><label for="ei-instituicao" class="form-label">Instituição</label><input id="ei-instituicao" class="form-control" maxlength="150" autocomplete="off"><div class="form-text" id="ei-instituicao-dica"></div></div>
+              <div class="col-12"><p class="small text-muted mb-0"><i class="bi bi-lock me-1" aria-hidden="true"></i>CPF e matrícula não podem ser alterados, porque identificam a inscrição.</p></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary" id="ei-salvar">Salvar alterações</button>
+          </div>
+        </form>
       </div>
     </div>
   </main>
@@ -426,14 +516,14 @@
   <script src="vendor/html5-qrcode.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/emailjs.min.js"></script>
-  <script src="js/config.js?v=202611201317"></script>
-  <script src="js/core.js?v=202611201317"></script>
-  <script src="js/servico.js?v=202611201317"></script>
-  <script src="js/api.js?v=202611201317"></script>
-  <script src="js/ui.js?v=202611201317"></script>
-  <script src="js/certificado-base64.js?v=202611201317"></script>
-  <script src="js/certificado-pdf.js?v=202611201317"></script>
-  <script src="js/painel.js?v=202611201317"></script>
-  <script src="js/painel-checkin.js?v=202611201317"></script>
+  <script src="js/config.js?v=202611201330"></script>
+  <script src="js/core.js?v=202611201330"></script>
+  <script src="js/servico.js?v=202611201330"></script>
+  <script src="js/api.js?v=202611201330"></script>
+  <script src="js/ui.js?v=202611201330"></script>
+  <script src="js/certificado-base64.js?v=202611201330"></script>
+  <script src="js/certificado-pdf.js?v=202611201330"></script>
+  <script src="js/painel.js?v=202611201330"></script>
+  <script src="js/painel-checkin.js?v=202611201330"></script>
 </body>
 </html>
