@@ -50,17 +50,54 @@
       const d = await API.dadosPainel();
       ({ alunos, frequencias, certificados, membros, emails } = d);
       trabalhos = d.trabalhos || [];
-      desenharTrabalhos(); desenharInscritos(); desenharLembretes(); desenharComissao(); desenharCertificados();
+      desenharTrabalhos(); desenharInscritos(); desenharLembretes(); desenharComissao(); desenharCertificados(); desenharVisao();
     } catch (err) {
       if (err.status === 401) { API.sairProfessor(); location.reload(); return; }
       UI.aviso(err.message || "Não foi possível carregar os dados.", "erro");
     }
   }
 
+  /* ---------------- Visão geral ---------------- */
+  function irPara(aba) {
+    const b = document.querySelector(`.painel-lateral [data-bs-target="#${aba}"]`);
+    if (b) { bootstrap.Tab.getOrCreateInstance(b).show(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  }
+  document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("[data-ir]"); if (a) { e.preventDefault(); irPara(a.dataset.ir); } });
+  // No celular, a barra lateral recolhe ao escolher uma área
+  document.querySelectorAll(".painel-lateral [data-bs-toggle=pill]").forEach((b) => b.addEventListener("shown.bs.tab", () => window.scrollTo({ top: 0 })));
+
+  function desenharVisao() {
+    const apresentados = trabalhos.filter((t) => t.apresentado).length;
+    const emAnalise = trabalhos.filter((t) => t.status === "em_analise").length;
+    const aprovSemApres = trabalhos.filter((t) => t.status === "aprovado" && !t.apresentado).length;
+    const ouvintes = alunos.filter((a) => a.inscricao === "participante").length;
+    const pendentes = membros.filter((m) => m.status === "pendente").length;
+    const lib = CFG.evento.certificadosAPartirDe;
+    const [ano, mes, dia] = String(lib || "").split("-");
+    const dataLib = lib ? `${dia}/${mes}/${ano}` : "";
+    const faltam = lib ? Math.ceil((new Date(`${lib}T00:00:00${CFG.evento.fusoHorario || "-03:00"}`) - Date.now()) / 864e5) : 0;
+    $("vg-submissoes").textContent = trabalhos.length;
+    $("vg-submissoes-sub").textContent = `${apresentados} já apresentaram`;
+    $("vg-participantes").textContent = ouvintes;
+    $("vg-participantes-sub").textContent = `${alunos.length} inscrições no total`;
+    $("vg-presencas").textContent = frequencias.length;
+    $("vg-presencas-sub").textContent = `${CFG.eventos.length} atividade(s) na programação`;
+    $("vg-certificados").textContent = certificados.length;
+    $("vg-certificados-sub").textContent = lib ? `Liberação em ${dataLib}` : "Liberados";
+    const itens = [];
+    if (emAnalise) itens.push(["mic", `<strong>${emAnalise}</strong> submissão(ões) aguardando a avaliação da banca.`, "aba-submissoes", "Avaliar"]);
+    if (aprovSemApres) itens.push(["easel", `<strong>${aprovSemApres}</strong> trabalho(s) aprovado(s) ainda sem a marcação “Apresentou”.`, "aba-submissoes", "Ver submissões"]);
+    if (pendentes) itens.push(["person-exclamation", `<strong>${pendentes}</strong> membro(s) da comissão aguardando liberação de acesso.`, "aba-comissao", "Liberar"]);
+    if (lib && faltam > 0) itens.push(["award", `Certificados liberados em <strong>${dataLib}</strong> — faltam <strong>${faltam}</strong> dia(s).`, "aba-certificados", "Certificados"]);
+    $("vg-atencao").innerHTML = itens.length
+      ? itens.map(([ic, txt, aba, rot]) => `<li><span class="atencao-icone"><i class="bi bi-${ic}" aria-hidden="true"></i></span><span class="flex-grow-1">${txt}</span><a href="#" data-ir="${aba}" class="atencao-link">${rot} <i class="bi bi-arrow-right" aria-hidden="true"></i></a></li>`).join("")
+      : `<li><span class="atencao-icone"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><span>Nada pendente por enquanto.</span></li>`;
+  }
+
   function abrirPainel() {
     $("tela-login").classList.add("d-none");
     $("tela-painel").classList.remove("d-none");
-    $("btn-sair").classList.remove("d-none");
+    document.body.classList.add("modo-painel");
     desenharConfig();
     recarregar();
     consultarServidor();

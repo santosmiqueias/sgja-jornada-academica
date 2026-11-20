@@ -266,3 +266,64 @@ fieldset > legend.form-label { float: none; width: auto; padding: 0; margin-bott
 [data-bs-theme="dark"] .btn-check:checked + .seletor-publico-opcao { background: var(--azul); color: #fff; }
 @media (max-width: 575.98px) { .seletor-publico-opcao { padding: .65rem .5rem; font-size: .92rem; } }
 @media (min-width: 1200px) and (max-width: 1399.98px) { .navbar .nav-link { padding-inline: .4rem !important; font-size: .9rem; } }
+
+/* ===================== Painel da organização (barra lateral + visão geral) ===================== */
+body.modo-painel { background: #e8edfa; }
+body.modo-painel #menu, body.modo-painel .cabecalho-pagina, body.modo-painel #rodape { display: none; }
+body.modo-painel main.container { max-width: 1440px; margin-top: 1.75rem !important; }
+body.modo-painel .aviso-demo, body.modo-painel main > .alert { margin-left: 0; }
+.painel-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.75rem; align-items: start; }
+.painel-lateral { position: sticky; top: 1.75rem; background: var(--navy); color: #fff; border-radius: 16px; padding: .75rem; box-shadow: 0 10px 30px rgba(11, 42, 111, .25); }
+.lateral-usuario { display: flex; align-items: center; gap: .7rem; background: rgba(255, 255, 255, .08); border-radius: 12px; padding: .75rem; margin-bottom: .5rem; }
+.lateral-usuario strong { display: block; font-size: .95rem; }
+.lateral-usuario small { color: var(--amarelo); font-size: .8rem; }
+.lateral-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--amarelo); color: var(--navy); font-weight: 800; flex-shrink: 0; }
+.lateral-grupo { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .55); margin: 1rem .75rem .35rem; }
+.lateral-link { display: flex; align-items: center; gap: .7rem; width: 100%; text-align: left; color: rgba(255, 255, 255, .88) !important; font-weight: 600; font-size: .95rem; padding: .6rem .75rem !important; border-radius: 10px; border: 0; background: transparent; }
+.lateral-link:hover { background: rgba(255, 255, 255, .08); color: #fff !important; }
+.lateral-link.active { background: var(--amarelo) !important; color: var(--navy) !important; }
+.lateral-link i { font-size: 1.05rem; width: 1.2rem; text-align: center; }
+.lateral-badge { margin-left: auto; background: var(--amarelo); color: var(--navy); border-radius: 999px; font-size: .72rem; font-weight: 700; padding: .05rem .5rem; }
+.lateral-link.active .lateral-badge { background: var(--navy); color: #fff; }
+.lateral-rodape { border-top: 1px solid rgba(255, 255, 255, .14); margin-top: 1rem; padding: .75rem .75rem .25rem; display: grid; gap: .5rem; }
+.lateral-rodape a, .lateral-rodape button { display: flex; align-items: center; gap: .5rem; color: rgba(255, 255, 255, .78); font-size: .88rem; font-weight: 600; text-decoration: none; background: none; border: 0; padding: 0; text-align: left; }
+.lateral-rodape a:hover, .lateral-rodape button:hover { color: #fff; }
+.painel-topo { display: flex; align-items: flex-start; gap: 1rem; padding-bottom: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #cfd8ee; }
+.painel-topo-icone { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); font-size: 1.3rem; flex-shrink: 0; }
+.painel-titulo { font-size: 1.75rem; font-weight: 800; color: var(--navy); margin: 0; }
+.painel-sub { color: #5b6b8c; }
+.painel-perfil { background: var(--navy); color: #fff; font-size: .8rem; font-weight: 700; border-radius: 999px; padding: .35rem .85rem; white-space: nowrap; }
+.cartao-numero { background: #fff; border-radius: 12px; padding: 1.25rem; height: 100%; box-shadow: 0 4px 14px rgba(11, 42, 111, .06); }
+.cartao-numero.destaque { border-top: 4px solid var(--amarelo); }
+.cartao-numero-icone { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: #e8edfa; color: var(--navy); font-size: 1.15rem; margin-bottom: .9rem; }
+.cartao-numero-valor { font-size: 2rem; font-weight: 800; color: var(--navy); line-height: 1; }
+.cartao-numero-rotulo { font-weight: 700; color: var(--navy); margin-top: .5rem; }
+.cartao-numero-sub { font-size: .82rem; color: #5b6b8c; }
+.lista-atencao { list-style: none; padding: 0; margin: 0; }
+.lista-atencao li { display: flex; align-items: center; gap: .9rem; padding: 1rem 0; border-bottom: 1px solid #e3e8f4; }
+.lista-atencao li:last-child { border-bottom: 0; }
+.atencao-icone { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: #e8edfa; color: var(--navy); flex-shrink: 0; }
+.atencao-link { font-weight: 700; white-space: nowrap; text-decoration: none; }
+.atalho { display: flex; align-items: center; gap: .9rem; width: 100%; text-align: left; border: 1px solid #dfe4f2; border-radius: 12px; padding: .9rem 1rem; background: #fff; color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
+.atalho:hover { border-color: var(--navy); transform: translateY(-1px); color: inherit; }
+.atalho-icone { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--navy); color: var(--amarelo); flex-shrink: 0; }
+.atalho-texto { flex: 1; display: flex; flex-direction: column; }
+.atalho-texto strong { color: var(--navy); }
+.atalho-texto span { font-size: .85rem; color: #5b6b8c; }
+.atalho > .bi-arrow-right { color: #5b6b8c; }
+@media (max-width: 991.98px) {
+  .painel-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .painel-lateral { position: static; }
+  .painel-lateral .nav { flex-direction: row !important; flex-wrap: wrap; gap: .25rem; }
+  .painel-lateral .nav li { flex: 1 1 calc(50% - .25rem); }
+  .lateral-grupo { margin: .6rem .5rem .25rem; }
+  .painel-topo { flex-wrap: wrap; }
+}
+[data-bs-theme="dark"] body.modo-painel { background: #0b1222; }
+[data-bs-theme="dark"] .cartao-numero, [data-bs-theme="dark"] .atalho { background: #1a2440; border-color: #2d3a5a; }
+[data-bs-theme="dark"] .cartao-numero-icone, [data-bs-theme="dark"] .atencao-icone { background: #26335a; color: var(--destaque); }
+[data-bs-theme="dark"] .painel-titulo, [data-bs-theme="dark"] .cartao-numero-valor, [data-bs-theme="dark"] .cartao-numero-rotulo, [data-bs-theme="dark"] .atalho-texto strong { color: #fff; }
+[data-bs-theme="dark"] .painel-topo { border-color: #2d3a5a; }
+[data-bs-theme="dark"] .painel-lateral { background: #0f1d47; }
+[data-bs-theme="dark"] .lista-atencao li { border-color: #2d3a5a; }
+.painel-conteudo { min-width: 0; } .painel-conteudo > .tab-content > .tab-pane > .row { --bs-gutter-x: 1rem; }
